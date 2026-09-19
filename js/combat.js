@@ -91,7 +91,8 @@ window.CR = window.CR || {};
   // 计算路径下一个目标点(简化寻路:地面单位需走桥)
   // RIVER_Y1=15, RIVER_Y2=17, 河道占 y=15,16;桥在 x=3 和 x=14
   function nextWaypoint(unit, game, finalTarget) {
-    if (unit.flying) {
+    // 飞行单位 或 可跳河单位(野猪骑士):直线朝目标,河道不构成障碍
+    if (unit.flying || (unit.card.special && unit.card.special.canJumpRiver)) {
       return { x: finalTarget.x, y: finalTarget.y };
     }
     const ux = unit.x, uy = unit.y;
