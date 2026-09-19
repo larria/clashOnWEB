@@ -19,6 +19,8 @@ window.CR = window.CR || {};
       // 静态战场层缓存(离屏 canvas,避免每帧重绘草地纹理)
       this.arenaCache = null;
       this.animTime = 0;
+      // 解锁区域当场闪烁提示 {lane, color:'r,g,b', until: 时间戳}
+      this.unlockFlash = null;
     }
 
     draw(deployPreview, dt) {
@@ -30,11 +32,53 @@ window.CR = window.CR || {};
       const previewCard = deployPreview ? CR.CARDS[deployPreview.cardId] : null;
       const showDeployZone = previewCard && previewCard.kind !== CR.KIND.SPELL;
       if (showDeployZone) this.drawDeployZoneHighlight();
+      // 解锁区当场闪烁(推塔后几秒内,不依赖选牌)
+      this.drawUnlockFlash();
       this.drawTowers();
       this.drawUnits();
       this.drawEffects();
       if (deployPreview) this.drawPreview(deployPreview);
       this.drawVignette();
+    }
+
+    // 解锁区域当场闪烁(推塔瞬间触发,3 秒渐隐;期间脉冲呼吸)
+    drawUnlockFlash() {
+      const uf = this.unlockFlash;
+      if (!uf || performance.now() > uf.until) { this.unlockFlash = null; return; }
+      const ctx = this.ctx;
+      const t = this.animTime;
+      // 总进度 1→0
+      const p = (uf.until - performance.now()) / 3200;
+      // 脉冲 + 整体渐隐
+      const alpha = (0.22 + 0.13 * Math.sin(t * 6)) * Math.min(1, p * 1.6);
+      // 区域:敌方侧(玩家解锁) 或 己方侧(AI 解锁警示)
+      // lane 决定 x 范围;颜色区分我方收益/敌方威胁
+      const towers = this.game.towers;
+      // 判断闪的是哪一侧区域:金色(我方解锁)显示 AI 半场该路;红色警示显示玩家半场该路
+      const isGold = uf.color.indexOf('255,213') === 0;
+      const x0 = uf.lane === 'left' ? 0 : 9;
+      const w = 9;
+      let y0, h;
+      if (isGold) {
+        y0 = 5; h = CR.RIVER_Y1 - 5;          // AI 半场该路(玩家新解锁区)
+      } else {
+        y0 = CR.RIVER_Y2; h = 27 - CR.RIVER_Y2; // 玩家半场该路(AI 新解锁区)
+      }
+      ctx.save();
+      ctx.fillStyle = `rgba(${uf.color},${alpha})`;
+      ctx.fillRect(x0*CELL+1, y0*CELL, w*CELL-2, h*CELL);
+      ctx.strokeStyle = `rgba(${uf.color},${Math.min(1, alpha*3)})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]); ctx.lineDashOffset = -t * 30;
+      ctx.strokeRect(x0*CELL+1, y0*CELL, w*CELL-2, h*CELL);
+      ctx.setLineDash([]);
+      // 区域文字
+      ctx.globalAlpha = Math.min(1, p * 2) * (0.75 + 0.25*Math.sin(t*6));
+      ctx.fillStyle = `rgba(${uf.color},0.95)`;
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(isGold ? '🔓 新部署区' : '⚠️ 敌方可在此部署', (x0 + w/2)*CELL, (y0 + h/2)*CELL);
+      ctx.restore();
     }
 
     // 可部署区域高亮(选中卡牌时):己方半场 + 推塔解锁区

@@ -104,6 +104,21 @@ window.CR = window.CR || {};
       if (tw.lane === 'king') {
         log(sideName === '你的' ? '💀 你的国王塔陨落,战斗失败!' : '🏆 AI国王塔陨落,胜利!', sideName === '你的' ? 'ai' : 'me');
       }
+      // 公主塔被推:解锁区域当场闪烁提示(几秒渐隐;常驻高亮仍仅选牌时显示)
+      if (tw.lane !== 'king' && renderer) {
+        const isMyKill = tw.side === 1; // 敌方(玩家打掉的塔)→ 金色增益提示
+        renderer.unlockFlash = {
+          lane: tw.lane,                    // 'left' | 'right'
+          color: isMyKill ? '255,213,79' : '255,90,79', // 金(我方解锁)/红(敌方解锁警示)
+          until: performance.now() + 3200,  // 闪烁 3.2 秒
+        };
+        if (isMyKill) {
+          announce('🔓 部署区解锁', (tw.lane === 'left' ? '左路' : '右路') + '敌方区域已开放', '#ffd54f');
+          log(`🔓 ${tw.lane === 'left' ? '左' : '右'}路敌方部署区已解锁(3秒高亮,选牌时可见)`, 'sys');
+        } else {
+          announce('⚠️ 防线告急', '敌方解锁了你的' + (tw.lane === 'left' ? '左' : '右') + '路部署区', '#ff5a4f');
+        }
+      }
     };
     renderer = new CR.Renderer(canvas, game);
     ai = new CR.AI(game, playerDeck.slice());
@@ -181,6 +196,18 @@ window.CR = window.CR || {};
 
   // 阶段提示状态
   let announcedDouble = false, announcedLastMinute = false, announcedTimeUp = false;
+
+  // 页面不可见时自动暂停(防止后台节流导致游戏时间失真/错过操作)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && phase === 'playing') {
+      togglePause();
+      log('页面切到后台,游戏已自动暂停', 'sys');
+    }
+  });
+  // 切回前台时校准时间基准(避免恢复瞬间 dt 跳变)
+  window.addEventListener('focus', () => {
+    if (phase === 'playing') lastTime = performance.now();
+  });
 
   // 重新开始(任何时候可点)
   document.getElementById('restart').addEventListener('click', () => {
