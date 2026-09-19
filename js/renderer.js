@@ -56,24 +56,25 @@ window.CR = window.CR || {};
       ctx.strokeStyle = `rgba(100,220,140,${0.35 + 0.15*Math.sin(t*3)})`;
       ctx.lineWidth = 2;
       ctx.strokeRect(1, CR.RIVER_Y2*CELL, CR.CANVAS_W-2, (CR.GRID_H-CR.RIVER_Y2)*CELL);
-      // 解锁区描边(如有)
+      // 解锁区描边(如有):y 从塔前(5)到河岸排末尾(RIVER_Y1,含岸边整行)
       const unlock = [];
       if (enemyTowers.left.dead) unlock.push({x:0, w:9});
       if (enemyTowers.right.dead) unlock.push({x:9, w:9});
+      const unlockTop = 5, unlockH = (CR.RIVER_Y1 - unlockTop); // 含岸排(y=14)整行
       for (const u of unlock) {
         // 解锁区金色微光填充
         ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
-        ctx.fillRect(u.x*CELL+1, 5*CELL, u.w*CELL-2, (CR.RIVER_Y1-1-5)*CELL);
+        ctx.fillRect(u.x*CELL+1, unlockTop*CELL, u.w*CELL-2, unlockH*CELL);
         ctx.strokeStyle = `rgba(255,213,79,${0.5 + 0.2*Math.sin(t*3)})`;
         ctx.lineWidth = 2;
         ctx.setLineDash([8, 5]);
-        ctx.strokeRect(u.x*CELL+1, 5*CELL, u.w*CELL-2, (CR.RIVER_Y1-1-5)*CELL);
+        ctx.strokeRect(u.x*CELL+1, unlockTop*CELL, u.w*CELL-2, unlockH*CELL);
         ctx.setLineDash([]);
         // 解锁区标记文字
         ctx.fillStyle = 'rgba(255,213,79,0.9)';
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🔓 已解锁', (u.x + u.w/2)*CELL, (5 + (CR.RIVER_Y1-1-5)/2)*CELL);
+        ctx.fillText('🔓 已解锁', (u.x + u.w/2)*CELL, (unlockTop + unlockH/2)*CELL);
       }
       ctx.restore();
     }
