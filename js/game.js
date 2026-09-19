@@ -281,6 +281,70 @@ window.CR = window.CR || {};
           if (!u.charged) u.chargeTimer = 0;
         }
       }
+      // 单位碰撞分离:地面单位互不重叠,后进单位被挤出(模拟 CR 部队互相阻挡)
+      this.separateUnits();
+    }
+
+    // 地面单位碰撞分离(每帧移动后调用)
+    // 飞行单位不参与(空中);建筑是静态障碍,把单位挤出
+    separateUnits() {
+      const movers = this.units.filter(u => !u.dead && !u.flying && !u.isBuilding && u.deployTimer <= 0);
+      const solids = this.units.filter(u => !u.dead && !u.flying && u.isBuilding);
+      // 1. 单位 vs 建筑静态挤出
+      for (const m of movers) {
+        for (const b of solids) {
+          const minD = m.radius + b.radius;
+          const dx = m.x - b.x, dy = m.y - b.y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < minD && d > 0.001) {
+            m.x = b.x + (dx/d) * minD;
+            m.y = b.y + (dy/d) * minD;
+          } else if (d <= 0.001) {
+            m.y += minD; // 完全重合,向下弹出
+          }
+        }
+      }
+      // 2. 单位 vs 单位软分离(多次迭代收敛)
+      for (let iter = 0; iter < 2; iter++) {
+        for (let i = 0; i < movers.length; i++) {
+          for (let j = i+1; j < movers.length; j++) {
+            const a = movers[i], b = movers[j];
+            const minD = a.radius + b.radius;
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const d = Math.sqrt(dx*dx + dy*dy);
+            if (d < minD) {
+              if (d > 0.001) {
+                // 沿连线各退一半
+                const push = (minD - d) / 2;
+                const nx = dx/d, ny = dy/d;
+                this.pushUnit(a, -nx*push, -ny*push);
+                this.pushUnit(b, nx*push, ny*push);
+              } else {
+                this.pushUnit(a, -0.1, 0);
+                this.pushUnit(b, 0.1, 0);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 推动单位但不得进入河道(非桥)或出地图
+    pushUnit(u, dx, dy) {
+      const nx = Math.max(u.radius, Math.min(CR.GRID_W - u.radius, u.x + dx));
+      let ny = u.y + dy;
+      // 河道限制(地面单位只能走桥)
+      if (CR.isRiver(nx, ny) && !CR.isBridge(nx, ny)) {
+        // 尝试仅 y 不动
+        if (!CR.isRiver(u.x, u.y + dy) || CR.isBridge(u.x, u.y + dy)) {
+          ny = u.y + dy;
+        } else {
+          ny = u.y; // 保持原 y
+        }
+      }
+      ny = Math.max(u.radius, Math.min(CR.GRID_H - u.radius, ny));
+      u.x = nx;
+      u.y = ny;
     }
 
     updateEffects(dt) {

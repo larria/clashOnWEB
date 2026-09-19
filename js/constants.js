@@ -56,12 +56,12 @@ window.CR = window.CR || {};
   const CANVAS_H = GRID_H * CELL;   // 1216 -> 太高,用缩放
 
   // 部署区域:
-  // 基础:己方半场(玩家 y>=18,AI y<=14)
+  // 基础:己方半场(玩家 y>=17,AI y<=14;两侧均为紧贴河道的岸边一排可部署)
   // 解锁:摧毁敌方某侧公主塔后,该侧敌方"塔前到河边"的区域可部署(两侧对称)
   // side: 'player' | 'ai';enemyTowers: 敌方塔 {left,right} 状态(可选,传入后启用解锁判定)
   function canDeploy(side, x, y, enemyTowers) {
     const inOwnHalf = side === 'player'
-      ? y >= RIVER_Y2 + 1
+      ? y >= RIVER_Y2
       : y <= RIVER_Y1 - 1;
     if (inOwnHalf) return true;
     // 敌方半场:仅在对应侧公主塔被摧毁后解锁
@@ -73,11 +73,11 @@ window.CR = window.CR || {};
     if (isLeftLane && !leftUnlocked) return false;
     if (!isLeftLane && !rightUnlocked) return false;
     // 该侧公主塔身前到河边的区域
-    // (玩家打 AI:AI 塔在 y=4,区域 y∈[5,14];AI 打玩家:玩家塔在 y=27,区域 y∈[18,26])
+    // (玩家打 AI:AI 塔在 y=4,区域 y∈[5,14];AI 打玩家:玩家塔在 y=27,区域 y∈[17,26])
     if (side === 'player') {
       return y >= 5 && y <= RIVER_Y1 - 1;
     } else {
-      return y >= RIVER_Y2 + 1 && y <= 26;
+      return y >= RIVER_Y2 && y <= 26;
     }
   }
 

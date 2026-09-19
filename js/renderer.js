@@ -46,7 +46,7 @@ window.CR = window.CR || {};
       // 呼吸透明度
       const breathe = 0.16 + 0.07 * Math.sin(t * 3);
       // 己方半场逐格绿色高亮(解锁区另行金色处理)
-      for (let gy = CR.RIVER_Y2 + 1; gy < CR.GRID_H; gy += 0.5) {
+      for (let gy = CR.RIVER_Y2; gy < CR.GRID_H; gy += 0.5) {
         for (let gx = 0; gx < CR.GRID_W; gx += 0.5) {
           ctx.fillStyle = `rgba(100,220,140,${breathe})`;
           ctx.fillRect(gx*CELL, gy*CELL, CELL*0.5, CELL*0.5);
@@ -55,7 +55,7 @@ window.CR = window.CR || {};
       // 区域描边:己方半场底线区域
       ctx.strokeStyle = `rgba(100,220,140,${0.35 + 0.15*Math.sin(t*3)})`;
       ctx.lineWidth = 2;
-      ctx.strokeRect(1, (CR.RIVER_Y2+1)*CELL, CR.CANVAS_W-2, (CR.GRID_H-CR.RIVER_Y2-1)*CELL);
+      ctx.strokeRect(1, CR.RIVER_Y2*CELL, CR.CANVAS_W-2, (CR.GRID_H-CR.RIVER_Y2)*CELL);
       // 解锁区描边(如有)
       const unlock = [];
       if (enemyTowers.left.dead) unlock.push({x:0, w:9});
