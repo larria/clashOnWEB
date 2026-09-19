@@ -30,7 +30,7 @@ window.CR = window.CR || {};
       hp:30, dmg:30, hitSpeed:1.0, range:0.7, sightRange:5.0, speed:SPEED.FAST,
       targets:T.GROUND, flying:false, count:4, splash:0, deployTime:1, color:'#eeeeee', radius:0.28 },
     minions: { id:'minions', name:'亡灵', cost:3, rarity:'普通', kind:KIND.TROOP,
-      hp:90, dmg:40, hitSpeed:1.0, range:2.0, sightRange:5.5, speed:SPEED.FAST,
+      hp:130, dmg:40, hitSpeed:1.0, range:2.0, sightRange:5.5, speed:SPEED.FAST,
       targets:T.ALL, flying:true, count:3, splash:0, deployTime:1, color:'#5c6bc0', radius:0.33 },
     barbarians: { id:'barbarians', name:'野蛮人', cost:5, rarity:'普通', kind:KIND.TROOP,
       hp:300, dmg:75, hitSpeed:1.4, range:0.8, sightRange:5.5, speed:SPEED.MEDIUM,
@@ -91,7 +91,7 @@ window.CR = window.CR || {};
       targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#558b2f', radius:0.60,
       special:{ deathDamage:{ dmg:200, splash:2.0, targets:T.ALL }, summonOnDeath:{ card:'golemite', count:2 } } },
     minionHorde: { id:'minionHorde', name:'亡灵大军', cost:5, rarity:'史诗', kind:KIND.TROOP,
-      hp:90, dmg:40, hitSpeed:1.0, range:2.0, sightRange:5.5, speed:SPEED.FAST,
+      hp:130, dmg:40, hitSpeed:1.0, range:2.0, sightRange:5.5, speed:SPEED.FAST,
       targets:T.ALL, flying:true, count:6, splash:0, deployTime:1, color:'#3949ab', radius:0.32 },
 
     // ===== 建筑 =====

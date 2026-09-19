@@ -35,6 +35,9 @@ window.CR = window.CR || {};
     game.lastPlayedCard = cardId;
   }
 
+  // 重型单位(不受法术击退):巨人/戈仑/皮卡/骷髅巨人/野蛮人小屋等大型单位
+  const HEAVY_UNITS = new Set(['giant', 'golem', 'golemite', 'pekka', 'giantSkeleton', 'barbarianHut']);
+
   function applySpellEffect(card, side, x, y, game) {
     const radius = card.radius;
     const dmg = card.dmg;
@@ -55,7 +58,8 @@ window.CR = window.CR || {};
           if (e.hp <= 0 && !e.dead) { e.hp = 0; e.dead = true; spellKills.push(e.card.name); CR.onUnitDeath(e, game); }
         }
         // 击退
-        if (card.knockback && card.knockback > 0 && !e.isBuilding) {
+        // 击退(重型单位免疫:巨人等大块头岿然不动)
+        if (card.knockback && card.knockback > 0 && !e.isBuilding && !HEAVY_UNITS.has(e.cardId)) {
           const dx = e.x - x, dy = e.y - y;
           const dd = Math.sqrt(dx*dx+dy*dy) || 1;
           e.x += (dx/dd) * card.knockback;
