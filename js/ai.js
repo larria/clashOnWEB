@@ -398,10 +398,12 @@ window.CR = window.CR || {};
       return null;
     }
 
-    // 低费卡避免溢出
+    // 低费卡避免溢出(法术必须有实际目标才有价值,空放=浪费圣水,因此过牌只甩部队/建筑)
     pickCycle(enemies, elixir) {
       for (let i = 0; i < this.hand.length; i++) {
         const c = CR.CARDS[this.hand[i]];
+        // 法术不参与过牌:万箭/电击等砸空地纯属送费
+        if (c.kind === CR.KIND.SPELL) continue;
         if (c.cost <= 3 && c.cost > 0 && elixir >= c.cost) {
           const px = enemies.length > 0 ? enemies[0].x : 9;
           const py = this.myRiverEdgeY;
