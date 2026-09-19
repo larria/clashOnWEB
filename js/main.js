@@ -98,7 +98,7 @@ window.CR = window.CR || {};
     selectedCardIdx = -1;
     lastTime = performance.now();
     logEl.innerHTML = '';
-    resultEl.style.display = 'none';
+    resultEl.classList.remove('show');
     log('战斗开始!同卡组对战:' + playerDeck.map(id=>CR.CARDS[id].name).join('、'), 'me');
     fitCanvas();
     window.scrollTo(0, 0);
@@ -155,7 +155,7 @@ window.CR = window.CR || {};
       }
       drawHandUI();
       drawInfo();
-      renderer.draw(getPreview());
+      renderer.draw(getPreview(), dt);
       if (game.gameOver) {
         showResult();
         return;
@@ -177,30 +177,47 @@ window.CR = window.CR || {};
   }
 
   function showResult() {
-    let txt;
-    if (game.winner === 0) txt = '🏆 胜利!';
-    else if (game.winner === 1) txt = '💀 失败';
-    else txt = '⚖️ 平局';
+    let txt, sub;
+    if (game.winner === 0) { txt = '🏆 胜利!'; sub = 'VICTORY'; }
+    else if (game.winner === 1) { txt = '💀 失败'; sub = 'DEFEAT'; }
+    else { txt = '⚖️ 平局'; sub = 'DRAW'; }
     resultText.textContent = txt;
-    resultText.style.color = game.winner === 0 ? '#7fd' : (game.winner === 1 ? '#f87' : '#ffd700');
-    resultEl.style.display = 'block';
+    resultText.style.color = game.winner === 0 ? '#7fd4ff' : (game.winner === 1 ? '#ff8a80' : '#ffe082');
+    const subEl = document.getElementById('resultSub');
+    if (subEl) { subEl.textContent = sub; subEl.style.color = resultText.style.color; }
+    resultEl.classList.add('show');
   }
 
   function drawInfo() {
     const t = Math.floor(game.time);
     const m = String(Math.floor(t/60)).padStart(2,'0');
     const s = String(t%60).padStart(2,'0');
-    const de = game.doubleElixir ? ' ×2圣水' : '';
-    let html = `⏱ ${m}:${s}${de}<br>`;
-    html += `🔵 你的圣水:${game.elixir[0]} / 10<br>`;
-    html += `🔴 AI圣水:${game.elixir[1]} / 10<br>`;
-    // 塔血
+    const de = game.doubleElixir ? ' <span style="color:#ff8a80;font-weight:700;">×2</span>' : '';
     const pt = game.towers[0], at = game.towers[1];
-    html += `<br>👑 你的国王塔:${Math.max(0,Math.round(pt.king.hp))}<br>`;
-    html += `🏰 左塔:${pt.left.dead?'×':Math.round(pt.left.hp)} | 右塔:${pt.right.dead?'×':Math.round(pt.right.hp)}<br>`;
-    html += `<br>👑 AI国王塔:${Math.max(0,Math.round(at.king.hp))}<br>`;
-    html += `🏰 左塔:${at.left.dead?'×':Math.round(at.left.hp)} | 右塔:${at.right.dead?'×':Math.round(at.right.hp)}<br>`;
-    infoEl.innerHTML = html;
+    const towerLine = (tw, color) => {
+      const hp = tw.dead ? '<span style="color:#666;">✕</span>' : Math.round(tw.hp);
+      return `<span style="color:${color};">${hp}</span>`;
+    };
+    infoEl.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:15px;font-weight:700;letter-spacing:1px;">⏱ ${m}:${s}</span>${de ? `<span style="background:rgba(255,80,80,0.18);padding:1px 8px;border-radius:8px;font-size:10px;color:#ff8a80;border:1px solid rgba(255,80,80,0.35);">⚡双倍圣水</span>` : ''}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11.5px;">
+        <span style="color:#7fd4ff;">💧 你 <b>${game.elixir[0]}</b>/10</span>
+        <span style="color:#ffab91;">AI <b>${game.elixir[1]}</b>/10 💧</span>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,0.1);margin:7px 0;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;">
+        <span style="color:#7fd4ff;">👑 ${Math.max(0,Math.round(pt.king.hp))}</span>
+        <span style="color:#7fd4ff;font-size:10px;">你的塔</span>
+        <span>🏰 ${towerLine(pt.left,'#7fd4ff')} · ${towerLine(pt.right,'#7fd4ff')}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;margin-top:3px;">
+        <span style="color:#ffab91;">👑 ${Math.max(0,Math.round(at.king.hp))}</span>
+        <span style="color:#ffab91;font-size:10px;">AI的塔</span>
+        <span>🏰 ${towerLine(at.left,'#ffab91')} · ${towerLine(at.right,'#ffab91')}</span>
+      </div>
+    `;
   }
 
   // 手牌 UI(绘制在 canvas 下方 #handArea)— 增量更新,避免每帧重建导致点击丢失
@@ -219,17 +236,20 @@ window.CR = window.CR || {};
     if (sig !== lastHandSig) {
       lastHandSig = sig;
       el.innerHTML = '';
-      // 圣水条
+      // 圣水条(精致:立体珠+满水光晕)
       const isMobile = window.innerWidth <= 860;
       const orbSz = isMobile ? 11 : 14;
+      const full = game.elixir[0] >= 10;
       const bar = document.createElement('div');
-      bar.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;margin-bottom:4px;';
-      let barHtml = '<div style="display:flex;gap:1px;flex-wrap:nowrap;">';
+      bar.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;margin-bottom:5px;padding:4px 8px;border-radius:10px;background:rgba(12,15,30,0.6);border:1px solid rgba(255,255,255,0.08);' + (full ? 'box-shadow:0 0 12px rgba(255,80,80,0.45);' : '');
+      let barHtml = '<div style="display:flex;gap:2px;flex-wrap:nowrap;">';
       for (let i = 0; i < 10; i++) {
         const filled = i < game.elixir[0];
-        barHtml += `<div style="width:${orbSz}px;height:${orbSz}px;border-radius:50%;background:${filled?'#d32f2f':'#555'};border:1px solid #333;flex-shrink:0;"></div>`;
+        barHtml += `<div style="width:${orbSz}px;height:${orbSz}px;border-radius:50%;flex-shrink:0;${filled
+          ? `background:radial-gradient(circle at 35% 30%, #ff8a80, #e53935 60%, #b71c1c);box-shadow:0 1px 3px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(0,0,0,0.3);border:1px solid #7f1d1d;`
+          : `background:radial-gradient(circle at 35% 30%, #3a4266, #262b4a);border:1px solid #1a1e38;`}"></div>`;
       }
-      barHtml += `</div><div style="margin-left:6px;color:#ff6666;font-weight:bold;font-size:${orbSz+3}px;">${game.elixir[0]}</div>`;
+      barHtml += `</div><div style="margin-left:6px;color:#ff8a80;font-weight:800;font-size:${orbSz+4}px;text-shadow:0 0 8px rgba(255,80,80,0.6);">${game.elixir[0]}</div>`;
       bar.innerHTML = barHtml;
       el.appendChild(bar);
 
@@ -243,11 +263,14 @@ window.CR = window.CR || {};
         const selected = i === selectedCardIdx;
         const d = document.createElement('div');
         d.className = 'handCard';
-        d.style.cssText = `background:${selected?'#4a6daa':'#2a2a4e'};border:2px solid ${selected?'#ffd700':'#555'};opacity:${canPlay?1:0.5};cursor:${canPlay?'pointer':'not-allowed'};`;
+        // 选中态:金边+上浮+光晕;不可用:暗化
+        d.style.cssText = selected
+          ? `border-color:#ffd54f;transform:translateY(-6px);box-shadow:0 8px 18px rgba(0,0,0,0.55), 0 0 14px rgba(255,213,79,0.35);`
+          : (canPlay ? '' : 'opacity:0.45;filter:grayscale(0.5);cursor:not-allowed;');
         d.innerHTML = `
-          <div style="font-weight:bold;color:${card.color};text-shadow:0 0 3px #000;">${card.name}</div>
+          <div class="cardName">${card.name}</div>
           <div class="cardOrb" style="background:${card.color};"></div>
-          <div style="color:#ff6666;font-weight:bold;">💧${cost}</div>
+          <div class="cost">💧${cost}</div>
         `;
         d.dataset.idx = i;
         // 始终绑定点击,内部判断圣水
@@ -261,7 +284,7 @@ window.CR = window.CR || {};
       const nc = CR.CARDS[playerNext];
       const nd = document.createElement('div');
       nd.className = 'nextCard';
-      nd.innerHTML = `<div>下一张</div><div style="font-weight:bold;color:${nc.color}">${nc.name}</div><div style="color:#ff6666">💧${nc.cost}</div>`;
+      nd.innerHTML = `<div class="label">下一张</div><div style="font-weight:700;color:${nc.color}">${nc.name}</div><div style="color:#ff8a80;font-weight:700;">💧${nc.cost}</div>`;
       row.appendChild(nd);
       el.appendChild(row);
     }

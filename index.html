@@ -8,89 +8,199 @@
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { touch-action:manipulation; }
   body {
-    background:#1a1a2e; color:#eee; font-family:'PingFang SC','Microsoft YaHei',sans-serif;
-    display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:8px;
+    background:
+      radial-gradient(1200px 600px at 20% -10%, #2c3a6b 0%, transparent 55%),
+      radial-gradient(1000px 500px at 90% 110%, #3d2a4f 0%, transparent 50%),
+      linear-gradient(160deg, #171a2e 0%, #14172a 50%, #191430 100%);
+    background-attachment:fixed;
+    color:#eceef5; font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+    display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:10px;
     overflow:auto;
   }
   #wrap { align-self:flex-start; }
-  h1 { font-size:20px; margin-bottom:8px; color:#ffd700; }
-  #wrap { display:flex; gap:12px; align-items:flex-start; justify-content:center; }
-  #gameCol { display:flex; flex-direction:column; align-items:center; min-width:0; }
-  #handArea { width:100%; display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:6px; }
-  #side {
-    width:220px; max-width:220px; display:flex; flex-direction:column; gap:10px; font-size:13px; flex-shrink:0;
-  }
-  /* ===== 手牌卡(CSS 变量控制尺寸,由 fitHandCards 动态设置)===== */
-  :root { --card-w:80px; --card-h:100px; --card-font:11px; --orb-size:30px; }
-  .handCard {
-    width:var(--card-w); height:var(--card-h);
-    border-radius:6px; padding:4px; position:relative; text-align:center;
-    font-size:var(--card-font); display:flex; flex-direction:column; justify-content:space-between;
-    flex-shrink:0; user-select:none; -webkit-user-select:none;
-  }
-  .nextCard {
-    width:calc(var(--card-w) * 0.75); height:var(--card-h);
-    background:#1a1a2e; border:2px dashed #555; border-radius:6px; padding:4px;
-    text-align:center; font-size:calc(var(--card-font) - 1px);
-    display:flex; flex-direction:column; justify-content:center; opacity:0.7; flex-shrink:0;
-  }
-  .cardOrb {
-    width:var(--orb-size); height:var(--orb-size); border-radius:50%; margin:0 auto; flex-shrink:0;
-  }
 
-  /* ===== 移动端:纵向堆叠布局 ===== */
-  @media (max-width: 860px) {
-    body { padding:4px; }
-    h1 { font-size:16px; margin-bottom:4px; }
-    #wrap { flex-direction:column; align-items:stretch; gap:8px; width:100%; }
-    #gameCol { width:100%; align-items:center; }
-    #side { width:100%; max-width:100%; flex-direction:row; flex-wrap:wrap; gap:6px; }
-    #side .panel { flex:1 1 45%; min-width:140px; font-size:12px; }
-    #side .panel:last-child { flex:1 1 100%; }
-    #log { height:120px; }
-    #canvasWrap { border-width:2px; }
+  /* ===== 标题 ===== */
+  .titleBar {
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
+    padding:8px 22px; border-radius:14px;
+    background:linear-gradient(135deg, rgba(58,68,120,0.75), rgba(40,46,88,0.55));
+    border:1px solid rgba(255,214,79,0.25);
+    box-shadow:0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
   }
+  .titleBar .shield { font-size:24px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+  .titleBar h1 {
+    font-size:19px; font-weight:800; letter-spacing:1px;
+    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:none;
+  }
+  .titleBar .sub { font-size:11px; color:#9aa3c7; letter-spacing:2px; }
+
+  #wrap { display:flex; gap:14px; align-items:flex-start; justify-content:center; }
+  #gameCol { display:flex; flex-direction:column; align-items:center; min-width:0; }
+  #handArea { width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; margin-top:8px; }
+
+  /* ===== 侧栏 ===== */
+  #side {
+    width:230px; max-width:230px; display:flex; flex-direction:column; gap:10px; font-size:13px; flex-shrink:0;
+  }
+  .panel {
+    background:linear-gradient(160deg, rgba(46,52,94,0.72), rgba(34,38,72,0.72));
+    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    padding:12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.09);
+    box-shadow:0 6px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .panel h3 {
+    font-size:13px; margin-bottom:8px; letter-spacing:0.5px;
+    color:#ffd54f; display:flex; align-items:center; gap:5px;
+  }
+  .panel h3::after { content:''; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,213,79,0.35), transparent); }
+
+  /* ===== 画布 ===== */
   #canvasWrap {
     position:relative;
     background:#000;
-    border:3px solid #444;
-    border-radius:8px;
+    border:3px solid #3a4266;
+    border-radius:14px;
     overflow:hidden;
+    box-shadow:
+      0 10px 34px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.06),
+      inset 0 0 24px rgba(0,0,0,0.35);
   }
   canvas { display:block; }
   #status {
-    position:absolute; top:6px; left:50%; transform:translateX(-50%);
-    background:rgba(0,0,0,0.6); padding:4px 12px; border-radius:12px; font-size:13px;
-    pointer-events:none;
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    background:rgba(10,14,26,0.82); padding:5px 16px; border-radius:20px; font-size:13px;
+    border:1px solid rgba(255,255,255,0.15);
+    pointer-events:none; z-index:5;
+    box-shadow:0 2px 10px rgba(0,0,0,0.4);
   }
-  #result {
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    background:rgba(0,0,0,0.85); padding:24px 40px; border-radius:12px;
-    text-align:center; display:none; z-index:10;
+
+  /* ===== 手牌卡(CSS 变量控制尺寸)===== */
+  :root { --card-w:80px; --card-h:100px; --card-font:11px; --orb-size:30px; }
+  .handCard {
+    width:var(--card-w); height:var(--card-h);
+    border-radius:9px; padding:5px 4px; position:relative; text-align:center;
+    font-size:var(--card-font); font-weight:600;
+    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+    flex-shrink:0; user-select:none; -webkit-user-select:none;
+    border:2px solid #4a5178;
+    background:linear-gradient(165deg, #343a5e 0%, #262b4a 60%, #202440 100%);
+    box-shadow:0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    cursor:pointer;
   }
-  #result h2 { font-size:32px; margin-bottom:12px; }
-  .panel { background:#2a2a4e; padding:10px; border-radius:6px; }
-  .panel h3 { font-size:14px; margin-bottom:6px; color:#ffd700; }
-  #log { height:280px; overflow-y:auto; font-size:11px; line-height:1.6; font-family:monospace; }
-  #log div { padding:1px 2px; border-bottom:1px solid rgba(255,255,255,0.04); }
-  .me { color:#7fd; }
-  .ai { color:#f87; }
-  .sys { color:#ffd700; font-weight:bold; }
-  .kill { color:#f55; }
-  .spell { color:#c9f; }
+  .handCard:hover { transform:translateY(-4px); border-color:#6a74a8; box-shadow:0 7px 14px rgba(0,0,0,0.5); }
+  .handCard:active { transform:translateY(-1px) scale(0.98); }
+  .handCard .cardName {
+    color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.8);
+    line-height:1.15; max-width:100%; overflow:hidden;
+  }
+  .cardOrb {
+    width:var(--orb-size); height:var(--orb-size); border-radius:50%; margin:0 auto; flex-shrink:0;
+    box-shadow:inset -3px -4px 6px rgba(0,0,0,0.45), inset 2px 3px 5px rgba(255,255,255,0.35), 0 2px 5px rgba(0,0,0,0.4);
+  }
+  .handCard .cost {
+    color:#ff8f8f; font-weight:800; font-size:calc(var(--card-font) + 1px);
+    text-shadow:0 1px 2px rgba(0,0,0,0.8);
+    display:flex; align-items:center; gap:2px; justify-content:center;
+  }
+  .nextCard {
+    width:calc(var(--card-w) * 0.72); height:var(--card-h);
+    background:linear-gradient(165deg, rgba(38,43,74,0.6), rgba(28,32,58,0.6));
+    border:2px dashed rgba(255,255,255,0.22); border-radius:9px; padding:4px;
+    text-align:center; font-size:calc(var(--card-font) - 1px);
+    display:flex; flex-direction:column; justify-content:center; gap:3px;
+    opacity:0.72; flex-shrink:0;
+  }
+  .nextCard .label { color:#8a93b8; font-size:9px; letter-spacing:1px; }
+
+  /* ===== 日志 ===== */
+  #log {
+    height:270px; overflow-y:auto; font-size:11px; line-height:1.65;
+    font-family:'SF Mono', Menlo, Consolas, monospace;
+    background:rgba(12,15,30,0.55); border-radius:8px; padding:6px 8px;
+    border:1px solid rgba(255,255,255,0.06);
+    scrollbar-width:thin; scrollbar-color:#4a5178 transparent;
+  }
+  #log::-webkit-scrollbar { width:5px; }
+  #log::-webkit-scrollbar-thumb { background:#4a5178; border-radius:3px; }
+  #log div { padding:1px 4px; border-radius:3px; }
+  .me { color:#7fd4ff; }
+  .ai { color:#ffab91; }
+  .sys { color:#ffe082; font-weight:700; }
+  .kill { color:#ff8a80; }
+  .spell { color:#e1bee7; }
+
+  /* ===== 信息面板 ===== */
+  #info { font-size:12px; line-height:1.8; }
+  #info b { color:#fff; }
+
+  /* ===== 按钮/表单 ===== */
   .btn {
-    background:#3a7d3a; color:#fff; border:none; padding:8px 14px; border-radius:4px;
-    cursor:pointer; font-size:13px;
+    background:linear-gradient(180deg, #4f9e4a 0%, #3d8a39 55%, #33722f 100%);
+    color:#fff; border:none; padding:9px 16px; border-radius:9px;
+    cursor:pointer; font-size:13px; font-weight:600; letter-spacing:0.5px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.22);
+    transition:filter .12s, transform .08s;
+    text-shadow:0 1px 2px rgba(0,0,0,0.4);
   }
-  .btn:hover { background:#4a8d4a; }
-  .btn-blue { background:#3a5d8a; }
-  .btn-blue:hover { background:#4a6d9a; }
-  select { background:#1a1a2e; color:#eee; border:1px solid #555; padding:4px; border-radius:3px; width:100%; }
-  label { display:block; margin:6px 0 2px; font-size:12px; color:#aaa; }
+  .btn:hover { filter:brightness(1.12); }
+  .btn:active { transform:translateY(1px); }
+  .btn-blue {
+    background:linear-gradient(180deg, #4a6fb5 0%, #3a5a99 55%, #2e4879 100%);
+  }
+  select {
+    background:linear-gradient(180deg, #2a2f52, #22264380);
+    background-color:#262b4a; color:#eceef5; border:1px solid #4a5178; padding:6px 8px;
+    border-radius:8px; width:100%; font-size:12px; outline:none;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,0.3);
+    cursor:pointer; appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a93b8'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center; padding-right:26px;
+  }
+  select:focus { border-color:#7984c0; }
+  label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-spacing:0.5px; }
+
+  /* ===== 结算弹窗 ===== */
+  #result {
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.9);
+    background:linear-gradient(165deg, rgba(40,46,88,0.96), rgba(24,28,54,0.96));
+    padding:34px 52px; border-radius:18px; text-align:center; display:none; z-index:100;
+    border:1px solid rgba(255,213,79,0.35);
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    opacity:0; transition:opacity .25s, transform .25s;
+  }
+  #result.show { display:block; opacity:1; transform:translate(-50%,-50%) scale(1); }
+  #result h2 { font-size:38px; margin-bottom:18px; letter-spacing:2px; text-shadow:0 4px 16px rgba(0,0,0,0.5); }
+
+  /* ===== 移动端:纵向堆叠布局 ===== */
+  @media (max-width: 860px) {
+    body { padding:5px; }
+    .titleBar { margin-bottom:6px; padding:6px 14px; }
+    .titleBar h1 { font-size:16px; }
+    .titleBar .sub { display:none; }
+    #wrap { flex-direction:column; align-items:stretch; gap:8px; width:100%; }
+    #gameCol { width:100%; align-items:center; }
+    #side { width:100%; max-width:100%; flex-direction:row; flex-wrap:wrap; gap:6px; }
+    #side .panel { flex:1 1 45%; min-width:150px; font-size:12px; padding:9px; }
+    #side .panel:last-child { flex:1 1 100%; }
+    #log { height:110px; }
+    #canvasWrap { border-width:2px; }
+    #result { padding:24px 34px; }
+    #result h2 { font-size:28px; }
+  }
 </style>
 </head>
 <body>
-<h1>⚔️ 皇室战争 单机版</h1>
+<script>window.__errs=[];window.addEventListener('error',function(e){window.__errs.push(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno);});</script>
+<div class="titleBar">
+  <span class="shield">⚔️</span>
+  <h1>皇室战争</h1>
+  <span class="sub">SINGLE PLAYER EDITION</span>
+</div>
 <div id="wrap">
   <div id="gameCol">
     <div id="canvasWrap">
@@ -132,7 +242,11 @@
     </div>
   </div>
 </div>
-<div id="result"><h2 id="resultText"></h2><button class="btn" onclick="location.reload()">再来一局</button></div>
+<div id="result">
+  <h2 id="resultText"></h2>
+  <div id="resultSub" style="font-size:12px;letter-spacing:4px;margin:-10px 0 18px;opacity:0.8;"></div>
+  <button class="btn" onclick="location.reload()">再来一局</button>
+</div>
 
 <script src="js/constants.js"></script>
 <script src="js/cards.js"></script>
@@ -142,6 +256,7 @@
 <script src="js/spells.js"></script>
 <script src="js/game.js"></script>
 <script src="js/ai.js"></script>
+<script src="js/graphics.js"></script>
 <script src="js/renderer.js"></script>
 <script src="js/main.js"></script>
 </body>
