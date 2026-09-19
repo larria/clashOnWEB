@@ -1,0 +1,2751 @@
+{
+ "_meta": {
+  "source": "https://clashroyale.fandom.com (MediaWiki API)",
+  "note": "vars: wiki #vardefine 变量(*_11 与 hp_base/dmg_base 均为11级基准;建筑本体用 hut_/tomb_ 前缀;golem 页含 golem_/mite_)。全等级公式: value = var * 1.1^(level-11)。本项目缩放: 11级×0.5(公主塔 3052/109 ×0.5 = 1526/54)。attributes: unit-attributes-table(费用/攻速/速度/射程/目标/数量/运输)。levels: 静态等级表(塔)。",
+  "progress": "141 fetched, 0 pending",
+  "fails": []
+ },
+ "cards": {
+  "Archer Queen": {
+   "vars": {
+    "hp_11": 1000.0,
+    "dmg_11": 225.0,
+    "atk_speed": 1.2
+   },
+   "kind": "troop",
+   "page": "Archer Queen"
+  },
+  "Archers": {
+   "vars": {
+    "hp_base": 304.0,
+    "dmg_base": 112.0,
+    "atk_speed": 0.9
+   },
+   "attributes": {
+    "Cost": "3",
+    "Hit Speed": "0.9 sec",
+    "First Hit Speed": "0.5 sec",
+    "Speed": "Medium (60)",
+    "Deploy Time": "1 sec",
+    "Range": "5",
+    "Projectile Speed": "600",
+    "Target": "Air & Ground",
+    "Count": "x2",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Common}}"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Archers"
+  },
+  "Baby Dragon": {
+   "vars": {
+    "hp_11": 1152.0,
+    "dmg_11": 168.0,
+    "atk_speed": 1.5
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "1.5 sec",
+    "Damage": "0.3 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Baby Dragon"
+  },
+  "Balloon": {
+   "vars": {
+    "hp_11": 1679.0,
+    "dmg_11": 640.0,
+    "atk_speed": 2.0,
+    "death_11": 240.0
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Balloon"
+  },
+  "Bandit": {
+   "vars": {
+    "hp_11": 906.0,
+    "dmg_11": 194.0,
+    "dash_11": 389.0,
+    "atk_speed": 1.0
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Bandit"
+  },
+  "Barbarians": {
+   "vars": {
+    "hp_11": 716.0,
+    "dmg_11": 192.0,
+    "atk_speed": 1.4
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "1.4 sec",
+    "Damage": "0.4 sec",
+    "Damage Per Second": "Medium (60)"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Barbarians"
+  },
+  "Bats": {
+   "vars": {
+    "hp_11": 81.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "2",
+    "Hitpoints": "1.3 sec",
+    "Damage": "0.6 sec",
+    "Damage Per Second": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Bats"
+  },
+  "Battle Healer": {
+   "vars": {
+    "hp_11": 1920.0,
+    "dmg_11": 268.0,
+    "atk_speed": 2.0,
+    "spawn_heal_11": 50.0,
+    "heal_11": 25.0,
+    "heal_speed": 0.25
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Battle Healer"
+  },
+  "Battle Ram": {
+   "vars": {
+    "ram_hp_11": 967.0,
+    "ram_dmg_11": 286.0,
+    "charge_dmg_11": 573.0,
+    "hp_11": 716.0,
+    "dmg_11": 192.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "Medium (60)",
+    "Damage": "1 sec",
+    "Damage Per Second": "Melee: Short (0.5)"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Battle Ram"
+  },
+  "Berserker": {
+   "vars": {
+    "hp_11": 896.0,
+    "dmg_11": 102.0,
+    "atk_speed": 0.6
+   },
+   "attributes": {
+    "Level": "2",
+    "Hitpoints": "0.6 sec",
+    "Damage": "0.2 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Berserker"
+  },
+  "Bomber": {
+   "vars": {
+    "hp_11": 304.0,
+    "dmg_11": 225.0,
+    "atk_speed": 1.8
+   },
+   "attributes": {
+    "Level": "2",
+    "Hitpoints": "1.8 sec",
+    "Damage Per Second": "0.2 sec"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Bomber"
+  },
+  "Boss Bandit": {
+   "vars": {
+    "hp_11": 2624.0,
+    "dmg_11": 244.0,
+    "dash_11": 489.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Cost": "6",
+    "Hit Speed": "1.1 sec",
+    "First Hit Speed": "0.4 sec",
+    "Speed": "Fast (90)",
+    "Deploy Time": "1 sec",
+    "Range": "Melee: Short (0.8)",
+    "Target": "Ground",
+    "Count": "x1",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Champion}}"
+   },
+   "kind": "troop",
+   "page": "Boss Bandit"
+  },
+  "Bowler": {
+   "vars": {
+    "hp_11": 2081.0,
+    "dmg_11": 289.0,
+    "atk_speed": 2.5
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Bowler"
+  },
+  "Cannon Cart": {
+   "vars": {
+    "hp_11": 1809.0,
+    "dmg_11": 212.0,
+    "atk_speed": 0.9,
+    "life": 15.0
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Cannon Cart"
+  },
+  "Dark Prince": {
+   "vars": {
+    "hp_11": 1200.0,
+    "shield_11": 256.0,
+    "dmg_11": 266.0,
+    "charge_11": 532.0,
+    "atk_speed": 1.3
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Dark Prince"
+  },
+  "Dart Goblin": {
+   "vars": {
+    "hp_11": 261.0,
+    "dmg_11": 156.0,
+    "atk_speed": 0.8
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "0.8 sec",
+    "Damage": "0.35 sec",
+    "Damage Per Second": "Very Fast (120)"
+   },
+   "kind": "troop",
+   "page": "Dart Goblin"
+  },
+  "Electro Dragon": {
+   "vars": {
+    "hp_11": 1049.0,
+    "dmg_11": 192.0,
+    "dmg_hits": 3.0,
+    "atk_speed": 2.3
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "2.3 sec",
+    "Damage": "0.8 sec",
+    "Damage Per Second": "0.5 sec"
+   },
+   "kind": "troop",
+   "page": "Electro Dragon"
+  },
+  "Electro Giant": {
+   "vars": {
+    "hp_11": 3952.0,
+    "dmg_11": 163.0,
+    "atk_speed": 2.1,
+    "reflect_11": 192.0,
+    "crown_11": 97.0
+   },
+   "info": {
+    "cost": 7.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Electro Giant"
+  },
+  "Electro Spirit": {
+   "vars": {
+    "hp_11": 215.0,
+    "dmg_11": 99.0
+   },
+   "attributes": {
+    "Level": "1",
+    "Hitpoints": "0.5 sec",
+    "Damage": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 1.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Electro Spirit"
+  },
+  "Electro Wizard": {
+   "vars": {
+    "hp_11": 714.0,
+    "dmg_11": 115.0,
+    "dmg_hits": 2.0,
+    "atk_speed": 1.8,
+    "zap_11": 192.0
+   },
+   "kind": "troop",
+   "page": "Electro Wizard"
+  },
+  "Elite Barbarians": {
+   "vars": {
+    "hp_11": 1341.0,
+    "dmg_11": 384.0,
+    "atk_speed": 1.4
+   },
+   "attributes": {
+    "Level": "6",
+    "Hitpoints": "1.4 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Elite Barbarians"
+  },
+  "Elixir Golem": {
+   "vars": {
+    "golem_hp_11": 1569.0,
+    "golem_dmg_11": 253.0,
+    "golem_atk_speed": 1.1,
+    "mite_hp_11": 762.0,
+    "mite__dmg_11": 128.0,
+    "mite_atk_speed": 1.1,
+    "blob_hp_11": 360.0,
+    "blob__dmg_11": 64.0,
+    "blob_atk_speed": 1.1
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Elixir Golem"
+  },
+  "Executioner": {
+   "vars": {
+    "hp_11": 1280.0,
+    "dmg_11": 168.0,
+    "dmg_hits": 2.0,
+    "atk_speed": 2.4
+   },
+   "attributes": {
+    "Level": "5"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Executioner"
+  },
+  "Fire Spirit": {
+   "vars": {
+    "hp_11": 215.0,
+    "dmg_11": 207.0
+   },
+   "attributes": {
+    "Level": "1",
+    "Hitpoints": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 1.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Fire Spirit"
+  },
+  "Firecracker": {
+   "vars": {
+    "hp_11": 304.0,
+    "dmg_11": 64.0,
+    "dmg_hits": 5.0,
+    "atk_speed": 3.0
+   },
+   "attributes": {
+    "Level": "3"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Firecracker"
+  },
+  "Fisherman": {
+   "vars": {
+    "hp_11": 870.0,
+    "dmg_11": 194.0,
+    "atk_speed": 1.3
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Fisherman"
+  },
+  "Flying Machine": {
+   "vars": {
+    "hp_11": 614.0,
+    "dmg_11": 171.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "1.1 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Flying Machine"
+  },
+  "Furnace": {
+   "vars": {
+    "hp_11": 727.0,
+    "dmg_11": 179.0,
+    "atk_speed": 1.8,
+    "fire_hp_11": 230.0,
+    "fire_dmg_11": 207.0
+   },
+   "attributes": {
+    "Cost": "4",
+    "Hit Speed": "1.8 sec",
+    "Speed": "Medium (60)",
+    "Deploy Time": "1 sec",
+    "Spawn Speed": "7 sec",
+    "Range": "6",
+    "Target": "Air & Ground",
+    "Count": "1x",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Rare}}"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Furnace"
+  },
+  "Giant": {
+   "vars": {
+    "hp_11": 3968.0,
+    "dmg_11": 253.0,
+    "atk_speed": 1.5
+   },
+   "attributes": {
+    "Cost": "5",
+    "Hit Speed": "1.5 sec",
+    "First Hit Speed": "0.5 sec",
+    "Speed": "Slow (45)",
+    "Deploy Time": "1 sec",
+    "Range": "Melee: Medium (1.2)",
+    "Target": "Buildings",
+    "Count": "x1",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Rare}}"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Giant"
+  },
+  "Giant Skeleton": {
+   "vars": {
+    "hp_11": 3361.0,
+    "dmg_11": 276.0,
+    "atk_speed": 1.4,
+    "death_11": 688.0
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Giant Skeleton"
+  },
+  "Goblin Demolisher": {
+   "vars": {
+    "hp_11": 1300.0,
+    "dmg_11": 186.0,
+    "atk_speed": 1.2,
+    "life": 10.0,
+    "death_11": 404.0
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Goblin Demolisher"
+  },
+  "Goblin Gang": {
+   "vars": {
+    "stab_hp_11": 202.0,
+    "stab_dmg_11": 120.0,
+    "stab_atk_speed": 1.1,
+    "spear_hp_11": 133.0,
+    "spear_dmg_11": 81.0,
+    "spear_atk_speed": 1.7
+   },
+   "attributes": {
+    "Level": "1.1 sec"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Goblin Gang"
+  },
+  "Goblin Giant": {
+   "vars": {
+    "giant_hp_11": 3022.0,
+    "giant_dmg_11": 176.0,
+    "giant_atk_speed": 1.5,
+    "spear_hp_11": 133.0,
+    "spear_dmg_11": 81.0,
+    "spear_atk_speed": 1.7
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Goblin Giant"
+  },
+  "Goblin Machine": {
+   "vars": {
+    "hp_11": 2150.0,
+    "dmg_11": 212.0,
+    "atk_speed": 1.2,
+    "rocket_dmg_11": 304.0,
+    "rocket_crown_11": 152.0,
+    "rocket_atk_speed": 3.5
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Goblin Machine"
+  },
+  "Goblins": {
+   "vars": {
+    "hp_11": 202.0,
+    "dmg_11": 125.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "2",
+    "Hitpoints": "1.1 sec",
+    "Damage": "0.6 sec",
+    "Damage Per Second": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Goblins"
+  },
+  "Goblinstein": {
+   "vars": {
+    "hp_11": 721.0,
+    "dmg_11": 92.0,
+    "atk_speed": 1.8,
+    "monster_hp_11": 2393.0,
+    "monster_dmg_11": 128.0,
+    "monster_atk_speed": 1.5,
+    "link_11": 107.0,
+    "crown_11": 23.0
+   },
+   "kind": "troop",
+   "page": "Goblinstein"
+  },
+  "Golden Knight": {
+   "vars": {
+    "hp_11": 1799.0,
+    "dmg_11": 161.0,
+    "atk_speed": 0.9,
+    "dash_11": 335.0
+   },
+   "kind": "troop",
+   "page": "Golden Knight"
+  },
+  "Golem": {
+   "vars": {
+    "golem_hp_11": 5120.0,
+    "golem_dmg_11": 312.0,
+    "golem_atk_speed": 2.5,
+    "golem_death_11": 225.0,
+    "mite_hp_11": 1039.0,
+    "mite_dmg_11": 84.0,
+    "mite_atk_speed": 2.5,
+    "mite_death_11": 99.0
+   },
+   "info": {
+    "cost": 8.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Golem"
+  },
+  "Guards": {
+   "vars": {
+    "hp_11": 81.0,
+    "shield_11": 256.0,
+    "dmg_11": 117.0,
+    "atk_speed": 1.0
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Guards"
+  },
+  "Heal Spirit": {
+   "vars": {
+    "hp_11": 215.0,
+    "dmg_11": 110.0,
+    "heal_11": 100.25,
+    "heal_speed": 0.25
+   },
+   "kind": "troop",
+   "page": "Heal Spirit"
+  },
+  "Hog Rider": {
+   "vars": {
+    "hp_11": 1697.0,
+    "dmg_11": 317.0,
+    "atk_speed": 1.6
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "1.6 sec",
+    "Damage": "0.6 sec",
+    "Damage Per Second": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Hog Rider"
+  },
+  "Hunter": {
+   "vars": {
+    "hp_11": 885.0,
+    "dmg_11": 84.0,
+    "dmg_hits": 10.0,
+    "atk_speed": 2.2
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Hunter"
+  },
+  "Ice Golem": {
+   "vars": {
+    "hp_11": 1315.0,
+    "dmg_11": 84.0,
+    "atk_speed": 2.5,
+    "death_11": 84.0
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Ice Golem"
+  },
+  "Ice Spirit": {
+   "vars": {
+    "hp_11": 215.0,
+    "dmg_11": 110.0
+   },
+   "attributes": {
+    "Level": "1",
+    "Hitpoints": "Very Fast (120)",
+    "Damage": "1 sec"
+   },
+   "info": {
+    "cost": 1.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Ice Spirit"
+  },
+  "Ice Wizard": {
+   "vars": {
+    "hp_11": 688.0,
+    "dmg_11": 89.0,
+    "atk_speed": 1.7,
+    "spawn_11": 84.0
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Ice Wizard"
+  },
+  "Inferno Dragon": {
+   "vars": {
+    "hp_11": 1295.0,
+    "1_dmg_11": 35.0,
+    "2_dmg_11": 120.0,
+    "3_dmg_11": 422.0,
+    "atk_speed": 0.4
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "0.4 sec",
+    "1 stage Damage": "Medium (60)",
+    "1 stage Damage Per Second": "1 sec",
+    "2 stage Damage": "3.5",
+    "2 stage Damage Per Second": "Air & Ground",
+    "3 stage Damage": "x1",
+    "3 stage Damage Per Second": "Air"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Inferno Dragon"
+  },
+  "Knight": {
+   "vars": {
+    "hp_11": 1766.0,
+    "dmg_11": 202.0,
+    "atk_speed": 1.2
+   },
+   "attributes": {
+    "Cost": "3",
+    "Hit Speed": "1.2 sec",
+    "First Hit Speed": "0.5 sec",
+    "Speed": "Medium (60)",
+    "Deploy Time": "1 sec",
+    "Range": "Melee: Medium (1.2)",
+    "Target": "Ground",
+    "Count": "x1",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Common}}"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Knight"
+  },
+  "Lava Hound": {
+   "vars": {
+    "hound_hp_11": 3581.0,
+    "hound_dmg_11": 53.0,
+    "hound_atk_speed": 1.3,
+    "pup_hp_11": 217.0,
+    "pup_dmg_11": 81.0,
+    "pup_atk_speed": 1.7
+   },
+   "attributes": {
+    "Level": "7"
+   },
+   "info": {
+    "cost": 7.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Lava Hound"
+  },
+  "Little Prince": {
+   "vars": {
+    "hp_11": 698.0,
+    "dmg_11": 104.0,
+    "1_atk_speed": 1.2,
+    "2_atk_speed": 0.6,
+    "3_atk_speed": 0.4,
+    "charge_11": 256.0,
+    "guard_hp_11": 1600.0,
+    "guard_dmg_11": 217.0,
+    "guard_atk_speed": 1.2
+   },
+   "kind": "troop",
+   "page": "Little Prince"
+  },
+  "Lumberjack": {
+   "vars": {
+    "hp_11": 1282.0,
+    "dmg_11": 256.0,
+    "atk_speed": 0.8,
+    "rage_dmg_11": 179.0,
+    "rage_crown_11": 54.0
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Lumberjack"
+  },
+  "Magic Archer": {
+   "vars": {
+    "hp_11": 529.0,
+    "dmg_11": 133.0,
+    "atk_speed": 1.1
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Magic Archer"
+  },
+  "Mega Knight": {
+   "vars": {
+    "hp_11": 3993.0,
+    "dmg_11": 268.0,
+    "atk_speed": 1.7,
+    "spawn_11": 430.0,
+    "jump_11": 537.0
+   },
+   "info": {
+    "cost": 7.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Mega Knight"
+  },
+  "Mega Minion": {
+   "vars": {
+    "hp_11": 837.0,
+    "dmg_11": 312.0,
+    "atk_speed": 1.5
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "1.5 sec",
+    "Damage": "0.4 sec",
+    "Damage Per Second": "Medium (60)"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Mega Minion"
+  },
+  "Mighty Miner": {
+   "vars": {
+    "hp_11": 2250.0,
+    "1_dmg_11": 40.0,
+    "2_dmg_11": 204.0,
+    "3_dmg_11": 409.0,
+    "atk_speed": 0.4,
+    "escape_11": 332.0
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "0.4 sec\n|2 sec",
+    "1 stage Damage": "Medium (60)",
+    "1 stage Damage Per Second": "1 sec",
+    "2 stage Damage": "Melee: Long (1.6)",
+    "2 stage Damage Per Second": "Ground",
+    "3 stage Damage": "x1",
+    "3 stage Damage Per Second": "Ground"
+   },
+   "kind": "troop",
+   "page": "Mighty Miner"
+  },
+  "Miner": {
+   "vars": {
+    "hp_11": 1210.0,
+    "dmg_11": 194.0,
+    "atk_speed": 1.3,
+    "crown_11": 48.0
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Miner"
+  },
+  "Mini P.E.K.K.A.": {
+   "vars": {
+    "hp_base": 1390.0,
+    "dmg_base": 755.0,
+    "atk_speed": 1.6
+   },
+   "attributes": {
+    "Cost": "4",
+    "Hit Speed": "1.6 sec",
+    "First Hit Speed": "0.5 sec",
+    "Speed": "Fast (90)",
+    "Deploy Time": "1 sec",
+    "Range": "Melee: Short (0.8)",
+    "Target": "Ground",
+    "Count": "x1",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Rare}}"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Mini P.E.K.K.A."
+  },
+  "Minion Horde": {
+   "vars": {
+    "hp_base": 230.0,
+    "dmg_base": 107.0,
+    "atk_speed": 1.2
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "1.1 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Minion Horde"
+  },
+  "Minions": {
+   "vars": {
+    "hp_base": 230.0,
+    "dmg_base": 107.0,
+    "atk_speed": 1.2
+   },
+   "attributes": {
+    "Cost": "3",
+    "Hit Speed": "1.2 sec",
+    "First Hit Speed": "0.5 sec",
+    "Speed": "Fast (90)",
+    "Deploy Time": "1 sec",
+    "Range": "2.5",
+    "Projectile Speed": "1000",
+    "Target": "Air & Ground",
+    "Count": "x3",
+    "Transport": "Air",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Common}}"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Minions"
+  },
+  "Monk": {
+   "vars": {
+    "hp_11": 2214.0,
+    "dmg_11": 140.0,
+    "atk_speed": 0.8,
+    "combo_11": 422.0
+   },
+   "kind": "troop",
+   "page": "Monk"
+  },
+  "Mother Witch": {
+   "vars": {
+    "hp_11": 529.0,
+    "dmg_11": 133.0,
+    "atk_speed": 1.0,
+    "hog_hp_11": 629.0,
+    "hog_dmg_11": 53.0,
+    "hog_atk_speed": 1.2
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Mother Witch"
+  },
+  "Musketeer": {
+   "vars": {
+    "hp_11": 721.0,
+    "dmg_11": 217.0,
+    "atk_speed": 1.0
+   },
+   "attributes": {
+    "Cost": "4",
+    "Hit Speed": "1 sec",
+    "First Hit Speed": "0.7 sec",
+    "Speed": "Medium (60)",
+    "Deploy Time": "1 sec",
+    "Range": "6",
+    "Projectile Speed": "1000",
+    "Target": "Air & Ground",
+    "Count": "x1",
+    "Transport": "Ground",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Rare}}"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Musketeer"
+  },
+  "Night Witch": {
+   "vars": {
+    "hp_11": 906.0,
+    "dmg_11": 314.0,
+    "atk_speed": 1.3,
+    "bat_hp_11": 81.0,
+    "bat_dmg_11": 81.0,
+    "bat_atk_speed": 1.3
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Night Witch"
+  },
+  "P.E.K.K.A.": {
+   "vars": {
+    "hp_11": 3760.0,
+    "dmg_11": 842.0,
+    "atk_speed": 1.8
+   },
+   "attributes": {
+    "Level": "7",
+    "Hitpoints": "1.8 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Slow (45)"
+   },
+   "info": {
+    "cost": 7.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "P.E.K.K.A."
+  },
+  "Phoenix": {
+   "vars": {
+    "hp_11": 1052.0,
+    "dmg_11": 217.0,
+    "atk_speed": 1.0,
+    "death_11": 163.0,
+    "egg_11": 240.0
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Phoenix"
+  },
+  "Prince": {
+   "vars": {
+    "hp_11": 1920.0,
+    "dmg_11": 391.0,
+    "charge_11": 783.0,
+    "atk_speed": 1.4
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Prince"
+  },
+  "Princess": {
+   "vars": {
+    "hp_11": 261.0,
+    "dmg_11": 168.0,
+    "atk_speed": 3.0
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Princess"
+  },
+  "Raging Prince": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "levels": {
+    "6": {
+     "hp": 1440,
+     "dmg": 245,
+     "dps": 490
+    },
+    "7": {
+     "hp": 1584,
+     "dmg": 269,
+     "dps": 539
+    },
+    "8": {
+     "hp": 1742,
+     "dmg": 296,
+     "dps": 592
+    },
+    "9": {
+     "hp": 1915,
+     "dmg": 325,
+     "dps": 651
+    },
+    "10": {
+     "hp": 2102,
+     "dmg": 357,
+     "dps": 715
+    },
+    "11": {
+     "hp": 2304,
+     "dmg": 392,
+     "dps": 784
+    },
+    "12": {
+     "hp": 2534,
+     "dmg": 431,
+     "dps": 862
+    },
+    "13": {
+     "hp": 2779,
+     "dmg": 472,
+     "dps": 945
+    },
+    "14": {
+     "hp": 3052,
+     "dmg": 519,
+     "dps": 1
+    },
+    "15": {
+     "hp": 3355,
+     "dmg": 570,
+     "dps": 1
+    }
+   },
+   "kind": "troop",
+   "page": "Raging Prince"
+  },
+  "Ram Rider": {
+   "vars": {
+    "hp_11": 1697.0,
+    "dmg_11": 250.0,
+    "charge_11": 501.0,
+    "atk_speed": 1.8,
+    "rider_dmg_11": 104.0,
+    "rider_atk_speed": 1.1
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Ram Rider"
+  },
+  "Rascals": {
+   "vars": {
+    "boy_hp_11": 1940.0,
+    "boy_dmg_11": 204.0,
+    "boy_atk_speed": 1.5,
+    "girl_hp_11": 261.0,
+    "girl_dmg_11": 125.0,
+    "girl_atk_speed": 1.0
+   },
+   "attributes": {
+    "Level": "1.5 sec"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Rascals"
+  },
+  "Ronin": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Ronin"
+  },
+  "Royal Ghost": {
+   "vars": {
+    "hp_11": 1210.0,
+    "dmg_11": 261.0,
+    "atk_speed": 1.8
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "1.8 sec",
+    "Damage": "0.6 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Royal Ghost"
+  },
+  "Royal Giant": {
+   "vars": {
+    "hp_11": 3164.0,
+    "dmg_11": 307.0,
+    "atk_speed": 1.8
+   },
+   "attributes": {
+    "Level": "6",
+    "Hitpoints": "1.8 sec",
+    "Damage": "0.9 sec",
+    "Damage Per Second": "Slow (45)"
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Royal Giant"
+  },
+  "Royal Hogs": {
+   "vars": {
+    "hp_11": 837.0,
+    "dmg_11": 74.0,
+    "atk_speed": 1.2
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "1.2 sec",
+    "Damage": "0.4 sec",
+    "Damage Per Second": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Royal Hogs"
+  },
+  "Royal Recruits": {
+   "vars": {
+    "hp_11": 547.0,
+    "Shield_11": 240.0,
+    "dmg_11": 133.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "7",
+    "Hitpoints": "1.3 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Medium (60)"
+   },
+   "info": {
+    "cost": 7.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Royal Recruits"
+  },
+  "Rune Giant": {
+   "vars": {
+    "hp_11": 2662.0,
+    "dmg_11": 120.0,
+    "atk_speed": 1.5,
+    "bonus_11": 220.0
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Rune Giant"
+  },
+  "Santa Hog Rider": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Santa Hog Rider"
+  },
+  "Skeleton Army": {
+   "vars": {
+    "hp_11": 81.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "1.1 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Skeleton Army"
+  },
+  "Skeleton Barrel": {
+   "vars": {
+    "hp_11": 532.0,
+    "death_11": 145.0,
+    "sk_hp_11": 81.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.1
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Skeleton Barrel"
+  },
+  "Skeleton Dragons": {
+   "vars": {
+    "hp_11": 560.0,
+    "dmg_11": 161.0,
+    "atk_speed": 2.0
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "2 sec",
+    "Damage Per Second": "0.4 sec"
+   },
+   "kind": "troop",
+   "page": "Skeleton Dragons"
+  },
+  "Skeleton King": {
+   "vars": {
+    "hp_11": 2298.0,
+    "dmg_11": 204.0,
+    "atk_speed": 1.6,
+    "skel_dmg_11": 81.0,
+    "skel_atk_speed": 1.1
+   },
+   "kind": "troop",
+   "page": "Skeleton King"
+  },
+  "Skeletons": {
+   "vars": {
+    "hp_11": 81.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "1",
+    "Hitpoints": "1.1 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Fast (90)"
+   },
+   "info": {
+    "cost": 1.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Skeletons"
+  },
+  "Sparky": {
+   "vars": {
+    "hp_11": 1451.0,
+    "dmg_11": 1331.0,
+    "atk_speed": 4.0
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Sparky"
+  },
+  "Spear Goblins": {
+   "vars": {
+    "hp_11": 133.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.6
+   },
+   "attributes": {
+    "Level": "2",
+    "Hitpoints": "1.6 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "Very Fast (120)"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Spear Goblins"
+  },
+  "Spirit Empress": {
+   "vars": {
+    "hp_11": 1798.0,
+    "dmg_11": 309.0,
+    "air_atk_speed": 1.6,
+    "ground_atk_speed": 1.2
+   },
+   "attributes": {
+    "Deploy Time": "1 sec",
+    "Count": "1",
+    "Type": "[[:Category:Troop Cards|Troop]]",
+    "Rarity": "{{Rarity|Legendary}}"
+   },
+   "kind": "troop",
+   "page": "Spirit Empress"
+  },
+  "Super Archers": {
+   "info": {
+    "cost": 3.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Super Archers"
+  },
+  "Super Ice Golem": {
+   "info": {
+    "cost": 4.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Super Ice Golem"
+  },
+  "Super Knight": {
+   "kind": "troop",
+   "page": "Super Knight"
+  },
+  "Super Lava Hound": {
+   "info": {
+    "cost": 8.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Super Lava Hound"
+  },
+  "Super Magic Archer": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Super Magic Archer"
+  },
+  "Super Mini P.E.K.K.A.": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Super Mini P.E.K.K.A."
+  },
+  "Super Witch": {
+   "info": {
+    "cost": 6.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Super Witch"
+  },
+  "Suspicious Bush": {
+   "vars": {
+    "bush_hp_11": 81.0,
+    "hp_11": 304.0,
+    "dmg_11": 256.0,
+    "atk_speed": 1.4
+   },
+   "attributes": {
+    "Cost": "2",
+    "Type": "Medium (60)",
+    "Rarity": "1 sec"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Suspicious Bush"
+  },
+  "Terry": {
+   "kind": "troop",
+   "page": "Terry"
+  },
+  "Three Musketeers": {
+   "vars": {
+    "hp_11": 883.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "9",
+    "Melee Damage": "1.3 sec",
+    "Melee Damage Per Second": "0.7 sec",
+    "Ranged Damage Per Second": "Medium (60)"
+   },
+   "info": {
+    "cost": 9.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Three Musketeers"
+  },
+  "Valkyrie": {
+   "vars": {
+    "hp_11": 1907.0,
+    "dmg_11": 266.0,
+    "atk_speed": 1.5
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "1.5 sec",
+    "Damage Per Second": "0.1 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Valkyrie"
+  },
+  "Wall Breakers": {
+   "vars": {
+    "hp_11": 330.0,
+    "dmg_11": 391.0
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Wall Breakers"
+  },
+  "Witch": {
+   "vars": {
+    "hp_11": 839.0,
+    "dmg_11": 135.0,
+    "atk_speed": 1.1,
+    "skel_hp_11": 81.0,
+    "skel_dmg_11": 81.0,
+    "skel_atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "1.1 sec",
+    "Area Damage": "0.7 sec",
+    "Damage per second": "Medium (60)",
+    "Skeleton Hitpoints": "1 sec",
+    "Skeleton Damage": "7 sec",
+    "Skeleton Damage per second": "5.5"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Witch"
+  },
+  "Wizard": {
+   "vars": {
+    "hp_11": 832.0,
+    "dmg_11": 281.0,
+    "atk_speed": 1.4
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "1.4 sec",
+    "Damage": "0.4 sec",
+    "Damage Per Second": "Medium (60)"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Wizard"
+  },
+  "Wizard Trio": {
+   "info": {
+    "cost": 7.0,
+    "rarity": "Legendary",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Wizard Trio"
+  },
+  "Zappies": {
+   "vars": {
+    "hp_11": 529.0,
+    "dmg_11": 117.0,
+    "atk_speed": 2.2
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "2.2 sec",
+    "Damage": "0.8 sec",
+    "Damage Per Second": "0.5 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Troop"
+   },
+   "kind": "troop",
+   "page": "Zappies"
+  },
+  "Arrows": {
+   "vars": {
+    "dmg_11": 122.0,
+    "dmg_hits": 3.0,
+    "crown_dmg_11": 31.0
+   },
+   "attributes": {
+    "Cost": "3",
+    "Radius": "3.5\n|1100",
+    "Type": "Air & Ground",
+    "Rarity": "[[:Category:Spell Cards|Spell]]",
+    "Level": "{{Rarity|Common}}"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Arrows"
+  },
+  "Barbarian Barrel": {
+   "vars": {
+    "spawn_11": 230.0,
+    "hp_11": 670.0,
+    "dmg_11": 191.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "2",
+    "Hitpoints": "4.5",
+    "Damage": "2.6",
+    "Damage Per Second": "Ground"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Barbarian Barrel"
+  },
+  "Clone": {
+   "info": {
+    "cost": 3.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "levels": {
+    "3": {
+     "hp": 1,
+     "dmg": 1,
+     "dps": 3
+    },
+    "6": {
+     "hp": 6,
+     "dmg": 6,
+     "dps": 6
+    },
+    "7": {
+     "hp": 7,
+     "dmg": 7,
+     "dps": 7
+    },
+    "8": {
+     "hp": 8,
+     "dmg": 8,
+     "dps": 8
+    },
+    "9": {
+     "hp": 9,
+     "dmg": 9,
+     "dps": 9
+    },
+    "10": {
+     "hp": 10,
+     "dmg": 10,
+     "dps": 10
+    },
+    "11": {
+     "hp": 11,
+     "dmg": 11,
+     "dps": 11
+    },
+    "12": {
+     "hp": 12,
+     "dmg": 12,
+     "dps": 12
+    },
+    "13": {
+     "hp": 13,
+     "dmg": 13,
+     "dps": 13
+    },
+    "14": {
+     "hp": 14,
+     "dmg": 14,
+     "dps": 14
+    },
+    "15": {
+     "hp": 15,
+     "dmg": 15,
+     "dps": 15
+    }
+   },
+   "kind": "spell",
+   "page": "Clone"
+  },
+  "Earthquake": {
+   "vars": {
+    "dmg_11": 84.0,
+    "build_dmg_11": 287.0,
+    "dmg_hits": 3.0,
+    "crown_dmg_11": 53.0
+   },
+   "attributes": {
+    "Level": "3",
+    "Area Damage": "3.5",
+    "Crown Tower Damage": "3 sec"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Rare",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Earthquake"
+  },
+  "Fireball": {
+   "vars": {
+    "dmg_11": 688.0,
+    "crown_dmg_11": 207.0
+   },
+   "attributes": {
+    "Level": "4",
+    "Area Damage": "2.5\n|600",
+    "Crown Tower Damage": "Air & Ground"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Fireball"
+  },
+  "Freeze": {
+   "vars": {
+    "dmg_11": 115.0,
+    "crown_dmg_11": 35.0
+   },
+   "attributes": {
+    "Level": "4",
+    "Area Damage": "3",
+    "Crown Tower Damage": "4 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Freeze"
+  },
+  "Giant Snowball": {
+   "vars": {
+    "dmg_11": 179.0,
+    "crown_dmg_11": 54.0
+   },
+   "attributes": {
+    "Level": "2",
+    "Area Damage": "2.5",
+    "Crown Tower Damage": "3 sec"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Giant Snowball"
+  },
+  "Goblin Barrel": {
+   "vars": {
+    "hp_11": 202.0,
+    "dmg_11": 120.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Cost": "3",
+    "Radius": "1.5",
+    "Type": "[[:Category:Spell Cards|Spell]]",
+    "Rarity": "{{Rarity|Epic}}"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Goblin Barrel"
+  },
+  "Goblin Curse": {
+   "vars": {
+    "curse_dmg_11": 35.0,
+    "dmg_hits": 6.0,
+    "crown_dmg_11": 10.0,
+    "hp_11": 202.0,
+    "dmg_11": 120.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "2",
+    "Area Damage": "3",
+    "Crown Tower Damage": "6 sec"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Goblin Curse"
+  },
+  "Graveyard": {
+   "vars": {
+    "hp_11": 81.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "5",
+    "Hitpoints": "4",
+    "Damage": "9 sec",
+    "Damage Per Second": "0.5 sec"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Graveyard"
+  },
+  "Heal": {
+   "info": {
+    "cost": 1.0,
+    "rarity": "Rare",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Heal"
+  },
+  "Lightning": {
+   "vars": {
+    "dmg_11": 1057.0,
+    "crown_dmg_11": 286.0
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Lightning"
+  },
+  "Mirror": {
+   "levels": {
+    "6": {
+     "hp": 7,
+     "dmg": 7,
+     "dps": 7
+    },
+    "7": {
+     "hp": 8,
+     "dmg": 8,
+     "dps": 8
+    },
+    "8": {
+     "hp": 9,
+     "dmg": 9,
+     "dps": 9
+    },
+    "9": {
+     "hp": 10,
+     "dmg": 10,
+     "dps": 10
+    },
+    "10": {
+     "hp": 11,
+     "dmg": 11,
+     "dps": 11
+    },
+    "11": {
+     "hp": 12,
+     "dmg": 12,
+     "dps": 12
+    },
+    "12": {
+     "hp": 13,
+     "dmg": 13,
+     "dps": 13
+    },
+    "13": {
+     "hp": 14,
+     "dmg": 14,
+     "dps": 14
+    },
+    "14": {
+     "hp": 15,
+     "dmg": 15,
+     "dps": 15
+    },
+    "15": {
+     "hp": 16,
+     "dmg": 16,
+     "dps": 16
+    },
+    "16": {
+     "hp": 17,
+     "dmg": 17,
+     "dps": 17
+    }
+   },
+   "kind": "spell",
+   "page": "Mirror"
+  },
+  "Party Rocket": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Spell"
+   },
+   "levels": {
+    "9": {
+     "hp": 167,
+     "dmg": 99,
+     "dps": 90
+    },
+    "10": {
+     "hp": 184,
+     "dmg": 109,
+     "dps": 99
+    },
+    "11": {
+     "hp": 202,
+     "dmg": 120,
+     "dps": 109
+    },
+    "12": {
+     "hp": 221,
+     "dmg": 132,
+     "dps": 120
+    },
+    "13": {
+     "hp": 244,
+     "dmg": 145,
+     "dps": 131
+    },
+    "14": {
+     "hp": 267,
+     "dmg": 159,
+     "dps": 144
+    },
+    "15": {
+     "hp": 293,
+     "dmg": 175,
+     "dps": 159
+    }
+   },
+   "kind": "spell",
+   "page": "Party Rocket"
+  },
+  "Poison": {
+   "vars": {
+    "dmg_11": 92.0,
+    "dmg_hits": 8.0,
+    "crown_dmg_11": 22.0
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Poison"
+  },
+  "Rage": {
+   "vars": {
+    "dmg_11": 179.0,
+    "crown_dmg_11": 54.0
+   },
+   "attributes": {
+    "Level": "2",
+    "Area Damage": "3",
+    "Crown Tower Damage": "0.5 sec"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Rage"
+  },
+  "Rocket": {
+   "vars": {
+    "dmg_11": 1484.0,
+    "crown_dmg_11": 371.0
+   },
+   "attributes": {
+    "Level": "6",
+    "Area Damage": "2\n|350",
+    "Crown Tower Damage": "Air & Ground"
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Rare",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Rocket"
+  },
+  "Royal Delivery": {
+   "vars": {
+    "spawn_11": 437.0,
+    "hp_11": 547.0,
+    "Shield_11": 240.0,
+    "dmg_11": 133.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "3",
+    "Damage": "3 sec",
+    "Damage Per Second": "Air & Ground"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Royal Delivery"
+  },
+  "The Log": {
+   "vars": {
+    "dmg_11": 266.0,
+    "crown_dmg_11": 40.0
+   },
+   "attributes": {
+    "Level": "2",
+    "Area Damage": "10.1",
+    "Crown Tower Damage": "3.9"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Legendary",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "The Log"
+  },
+  "Tornado": {
+   "vars": {
+    "dmg_11": 84.0,
+    "crown_dmg_11": 29.0
+   },
+   "attributes": {
+    "Level": "3",
+    "Area Damage": "5.5",
+    "Crown Tower Damage": "1.05 sec"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Tornado"
+  },
+  "Vines": {
+   "vars": {
+    "dmg_11": 153.0,
+    "dmg_hits": 2.0,
+    "crown_dmg_11": 39.0
+   },
+   "attributes": {
+    "Level": "3",
+    "Area Damage": "2.5",
+    "Crown Tower Damage": "2 sec\n|0.9s"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Vines"
+  },
+  "Void": {
+   "vars": {
+    "dmg_hits": 3.0,
+    "5_dmg_11": 153.0,
+    "5_crown_dmg_11": 35.0,
+    "3_dmg_11": 294.0,
+    "3_crown_dmg_11": 51.0,
+    "1_dmg_11": 696.0,
+    "1_crown_dmg_11": 97.0
+   },
+   "attributes": {
+    "Level": "5"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Epic",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Void"
+  },
+  "Warmth": {
+   "info": {
+    "cost": 1.0,
+    "rarity": "Common",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Warmth"
+  },
+  "Zap": {
+   "vars": {
+    "dmg_11": 192.0,
+    "crown_dmg_11": 58.0
+   },
+   "attributes": {
+    "Level": "2",
+    "Area Damage": "2.5",
+    "Crown Tower Damage": "0.5 sec"
+   },
+   "info": {
+    "cost": 2.0,
+    "rarity": "Common",
+    "type": "Spell"
+   },
+   "kind": "spell",
+   "page": "Zap"
+  },
+  "Barbarian Hut": {
+   "vars": {
+    "hut_hp_11": 1164.0,
+    "life": 30.0,
+    "hp_11": 716.0,
+    "dmg_11": 192.0,
+    "atk_speed": 1.3
+   },
+   "attributes": {
+    "Level": "6",
+    "Hitpoints": "1 sec",
+    "Damage": "30 sec",
+    "Damage Per Second": "[[:Category:Building Cards|Building]]"
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Barbarian Hut"
+  },
+  "Barbarian Launcher": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Common",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Barbarian Launcher"
+  },
+  "Bomb Tower": {
+   "vars": {
+    "hp_11": 1356.0,
+    "dmg_11": 222.0,
+    "life": 30.0,
+    "atk_speed": 1.8,
+    "death_11": 222.0
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "1.8 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "1 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Bomb Tower"
+  },
+  "Cannon": {
+   "vars": {
+    "hp_11": 824.0,
+    "dmg_11": 212.0,
+    "life": 30.0,
+    "atk_speed": 1.0
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "1 sec",
+    "Damage": "1 sec",
+    "Damage Per Second": "1 sec"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Common",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Cannon"
+  },
+  "Elixir Collector": {
+   "vars": {
+    "hp_11": 1070.0,
+    "life": 93.0
+   },
+   "attributes": {
+    "Level": "6",
+    "Hitpoints": "13 sec"
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Elixir Collector"
+  },
+  "Goblin Cage": {
+   "vars": {
+    "cage_hp_11": 780.0,
+    "life": 20.0,
+    "hp_11": 1080.0,
+    "dmg_11": 337.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "4"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Goblin Cage"
+  },
+  "Goblin Drill": {
+   "vars": {
+    "drill_hp_11": 1313.0,
+    "life": 10.0,
+    "spawn_11": 84.0,
+    "spawn_crown_11": 26.0,
+    "hp_11": 202.0,
+    "dmg_11": 120.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "3 sec",
+    "Damage": "1 sec",
+    "Damage Per Second": "10 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Epic",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Goblin Drill"
+  },
+  "Goblin Hut": {
+   "vars": {
+    "hut_hp_11": 1228.0,
+    "life": 30.0,
+    "hp_11": 133.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.7
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "0.5 sec",
+    "Damage": "6",
+    "Damage Per Second": "1 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Goblin Hut"
+  },
+  "Inferno Tower": {
+   "vars": {
+    "hp_11": 1748.0,
+    "1_dmg_11": 43.0,
+    "2_dmg_11": 158.0,
+    "3_dmg_11": 847.0,
+    "life": 30.0,
+    "atk_speed": 0.4
+   },
+   "attributes": {
+    "Level": "5\n|0.4 sec\n|1 sec\n|30 sec\n|6\n|Air & Ground\n|[[:Category:Building Cards|Building]]\n|{{Rarity|Rare}}"
+   },
+   "info": {
+    "cost": 5.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Inferno Tower"
+  },
+  "Mortar": {
+   "vars": {
+    "hp_11": 1369.0,
+    "dmg_11": 266.0,
+    "life": 30.0,
+    "atk_speed": 5.0
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "5 sec",
+    "Damage Per Second": "1 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Common",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Mortar"
+  },
+  "Party Hut": {
+   "info": {
+    "cost": 5.0,
+    "rarity": "Legendary",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Party Hut"
+  },
+  "Rocket Silo": {
+   "info": {
+    "cost": 7.0,
+    "rarity": "Legendary",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Rocket Silo"
+  },
+  "Tesla": {
+   "vars": {
+    "hp_11": 1152.0,
+    "dmg_11": 220.0,
+    "life": 25.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "4",
+    "Hitpoints": "1.1 sec",
+    "Damage": "0.5 sec",
+    "Damage Per Second": "1 sec"
+   },
+   "info": {
+    "cost": 4.0,
+    "rarity": "Common",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Tesla"
+  },
+  "Tombstone": {
+   "vars": {
+    "tomb_hp_11": 529.0,
+    "life": 30.0,
+    "hp_11": 81.0,
+    "dmg_11": 81.0,
+    "atk_speed": 1.1
+   },
+   "attributes": {
+    "Level": "3",
+    "Hitpoints": "1 sec",
+    "Damage": "30 sec",
+    "Damage Per Second": "[[:Category:Building Cards|Building]]"
+   },
+   "info": {
+    "cost": 3.0,
+    "rarity": "Rare",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "Tombstone"
+  },
+  "X-Bow": {
+   "vars": {
+    "hp_11": 1600.0,
+    "dmg_11": 43.0,
+    "life": 30.0,
+    "atk_speed": 0.3
+   },
+   "attributes": {
+    "Level": "6",
+    "Hitpoints": "0.3 sec",
+    "Damage": "0.3 sec",
+    "Damage Per Second": "3.5 sec"
+   },
+   "info": {
+    "cost": 6.0,
+    "rarity": "Epic",
+    "type": "Building"
+   },
+   "kind": "building",
+   "page": "X-Bow"
+  },
+  "Princess Towers": {
+   "levels": {
+    "1": {
+     "hp": 1400,
+     "dmg": 50,
+     "dps": 62
+    },
+    "2": {
+     "hp": 1512,
+     "dmg": 54,
+     "dps": 67
+    },
+    "3": {
+     "hp": 1624,
+     "dmg": 58,
+     "dps": 72
+    },
+    "4": {
+     "hp": 1750,
+     "dmg": 62,
+     "dps": 77
+    },
+    "5": {
+     "hp": 1890,
+     "dmg": 67,
+     "dps": 83
+    },
+    "6": {
+     "hp": 2030,
+     "dmg": 72,
+     "dps": 90
+    },
+    "7": {
+     "hp": 2184,
+     "dmg": 78,
+     "dps": 97
+    },
+    "8": {
+     "hp": 2352,
+     "dmg": 84,
+     "dps": 105
+    },
+    "9": {
+     "hp": 2534,
+     "dmg": 90,
+     "dps": 112
+    },
+    "10": {
+     "hp": 2786,
+     "dmg": 99,
+     "dps": 123
+    },
+    "11": {
+     "hp": 3052,
+     "dmg": 109,
+     "dps": 136
+    },
+    "12": {
+     "hp": 3346,
+     "dmg": 119,
+     "dps": 148
+    },
+    "13": {
+     "hp": 3668,
+     "dmg": 131,
+     "dps": 163
+    },
+    "14": {
+     "hp": 4032,
+     "dmg": 144,
+     "dps": 180
+    },
+    "15": {
+     "hp": 4424,
+     "dmg": 158,
+     "dps": 197
+    }
+   },
+   "kind": "tower",
+   "page": "Princess Towers"
+  },
+  "King's Tower": {
+   "attributes": {
+    "Hit Speed": "1 sec",
+    "Range": "7",
+    "Target": "Air & Ground"
+   },
+   "levels": {
+    "1": {
+     "hp": 2400,
+     "dmg": 50,
+     "dps": 50
+    },
+    "2": {
+     "hp": 2568,
+     "dmg": 54,
+     "dps": 54
+    },
+    "3": {
+     "hp": 2736,
+     "dmg": 58,
+     "dps": 58
+    },
+    "4": {
+     "hp": 2904,
+     "dmg": 62,
+     "dps": 62
+    },
+    "5": {
+     "hp": 3096,
+     "dmg": 67,
+     "dps": 67
+    },
+    "6": {
+     "hp": 3312,
+     "dmg": 72,
+     "dps": 72
+    },
+    "7": {
+     "hp": 3528,
+     "dmg": 78,
+     "dps": 78
+    },
+    "8": {
+     "hp": 3768,
+     "dmg": 84,
+     "dps": 84
+    },
+    "9": {
+     "hp": 4008,
+     "dmg": 90,
+     "dps": 90
+    },
+    "10": {
+     "hp": 4392,
+     "dmg": 99,
+     "dps": 99
+    },
+    "11": {
+     "hp": 4824,
+     "dmg": 109,
+     "dps": 109
+    },
+    "12": {
+     "hp": 5304,
+     "dmg": 119,
+     "dps": 119
+    },
+    "13": {
+     "hp": 5832,
+     "dmg": 131,
+     "dps": 131
+    },
+    "14": {
+     "hp": 6408,
+     "dmg": 144,
+     "dps": 144
+    },
+    "15": {
+     "hp": 7032,
+     "dmg": 158,
+     "dps": 158
+    },
+    "16": {
+     "hp": 7704,
+     "dmg": 173,
+     "dps": 173
+    }
+   },
+   "kind": "tower",
+   "page": "King's Tower"
+  }
+ }
+}
