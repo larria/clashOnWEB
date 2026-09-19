@@ -75,7 +75,22 @@ window.CR = window.CR || {};
     playerNext = playerDrawPile.shift();
   }
 
-  function start() {
+  // ===== 游戏流程状态机 =====
+  // phase: 'ready'(待开始) | 'playing' | 'paused' | 'over'
+  let phase = 'ready';
+  const overlayEl = document.getElementById('overlay');
+  const ovIcon = document.getElementById('ovIcon');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovDesc = document.getElementById('ovDesc');
+  const ovBtn = document.getElementById('ovBtn');
+  const ovHint = document.getElementById('ovHint');
+  const hudTimer = document.getElementById('hudTimer');
+  const hudPhase = document.getElementById('hudPhase');
+  const bigAnnounce = document.getElementById('bigAnnounce');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const MATCH_TIME = 180; // 总时长(秒)
+
+  function initGame() {
     const deckKey = document.getElementById('deckSelect').value;
     playerDeck = DECKS[deckKey].slice();
     aiLevel = parseFloat(document.getElementById('aiLevel').value);
@@ -83,7 +98,6 @@ window.CR = window.CR || {};
     game.onTowerDestroyedCb = (tw) => {
       const sideName = tw.side === 0 ? '你的' : 'AI的';
       const laneName = tw.lane === 'king' ? '国王塔' : (tw.lane === 'left' ? '左公主塔' : '右公主塔');
-      // 计算双方剩余皇冠
       const myCrowns = (game.towers[1].left.dead?1:0)+(game.towers[1].right.dead?1:0)+(game.towers[1].king.dead?1:0);
       const aiCrowns = (game.towers[0].left.dead?1:0)+(game.towers[0].right.dead?1:0)+(game.towers[0].king.dead?1:0);
       log(`${sideName}${laneName}被摧毁! 皇冠 ${myCrowns} : ${aiCrowns}`, tw.side === 0 ? 'ai' : 'me');
@@ -92,18 +106,108 @@ window.CR = window.CR || {};
       }
     };
     renderer = new CR.Renderer(canvas, game);
-    // AI 使用同卡组
     ai = new CR.AI(game, playerDeck.slice());
     drawPlayerHand();
     selectedCardIdx = -1;
-    lastTime = performance.now();
     logEl.innerHTML = '';
     resultEl.classList.remove('show');
-    log('战斗开始!同卡组对战:' + playerDeck.map(id=>CR.CARDS[id].name).join('、'), 'me');
     fitCanvas();
     window.scrollTo(0, 0);
-    requestAnimationFrame(loop);
   }
+
+  function setPhase(p) {
+    phase = p;
+    if (p === 'ready') {
+      overlayEl.classList.remove('hidden');
+      ovIcon.textContent = '⚔️';
+      ovTitle.textContent = '准备战斗';
+      ovDesc.textContent = '选择卡组与 AI 强度后开始 · 摧毁对方国王塔获胜';
+      ovBtn.textContent = '开始战斗';
+      ovBtn.style.display = '';
+      ovHint.style.display = '';
+      pauseBtn.textContent = '⏸ 暂停';
+      pauseBtn.disabled = true;
+    } else if (p === 'playing') {
+      overlayEl.classList.add('hidden');
+      pauseBtn.disabled = false;
+      pauseBtn.textContent = '⏸ 暂停';
+    } else if (p === 'paused') {
+      overlayEl.classList.remove('hidden');
+      ovIcon.textContent = '⏸';
+      ovTitle.textContent = '已暂停';
+      ovDesc.textContent = '圣水已冻结,战术思考一下?';
+      ovBtn.textContent = '继续战斗';
+      ovBtn.style.display = '';
+      ovHint.style.display = '';
+      pauseBtn.textContent = '▶ 继续';
+    } else if (p === 'over') {
+      overlayEl.classList.add('hidden');
+      pauseBtn.disabled = true;
+    }
+  }
+
+  // 中央大提示
+  function announce(main, sub, color) {
+    bigAnnounce.innerHTML = `<div class="baMain" style="color:${color || '#ffe082'};">${main}</div>` +
+      (sub ? `<div class="baSub">${sub}</div>` : '');
+    bigAnnounce.classList.remove('show');
+    // 强制重启动画
+    void bigAnnounce.offsetWidth;
+    bigAnnounce.classList.add('show');
+  }
+
+  function startGame() {
+    initGame();
+    lastTime = performance.now();
+    setPhase('playing');
+    log('战斗开始!同卡组对战:' + playerDeck.map(id=>CR.CARDS[id].name).join('、'), 'me');
+    announce('战斗开始', 'BATTLE START', '#ffe082');
+    // 阶段提示状态
+    announcedDouble = false;
+    announcedLastMinute = false;
+    announcedTimeUp = false;
+  }
+
+  function togglePause() {
+    if (phase === 'playing') {
+      setPhase('paused');
+      log('⏸ 游戏已暂停', 'sys');
+    } else if (phase === 'paused') {
+      lastTime = performance.now();
+      setPhase('playing');
+      log('▶ 继续战斗', 'sys');
+    }
+  }
+
+  // 阶段提示状态
+  let announcedDouble = false, announcedLastMinute = false, announcedTimeUp = false;
+
+  // 重新开始(任何时候可点)
+  document.getElementById('restart').addEventListener('click', () => {
+    setPhase('ready');
+    initGame();
+    // ready 态预渲染一帧战场
+    drawHandUI();
+    drawInfo();
+    renderer.draw(null, 0);
+  });
+  ovBtn.addEventListener('click', () => {
+    if (phase === 'ready') startGame();
+    else if (phase === 'paused') togglePause();
+  });
+  pauseBtn.addEventListener('click', () => { if (phase === 'playing' || phase === 'paused') togglePause(); });
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && (phase === 'playing' || phase === 'paused')) {
+      e.preventDefault();
+      togglePause();
+    }
+  });
+  // 覆盖层存在时阻止 canvas 点击穿透由 CSS pointer-events 处理(overlay 覆盖全屏)
+  document.getElementById('deckSelect').addEventListener('change', () => {
+    // ready 态切卡组直接重建预览
+    if (phase === 'ready') { initGame(); drawHandUI(); drawInfo(); renderer.draw(null, 0); }
+    else if (confirm('切换卡组将重新开始,确定?')) { setPhase('ready'); initGame(); drawHandUI(); drawInfo(); renderer.draw(null, 0); }
+  });
 
   // 缩放 canvas 适配窗口(桌面:侧栏并排;移动端≤860px:纵向堆叠)
   function fitCanvas() {
@@ -145,25 +249,70 @@ window.CR = window.CR || {};
     try {
       const dt = Math.min(0.05, (now - lastTime) / 1000);
       lastTime = now;
-      game.update(dt);
-      // AI 更新(按强度调整决策间隔)
-      ai.thinkTimer += dt;
-      const interval = 0.7 / aiLevel;
-      if (ai.thinkTimer >= interval && !game.gameOver) {
-        ai.thinkTimer = 0;
-        ai.decide();
+      if (phase === 'playing' && game) {
+        game.update(dt);
+        // AI 更新(按强度调整决策间隔)
+        ai.thinkTimer += dt;
+        const interval = 0.7 / aiLevel;
+        if (ai.thinkTimer >= interval && !game.gameOver) {
+          ai.thinkTimer = 0;
+          ai.decide();
+        }
+        updateHud();
+        // 阶段提示
+        const remain = MATCH_TIME - game.time;
+        if (!announcedDouble && game.doubleElixir) {
+          announcedDouble = true;
+          announce('⚡ 双倍圣水', 'DOUBLE ELIXIR', '#ff8a80');
+        }
+        if (!announcedLastMinute && remain <= 60) {
+          announcedLastMinute = true;
+          // 双倍圣水提示(120s)与本提示同时刻,错开播放避免覆盖
+          setTimeout(() => { if (phase === 'playing') announce('⏰ 最后 1 分钟', 'FINAL MINUTE', '#ffe082'); }, 2800);
+        }
+        if (!announcedTimeUp && game.gameOver && game.time >= MATCH_TIME - 0.01) {
+          announcedTimeUp = true;
+          announce('⏱ 时间到!', '判定胜负…', '#eceef5');
+          log('⏰ 时间到,按皇冠与塔血判定胜负', 'sys');
+        }
       }
-      drawHandUI();
-      drawInfo();
-      renderer.draw(getPreview(), dt);
-      if (game.gameOver) {
-        showResult();
-        return;
+      if (game) {
+        drawHandUI();
+        drawInfo();
+        renderer.draw(phase === 'playing' ? getPreview() : null, phase === 'playing' ? dt : 0);
+      }
+      if (phase === 'playing' && game && game.gameOver) {
+        // 终场提示后稍作停顿再弹结算
+        if (!announcedTimeUp && game.time < MATCH_TIME - 0.01) {
+          // 国王塔陨落型结束(非超时)
+          announce(game.winner === 0 ? '👑 国王塔陨落!' : '💥 防线崩溃!', game.winner === 0 ? 'VICTORY' : 'DEFEAT', game.winner === 0 ? '#7fd4ff' : '#ff8a80');
+        }
+        setTimeout(() => { if (phase !== 'over') { setPhase('over'); showResult(); } }, 1200);
+        phase = 'over-wait';
       }
     } catch (e) {
       console.error('游戏循环异常:', e);
     }
     requestAnimationFrame(loop);
+  }
+
+  // HUD 倒计时更新
+  function updateHud() {
+    const remain = Math.max(0, MATCH_TIME - game.time);
+    const m = String(Math.floor(remain/60)).padStart(2,'0');
+    const s = String(Math.floor(remain%60)).padStart(2,'0');
+    hudTimer.textContent = `${m}:${s}`;
+    // 危险态:最后60秒变红,最后10秒脉冲
+    hudTimer.classList.toggle('danger', remain <= 60);
+    hudTimer.classList.toggle('pulse', remain <= 10);
+    // 阶段标签
+    if (game.doubleElixir) {
+      hudPhase.textContent = '双倍圣水 ×2';
+      hudPhase.classList.add('double');
+    } else {
+      hudPhase.textContent = '常规时间';
+      hudPhase.classList.remove('double');
+    }
   }
 
   function getPreview() {
@@ -189,9 +338,9 @@ window.CR = window.CR || {};
   }
 
   function drawInfo() {
-    const t = Math.floor(game.time);
-    const m = String(Math.floor(t/60)).padStart(2,'0');
-    const s = String(t%60).padStart(2,'0');
+    const remain = Math.max(0, Math.ceil(MATCH_TIME - game.time));
+    const m = String(Math.floor(remain/60)).padStart(2,'0');
+    const s = String(remain%60).padStart(2,'0');
     const de = game.doubleElixir ? ' <span style="color:#ff8a80;font-weight:700;">×2</span>' : '';
     const pt = game.towers[0], at = game.towers[1];
     const towerLine = (tw, color) => {
@@ -200,7 +349,7 @@ window.CR = window.CR || {};
     };
     infoEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <span style="font-size:15px;font-weight:700;letter-spacing:1px;">⏱ ${m}:${s}</span>${de ? `<span style="background:rgba(255,80,80,0.18);padding:1px 8px;border-radius:8px;font-size:10px;color:#ff8a80;border:1px solid rgba(255,80,80,0.35);">⚡双倍圣水</span>` : ''}
+        <span style="font-size:15px;font-weight:700;letter-spacing:1px;">⏳ 剩余 ${m}:${s}</span>${de ? `<span style="background:rgba(255,80,80,0.18);padding:1px 8px;border-radius:8px;font-size:10px;color:#ff8a80;border:1px solid rgba(255,80,80,0.35);">⚡双倍圣水</span>` : ''}
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11.5px;">
         <span style="color:#7fd4ff;">💧 你 <b>${game.elixir[0]}</b>/10</span>
@@ -309,6 +458,7 @@ window.CR = window.CR || {};
     if (e.touches.length > 0) mouseGrid = canvasToGrid(e.touches[0]);
   }, { passive: true });
   canvas.addEventListener('click', (e) => {
+    if (phase !== 'playing') return;
     if (selectedCardIdx < 0 || game.gameOver) return;
     const g = canvasToGrid(e);
     const cardId = playerHand[selectedCardIdx];
@@ -351,11 +501,14 @@ window.CR = window.CR || {};
     flashTimer = setTimeout(() => { el.textContent = ''; }, 1500);
   }
 
-  document.getElementById('restart').addEventListener('click', start);
-  document.getElementById('deckSelect').addEventListener('change', () => { if (confirm('切换卡组将重新开始,确定?')) start(); });
-
-  // 启动
+  // 启动:进入待开始状态,不自动开战
   fitCanvas();
-  start();
+  setPhase('ready');
+  initGame();
+  drawHandUI();
+  drawInfo();
+  renderer.draw(null, 0);
+  lastTime = performance.now();
+  requestAnimationFrame(loop);
 
 })(window.CR);
