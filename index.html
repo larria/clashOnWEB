@@ -252,6 +252,75 @@
   #result.show { display:block; opacity:1; transform:translate(-50%,-50%) scale(1); }
   #result h2 { font-size:38px; margin-bottom:18px; letter-spacing:2px; text-shadow:0 4px 16px rgba(0,0,0,0.5); }
 
+  /* ===== 卡组编辑器 ===== */
+  #deckEditor { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center;
+    background:rgba(8,10,20,0.78); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #deckEditor.show { display:flex; }
+  #deckEditorBox {
+    width:min(760px, 94vw); max-height:92vh; overflow:auto;
+    background:linear-gradient(165deg, rgba(40,46,88,0.97), rgba(24,28,54,0.97));
+    border:1px solid rgba(255,213,79,0.35); border-radius:16px; padding:18px 20px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.65);
+    scrollbar-width:thin; scrollbar-color:#4a5178 transparent;
+  }
+  #deckEditorBox::-webkit-scrollbar { width:6px; }
+  #deckEditorBox::-webkit-scrollbar-thumb { background:#4a5178; border-radius:3px; }
+  .deTitle { font-size:20px; font-weight:900; letter-spacing:3px; margin-bottom:4px;
+    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .deSub { font-size:11px; color:#9aa3c7; margin-bottom:12px; letter-spacing:0.5px; }
+  #deSlots { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .deSlot {
+    flex:1 1 100px; min-width:96px; padding:8px 6px; border-radius:10px; text-align:center;
+    background:rgba(12,15,30,0.55); border:2px solid #3a4266; cursor:pointer;
+    transition:border-color .12s, box-shadow .12s;
+  }
+  .deSlot:hover { border-color:#6a74a8; }
+  .deSlot.active { border-color:#ffd54f; box-shadow:0 0 12px rgba(255,213,79,0.3); }
+  .deSlot .deSlotName { font-size:12px; font-weight:700; color:#eceef5;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .deSlot .deSlotCount { font-size:10px; color:#9aa3c7; margin-top:3px; }
+  .deSlot.active .deSlotCount { color:#ffd54f; font-weight:700; }
+  .deCurLabel { font-size:11px; color:#ffd54f; margin:2px 0 6px; letter-spacing:0.5px; }
+  #deDeckRow { display:flex; gap:6px; flex-wrap:wrap; min-height:66px; margin-bottom:10px;
+    padding:8px; border-radius:10px; background:rgba(12,15,30,0.5); border:1px dashed rgba(255,255,255,0.15); }
+  .deDeckCard {
+    width:52px; height:64px; border-radius:8px; border:2px solid #4a5178; cursor:pointer;
+    background:linear-gradient(165deg, #343a5e 0%, #262b4a 60%, #202440 100%);
+    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+    padding:3px 2px; font-size:9px; text-align:center; position:relative; flex-shrink:0;
+    transition:transform .1s, border-color .1s;
+  }
+  .deDeckCard:hover { transform:translateY(-2px); border-color:#ff7b7b; }
+  .deDeckCard .deName { color:#fff; line-height:1.15; max-width:100%; overflow:hidden; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
+  .deDeckCard .deOrb { width:22px; height:22px; border-radius:50%; flex-shrink:0;
+    box-shadow:inset -2px -3px 4px rgba(0,0,0,0.45), inset 1px 2px 3px rgba(255,255,255,0.35); }
+  .deDeckCard .deCost { color:#e07bff; font-weight:800; }
+  .deDeckCard .deRm { position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%;
+    background:#c62828; color:#fff; font-size:11px; line-height:16px; text-align:center; display:none;
+    box-shadow:0 1px 4px rgba(0,0,0,0.5); }
+  .deDeckCard:hover .deRm { display:block; }
+  .deCardGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(58px, 1fr)); gap:6px; margin-bottom:14px; }
+  .dePoolCard {
+    height:62px; border-radius:8px; border:2px solid #3a4266; cursor:pointer; position:relative;
+    background:linear-gradient(165deg, #2e3454 0%, #232847 60%, #1e233d 100%);
+    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+    padding:3px 2px; font-size:9px; text-align:center;
+    transition:transform .1s, border-color .1s, opacity .1s;
+  }
+  .dePoolCard:hover { transform:translateY(-2px); border-color:#7fd4ff; }
+  .dePoolCard.inDeck { opacity:0.35; border-color:#2a2f52; cursor:not-allowed; }
+  .dePoolCard.inDeck::after { content:'✓'; position:absolute; top:2px; right:5px; color:#7fff9e; font-size:11px; font-weight:900; }
+  .dePoolCard .deName { color:#eceef5; line-height:1.15; max-width:100%; overflow:hidden; }
+  .dePoolCard .deOrb { width:20px; height:20px; border-radius:50%; flex-shrink:0;
+    box-shadow:inset -2px -3px 4px rgba(0,0,0,0.45), inset 1px 2px 3px rgba(255,255,255,0.35); }
+  .dePoolCard .deCost { color:#e07bff; font-weight:800; }
+  .deRarityTag { position:absolute; top:2px; left:5px; width:6px; height:6px; border-radius:50%; }
+  .deFooter { display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+  .deAvg { font-size:11px; color:#9aa3c7; margin-right:auto; }
+  .deAvg b { color:#e07bff; }
+  .btn-sm { padding:7px 13px; font-size:12px; }
+
   /* ===== 移动端:纵向堆叠布局 ===== */
   @media (max-width: 860px) {
     body { padding:5px; }
@@ -310,14 +379,8 @@
     </div>
     <div class="panel">
       <h3>⚙️ 设置</h3>
-      <label>玩家卡组(同卡组对战)</label>
-      <select id="deckSelect">
-        <option value="strong">强卡组(巨人体系)</option>
-        <option value="hog">野猪快攻</option>
-        <option value="golem">戈仑重击</option>
-        <option value="air">空军流</option>
-        <option value="cycle">速转流</option>
-      </select>
+      <label>玩家卡组</label>
+      <select id="deckSelect"></select>
       <label>AI 强度</label>
       <select id="aiLevel">
         <option value="1">普通</option>
@@ -327,6 +390,9 @@
       <div style="margin-top:8px;display:flex;gap:6px;">
         <button class="btn btn-blue" id="restart" style="flex:1;">重新开始</button>
         <button class="btn btn-blue" id="pauseBtn" style="flex:1;">⏸ 暂停</button>
+      </div>
+      <div style="margin-top:6px;">
+        <button class="btn btn-blue" id="openDeckEditor" style="width:100%;">🃏 编辑卡组</button>
       </div>
     </div>
     <div class="panel">
@@ -345,6 +411,25 @@
   <button class="btn" onclick="location.reload()">再来一局</button>
 </div>
 
+<!-- 卡组编辑器 -->
+<div id="deckEditor">
+  <div id="deckEditorBox">
+    <div class="deTitle">🃏 卡组编辑器</div>
+    <div class="deSub">选择一个卡组槽,点击卡牌加入/移除 · 8 张成组 · 自动保存到本机</div>
+    <div id="deSlots"></div>
+    <div class="deCurLabel" id="deCurLabel"></div>
+    <div id="deDeckRow"></div>
+    <div class="deSub" style="margin-bottom:6px;">全部卡牌(42 张)· 灰色表示已在卡组中</div>
+    <div class="deCardGrid" id="deCardGrid"></div>
+    <div class="deFooter">
+      <div class="deAvg" id="deAvg"></div>
+      <button class="btn btn-blue btn-sm" id="deClear">清空</button>
+      <button class="btn btn-blue btn-sm" id="deReset">恢复默认</button>
+      <button class="btn btn-sm" id="deDone">完成</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/constants.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/unit.js"></script>
@@ -352,6 +437,7 @@
 <script src="js/combat.js"></script>
 <script src="js/spells.js"></script>
 <script src="js/game.js"></script>
+<script src="js/deckeditor.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/graphics.js"></script>
 <script src="js/renderer.js"></script>

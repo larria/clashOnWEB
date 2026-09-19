@@ -620,7 +620,7 @@ window.CR = window.CR || {};
       } else {
         const r = (card.radius || 0.4) * CELL;
         ctx.save();
-        // 合法/非法标识(含推塔解锁区)
+        // 合法/非法标识(含推塔解锁区);不绘制幻影单位,仅光圈+多体数量
         const ok = CR.canDeploy('player', p.x, p.y, this.game.towers[1]);
         ctx.globalAlpha = 0.9;
         ctx.strokeStyle = ok ? '#7fff9e' : '#ff7b7b';
@@ -628,13 +628,6 @@ window.CR = window.CR || {};
         ctx.setLineDash([6, 4]); ctx.lineDashOffset = -t*20;
         ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI*2); ctx.stroke();
         ctx.setLineDash([]);
-        // 幻影单位
-        ctx.globalAlpha = 0.55;
-        ctx.fillStyle = GFX.orbFill(ctx, x, y, r, card.color, GFX.shade(card.color, 55));
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = ok ? 'rgba(127,255,158,0.9)' : 'rgba(255,123,123,0.9)';
-        ctx.lineWidth = 2; ctx.stroke();
-        GFX.drawUnitIcon(ctx, p.cardId, x, y, r);
         // 多体指示
         if (card.count > 1) {
           ctx.globalAlpha = 0.5;

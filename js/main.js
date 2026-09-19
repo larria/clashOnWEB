@@ -5,29 +5,32 @@ window.CR = window.CR || {};
 (function (CR) {
   'use strict';
 
-  const DECKS = {
-    strong: ['giant','miniPekka','musketeer','wizard','skeletons','arrows','fireball','minions'],
-    hog: ['hogRider','musketeer','archers','skeletons','zap','fireball','cannon','goblins'],
-    golem: ['golem','babyDragon','miniPekka','wizard','minions','arrows','zap','barbarianHut'],
-    air: ['balloon','minionHorde','minions','babyDragon','musketeer','arrows','fireball','skeletons'],
-    cycle: ['hogRider','skeletons','goblins','spearGoblins','zap','archers','fireball','musketeer'],
-  };
-  // 修正:确保所有卡都存在且不重复(同名牌会导致手牌同屏出现两张)
-  for (const k of Object.keys(DECKS)) {
-    DECKS[k] = [...new Set(DECKS[k])].filter(id => CR.CARDS[id] && !CR.CARDS[id].hidden && id!=='golemite').slice(0,8);
-    if (DECKS[k].length < 8) {
-      // 补足
+  // 卡组来源:卡组编辑器(含 localStorage 自定义覆盖)
+  // DECKS: { slot0: {name, cards:[...]}, ... }
+  let DECKS = {};
+  function refreshDecks() {
+    const list = CR.DeckEditor.loadDecks();
+    DECKS = {};
+    list.forEach((d, i) => { DECKS['slot' + i] = d; });
+    buildDeckSelect();
+  }
+  // 修正:确保所有卡都存在且不重复(同名牌会导致手牌同屏出现两张);不足 8 张自动补足
+  function sanitizeDeck(cards) {
+    const out = [...new Set(cards)].filter(id => CR.CARDS[id] && !CR.CARDS[id].hidden && id !== 'golemite').slice(0, 8);
+    if (out.length < 8) {
       const fallback = ['skeletons','goblins','archers','musketeer','fireball','arrows','knight','minions'];
       for (const f of fallback) {
-        if (DECKS[k].length >= 8) break;
-        if (!DECKS[k].includes(f)) DECKS[k].push(f);
+        if (out.length >= 8) break;
+        if (!out.includes(f)) out.push(f);
       }
     }
+    return out;
   }
 
   let game, renderer, ai;
   let playerHand = [];
   let playerDeck = [];
+  let aiDeck = [];
   let playerDrawPile = [];
   let playerNext = null;
   let selectedCardIdx = -1;
@@ -90,10 +93,28 @@ window.CR = window.CR || {};
   const pauseBtn = document.getElementById('pauseBtn');
   const MATCH_TIME = 180; // 总时长(秒)
 
+  // 构建卡组下拉框(当前选项保持)
+  function buildDeckSelect() {
+    const sel = document.getElementById('deckSelect');
+    const prev = sel.value;
+    sel.innerHTML = '';
+    Object.keys(DECKS).forEach((k, i) => {
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = `卡组${i + 1} · ${DECKS[k].name}`;
+      sel.appendChild(opt);
+    });
+    if (prev && DECKS[prev]) sel.value = prev;
+  }
+
   function initGame() {
     const deckKey = document.getElementById('deckSelect').value;
-    playerDeck = DECKS[deckKey].slice();
+    playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
     aiLevel = parseFloat(document.getElementById('aiLevel').value);
+    // AI 每局从 5 套卡组中随机选择一套(不再与玩家同卡组)
+    const presetKeys = Object.keys(DECKS);
+    const pickKey = presetKeys[Math.floor(Math.random() * presetKeys.length)];
+    aiDeck = sanitizeDeck(DECKS[pickKey].cards);
     game = new CR.Game();
     game.onTowerDestroyedCb = (tw) => {
       const sideName = tw.side === 0 ? '你的' : 'AI的';
@@ -121,7 +142,8 @@ window.CR = window.CR || {};
       }
     };
     renderer = new CR.Renderer(canvas, game);
-    ai = new CR.AI(game, playerDeck.slice());
+    ai = new CR.AI(game, aiDeck.slice());
+    CR._dbg = { game, ai, get playerDeck(){return playerDeck;}, get aiDeck(){return aiDeck;} }; // 调试/测试出口
     drawPlayerHand();
     selectedCardIdx = -1;
     logEl.innerHTML = '';
@@ -192,7 +214,8 @@ window.CR = window.CR || {};
     initGame();
     lastTime = performance.now();
     setPhase('playing');
-    log('战斗开始!同卡组对战:' + playerDeck.map(id=>CR.CARDS[id].name).join('、'), 'me');
+    log('战斗开始!你的卡组:' + playerDeck.map(id=>CR.CARDS[id].name).join('、'), 'me');
+    log('AI 使用卡组:' + aiDeck.map(id=>CR.CARDS[id].name).join('、'), 'ai');
     announce('战斗开始', 'BATTLE START', '#ffe082');
     // 阶段提示状态
     announcedDouble = false;
@@ -546,6 +569,17 @@ window.CR = window.CR || {};
   }
 
   // 启动:进入待开始状态,不自动开战
+  // 卡组编辑器:数据变化时刷新下拉与预览
+  CR.DeckEditor.onChange(() => {
+    refreshDecks();
+    if (phase === 'ready') { initGame(); drawHandUI(); drawInfo(); renderer.draw(null, 0); }
+  });
+  document.getElementById('openDeckEditor').addEventListener('click', () => {
+    const cur = document.getElementById('deckSelect').value;
+    const slotIdx = parseInt((cur || 'slot0').replace('slot', ''), 10);
+    CR.DeckEditor.open(isNaN(slotIdx) ? 0 : slotIdx);
+  });
+  refreshDecks();
   fitCanvas();
   setPhase('ready');
   initGame();
