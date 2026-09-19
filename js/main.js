@@ -7,14 +7,14 @@ window.CR = window.CR || {};
 
   const DECKS = {
     strong: ['giant','miniPekka','musketeer','wizard','skeletons','arrows','fireball','minions'],
-    hog: ['hogRider','musketeer','archers','skeletons','zap','fireball','skeletons','goblins'],
+    hog: ['hogRider','musketeer','archers','skeletons','zap','fireball','cannon','goblins'],
     golem: ['golem','babyDragon','miniPekka','wizard','minions','arrows','zap','barbarianHut'],
     air: ['balloon','minionHorde','minions','babyDragon','musketeer','arrows','fireball','skeletons'],
     cycle: ['hogRider','skeletons','goblins','spearGoblins','zap','archers','fireball','musketeer'],
   };
-  // 修正:确保所有卡都存在
+  // 修正:确保所有卡都存在且不重复(同名牌会导致手牌同屏出现两张)
   for (const k of Object.keys(DECKS)) {
-    DECKS[k] = DECKS[k].filter(id => CR.CARDS[id] && !CR.CARDS[id].hidden && id!=='golemite').slice(0,8);
+    DECKS[k] = [...new Set(DECKS[k])].filter(id => CR.CARDS[id] && !CR.CARDS[id].hidden && id!=='golemite').slice(0,8);
     if (DECKS[k].length < 8) {
       // 补足
       const fallback = ['skeletons','goblins','archers','musketeer','fireball','arrows','knight','minions'];
@@ -134,7 +134,6 @@ window.CR = window.CR || {};
     phase = p;
     if (p === 'ready') {
       overlayEl.classList.remove('hidden');
-      ovIcon.textContent = '⚔️';
       ovTitle.textContent = '准备战斗';
       ovDesc.textContent = '选择卡组与 AI 强度后开始 · 摧毁对方国王塔获胜';
       ovBtn.textContent = '开始战斗';
@@ -148,7 +147,6 @@ window.CR = window.CR || {};
       pauseBtn.textContent = '⏸ 暂停';
     } else if (p === 'paused') {
       overlayEl.classList.remove('hidden');
-      ovIcon.textContent = '⏸';
       ovTitle.textContent = '已暂停';
       ovDesc.textContent = '圣水已冻结,战术思考一下?';
       ovBtn.textContent = '继续战斗';
@@ -159,12 +157,31 @@ window.CR = window.CR || {};
       overlayEl.classList.add('hidden');
       pauseBtn.disabled = true;
     }
+    // 标题自适应缩字号(nowrap 防折行,过长则缩小)
+    if (overlayEl && !overlayEl.classList.contains('hidden')) {
+      requestAnimationFrame(() => {
+        const canvasW = canvas.getBoundingClientRect().width;
+        const chars = (ovTitle.textContent || '').replace(/\s/g, '').length;
+        if (chars > 0) {
+          const fit = Math.max(16, Math.min(30, (canvasW * 0.88) / (chars * 1.15)));
+          ovTitle.style.fontSize = fit.toFixed(0) + 'px';
+        }
+      });
+    }
   }
 
-  // 中央大提示
+  // 中央大提示(字号按 canvas 宽自适应,防止长文案溢出)
   function announce(main, sub, color) {
     bigAnnounce.innerHTML = `<div class="baMain" style="color:${color || '#ffe082'};">${main}</div>` +
       (sub ? `<div class="baSub">${sub}</div>` : '');
+    // 按显示宽度自适应:基础 42px,每字符约占 1.05em,超出则等比缩小
+    const mainEl = bigAnnounce.querySelector('.baMain');
+    const canvasW = canvas.getBoundingClientRect().width;
+    if (mainEl) {
+      const chars = main.replace(/\s/g, '').length;
+      const fit = Math.max(16, Math.min(42, (canvasW * 0.92) / (chars * 1.12)));
+      mainEl.style.fontSize = fit.toFixed(0) + 'px';
+    }
     bigAnnounce.classList.remove('show');
     // 强制重启动画
     void bigAnnounce.offsetWidth;
