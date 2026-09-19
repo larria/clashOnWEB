@@ -262,7 +262,7 @@ window.CR = window.CR || {};
         const d = Math.sqrt(dx*dx+dy*dy) || 1;
         const px = tower.x + (dx/d) * 3.5;
         const py = tower.y + (dy/d) * 3.5;
-        if (CR.canDeploy(this.sideName, px, py)) return { x: px, y: py };
+        if (CR.canDeploy(this.sideName, px, py, this.game.towers[1 - this.side])) return { x: px, y: py };
         return { x: tower.x, y: tower.y + dir * 2 };
       }
       // 部队:在威胁行进方向前方拦截(威胁朝我方塔来,拦截点在威胁与我方塔之间,偏向威胁前方)
@@ -357,7 +357,7 @@ window.CR = window.CR || {};
           const tank = pushingTanks[0];
           // 放在坦克后方(我方一侧)
           const px = tank.x, py = tank.y - dir * 2;
-          if (CR.canDeploy(this.sideName, px, py)) {
+          if (CR.canDeploy(this.sideName, px, py, this.game.towers[1 - this.side])) {
             return { cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'support' };
           }
         }
@@ -376,7 +376,7 @@ window.CR = window.CR || {};
         if (elixir < c.cost) continue;
         const px = laneX;
         const py = this.myBackY;
-        if (CR.canDeploy(this.sideName, px, py)) {
+        if (CR.canDeploy(this.sideName, px, py, this.game.towers[1 - this.side])) {
           return { cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'tank_push' };
         }
       }
@@ -389,7 +389,7 @@ window.CR = window.CR || {};
           if (elixir < c.cost) continue;
           const px = laneX;
           const py = this.myRiverEdgeY;
-          if (CR.canDeploy(this.sideName, px, py)) {
+          if (CR.canDeploy(this.sideName, px, py, this.game.towers[1 - this.side])) {
             return { cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'wincon' };
           }
         }
@@ -407,7 +407,7 @@ window.CR = window.CR || {};
         if (c.cost <= 3 && c.cost > 0 && elixir >= c.cost) {
           const px = enemies.length > 0 ? enemies[0].x : 9;
           const py = this.myRiverEdgeY;
-          if (CR.canDeploy(this.sideName, px, py)) {
+          if (CR.canDeploy(this.sideName, px, py, this.game.towers[1 - this.side])) {
             return { cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'cycle' };
           }
         }

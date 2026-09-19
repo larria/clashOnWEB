@@ -135,8 +135,9 @@ window.CR = window.CR || {};
       castSpell(cardId, side, x, y, game);
       return true;
     }
-    // 部署区域检查(镜像召唤可豁免)
-    if (!opts.bypass && !CR.canDeploy(side === 0 ? 'player' : 'ai', x, y)) return false;
+    // 部署区域检查(镜像召唤可豁免;传入敌方塔状态以支持推塔解锁区)
+    const enemyTowers = game && game.towers ? game.towers[1 - side] : null;
+    if (!opts.bypass && !CR.canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers)) return false;
 
     const count = card.count || 1;
     // 多体单位排布

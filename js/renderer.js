@@ -26,12 +26,56 @@ window.CR = window.CR || {};
       this.animTime = (this.animTime || 0) + (dt || 0.016);
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.drawArena();
-      this.drawDeployZone();
+      // 选中部队/建筑卡时:高亮全部可部署区域(法术全场有效,不高亮)
+      const previewCard = deployPreview ? CR.CARDS[deployPreview.cardId] : null;
+      const showDeployZone = previewCard && previewCard.kind !== CR.KIND.SPELL;
+      if (showDeployZone) this.drawDeployZoneHighlight();
       this.drawTowers();
       this.drawUnits();
       this.drawEffects();
       if (deployPreview) this.drawPreview(deployPreview);
       this.drawVignette();
+    }
+
+    // 可部署区域高亮(选中卡牌时):己方半场 + 推塔解锁区
+    drawDeployZoneHighlight() {
+      const ctx = this.ctx;
+      const t = this.animTime;
+      const enemyTowers = this.game.towers[1];
+      ctx.save();
+      // 呼吸透明度
+      const breathe = 0.16 + 0.07 * Math.sin(t * 3);
+      // 己方半场逐格绿色高亮(解锁区另行金色处理)
+      for (let gy = CR.RIVER_Y2 + 1; gy < CR.GRID_H; gy += 0.5) {
+        for (let gx = 0; gx < CR.GRID_W; gx += 0.5) {
+          ctx.fillStyle = `rgba(100,220,140,${breathe})`;
+          ctx.fillRect(gx*CELL, gy*CELL, CELL*0.5, CELL*0.5);
+        }
+      }
+      // 区域描边:己方半场底线区域
+      ctx.strokeStyle = `rgba(100,220,140,${0.35 + 0.15*Math.sin(t*3)})`;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, (CR.RIVER_Y2+1)*CELL, CR.CANVAS_W-2, (CR.GRID_H-CR.RIVER_Y2-1)*CELL);
+      // 解锁区描边(如有)
+      const unlock = [];
+      if (enemyTowers.left.dead) unlock.push({x:0, w:9});
+      if (enemyTowers.right.dead) unlock.push({x:9, w:9});
+      for (const u of unlock) {
+        // 解锁区金色微光填充
+        ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
+        ctx.fillRect(u.x*CELL+1, 5*CELL, u.w*CELL-2, (CR.RIVER_Y1-1-5)*CELL);
+        ctx.strokeStyle = `rgba(255,213,79,${0.5 + 0.2*Math.sin(t*3)})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 5]);
+        ctx.strokeRect(u.x*CELL+1, 5*CELL, u.w*CELL-2, (CR.RIVER_Y1-1-5)*CELL);
+        ctx.setLineDash([]);
+        // 解锁区标记文字
+        ctx.fillStyle = 'rgba(255,213,79,0.9)';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🔓 已解锁', (u.x + u.w/2)*CELL, (5 + (CR.RIVER_Y1-1-5)/2)*CELL);
+      }
+      ctx.restore();
     }
 
     // ===== 战场(带静态缓存) =====
@@ -161,13 +205,6 @@ window.CR = window.CR || {};
         ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI*2); ctx.fill();
       }
       ctx.restore();
-    }
-
-    // 玩家可部署区微高亮(选中卡牌时由 preview 强化)
-    drawDeployZone() {
-      const ctx = this.ctx;
-      ctx.fillStyle = 'rgba(120,190,255,0.045)';
-      ctx.fillRect(0, CR.RIVER_Y2*CELL + 5, CR.CANVAS_W, (CR.GRID_H-CR.RIVER_Y2)*CELL - 5);
     }
 
     // ===== 塔 =====
@@ -538,8 +575,8 @@ window.CR = window.CR || {};
       } else {
         const r = (card.radius || 0.4) * CELL;
         ctx.save();
-        // 合法/非法标识
-        const ok = CR.canDeploy('player', p.x, p.y);
+        // 合法/非法标识(含推塔解锁区)
+        const ok = CR.canDeploy('player', p.x, p.y, this.game.towers[1]);
         ctx.globalAlpha = 0.9;
         ctx.strokeStyle = ok ? '#7fff9e' : '#ff7b7b';
         ctx.lineWidth = 2.5;

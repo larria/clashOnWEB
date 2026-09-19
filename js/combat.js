@@ -148,10 +148,10 @@ window.CR = window.CR || {};
     const ux = unit.x, uy = unit.y;
     const tx = finalTarget.x, ty = finalTarget.y;
     const RY1 = CR.RIVER_Y1, RY2 = CR.RIVER_Y2;
-    // 选择桥(按目标 x 选最近的同侧桥)
+    // 选择桥(桥心与公主塔 x 对齐:3.5 / 14.5)
     const bridges = [
-      { x: 3, y: (RY1+RY2)/2 },
-      { x: 14, y: (RY1+RY2)/2 },
+      { x: 3.5, y: (RY1+RY2)/2 },
+      { x: 14.5, y: (RY1+RY2)/2 },
     ];
     // 选离单位最近的桥
     let bridge = bridges[0], bd = Infinity;

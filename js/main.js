@@ -467,10 +467,10 @@ window.CR = window.CR || {};
       flashMsg('圣水不足');
       return;
     }
-    // 部署区域检查(法术可全场)
+    // 部署区域检查(法术可全场;推掉敌方公主塔后该侧敌方区域解锁)
     if (card.kind !== CR.KIND.SPELL) {
-      if (!CR.canDeploy('player', g.x, g.y)) {
-        flashMsg('只能在己方半场(河道下方)部署');
+      if (!CR.canDeploy('player', g.x, g.y, game.towers[1])) {
+        flashMsg('只能在己方半场(或已解锁区域)部署');
         return;
       }
     }

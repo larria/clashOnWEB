@@ -16,13 +16,14 @@ window.CR = window.CR || {};
 
   // 网格:18 宽 x 32 高(单位:格)
   // y=0 顶部=AI(对手)侧, y=31 底部=玩家侧
-  // 河道在 y=15..16 之间(两条河流),桥梁在 x=2..4 和 x=13..15
+  // 河道在 y=15..16 之间(两条河流)
+  // 桥梁 2 格宽(原 3 格收窄 1/3),对齐公主塔 x 坐标
   const GRID_W = 18;
   const GRID_H = 32;
   const RIVER_Y1 = 15; // 河道上沿(不含)
   const RIVER_Y2 = 17; // 河道下沿(不含),即河道占 y=15,16 两行
-  const BRIDGE_LEFT = [2, 3, 4];
-  const BRIDGE_RIGHT = [13, 14, 15];
+  const BRIDGE_LEFT = [3, 4];     // 中心 3.5,对齐左公主塔
+  const BRIDGE_RIGHT = [14, 15];  // 中心 14.5,对齐右公主塔
 
   // 塔位置(格坐标,塔心)
   // AI 塔(上方)
@@ -54,14 +55,30 @@ window.CR = window.CR || {};
   const CANVAS_W = GRID_W * CELL;   // 684
   const CANVAS_H = GRID_H * CELL;   // 1216 -> 太高,用缩放
 
-  // 部署区域:玩家只能在自己半场(河道下方)部署;AI 同理
-  // 玩家可部署 y > RIVER_Y2(即 y>=17),但有塔保护圈时不能直接放在塔脚下
-  function canDeploy(side, x, y) {
-    // side: 'player' | 'ai'
+  // 部署区域:
+  // 基础:己方半场(玩家 y>=18,AI y<=14)
+  // 解锁:摧毁敌方某侧公主塔后,该侧敌方"塔前到河边"的区域可部署(两侧对称)
+  // side: 'player' | 'ai';enemyTowers: 敌方塔 {left,right} 状态(可选,传入后启用解锁判定)
+  function canDeploy(side, x, y, enemyTowers) {
+    const inOwnHalf = side === 'player'
+      ? y >= RIVER_Y2 + 1
+      : y <= RIVER_Y1 - 1;
+    if (inOwnHalf) return true;
+    // 敌方半场:仅在对应侧公主塔被摧毁后解锁
+    if (!enemyTowers) return false;
+    const leftUnlocked = enemyTowers.left && enemyTowers.left.dead;
+    const rightUnlocked = enemyTowers.right && enemyTowers.right.dead;
+    if (!leftUnlocked && !rightUnlocked) return false;
+    const isLeftLane = x < 9;
+    if (isLeftLane && !leftUnlocked) return false;
+    if (!isLeftLane && !rightUnlocked) return false;
+    // 该侧公主塔身前到河边的区域
+    // (玩家打 AI:AI 塔在 y=4,区域 y∈[5,14];AI 打玩家:玩家塔在 y=27,区域 y∈[18,26])
     if (side === 'player') {
-      return y >= RIVER_Y2 + 1;
+      return y >= 5 && y <= RIVER_Y1 - 1;
+    } else {
+      return y >= RIVER_Y2 + 1 && y <= 26;
     }
-    return y <= RIVER_Y1 - 1;
   }
 
   // 是否在河道(阻挡地面单位)
