@@ -105,18 +105,41 @@ window.CR = window.CR || {};
     requestAnimationFrame(loop);
   }
 
-  // 缩放 canvas 适配窗口(同时考虑宽高,留出标题+手牌区空间,避免溢出视口)
+  // 缩放 canvas 适配窗口(桌面:侧栏并排;移动端≤860px:纵向堆叠)
   function fitCanvas() {
-    // 标题~40 + 手牌区~135 + 边距~25
-    const maxH = window.innerHeight - 200;
-    // 窄屏时侧边栏换行到下方,canvas 可占满宽度
-    const sideW = window.innerWidth > 820 ? 252 : 20;
-    const maxW = window.innerWidth - sideW;
-    const scale = Math.min(1, maxH / CR.CANVAS_H, maxW / CR.CANVAS_W);
-    canvas.style.width = (CR.CANVAS_W * scale) + 'px';
-    canvas.style.height = (CR.CANVAS_H * scale) + 'px';
+    const isMobile = window.innerWidth <= 860;
+    // 可用宽度:桌面减去侧栏(220+gap+padding),移动端占满视口(减边框/边距)
+    const maxW = isMobile ? window.innerWidth - 12 : window.innerWidth - 264;
+    // 可用高度:留出标题+手牌区;移动端手牌更紧凑
+    const chromeH = isMobile ? 150 : 200;
+    const maxH = Math.max(300, window.innerHeight - chromeH);
+    // 战场宽高比 684:1216,按更紧的约束缩放
+    const scale = Math.min(1, maxW / CR.CANVAS_W, maxH / CR.CANVAS_H);
+    canvas.style.width = Math.floor(CR.CANVAS_W * scale) + 'px';
+    canvas.style.height = Math.floor(CR.CANVAS_H * scale) + 'px';
+    // 同步手牌卡尺寸:移动端缩小,保证 4卡+next 不超出屏宽
+    fitHandCards(scale);
   }
   window.addEventListener('resize', fitCanvas);
+  window.addEventListener('orientationchange', fitCanvas);
+
+  // 手牌卡尺寸适配
+  function fitHandCards(scale) {
+    const isMobile = window.innerWidth <= 860;
+    // 基础卡宽80,移动端按 canvas 宽度比例缩小,但不小于 52
+    const canvasW = canvas.getBoundingClientRect().width || CR.CANVAS_W * scale;
+    let cardW = 80;
+    if (isMobile) {
+      // 4卡 + next(0.75卡) + 4gap 需 ≤ canvasW
+      cardW = Math.max(52, Math.floor((canvasW - 4*6) / 4.75));
+    }
+    document.documentElement.style.setProperty('--card-w', cardW + 'px');
+    document.documentElement.style.setProperty('--card-h', Math.floor(cardW * 1.25) + 'px');
+    document.documentElement.style.setProperty('--card-font', Math.max(9, Math.floor(cardW * 0.14)) + 'px');
+    document.documentElement.style.setProperty('--orb-size', Math.floor(cardW * 0.38) + 'px');
+    // 尺寸变化后强制重建手牌(圣水珠子等内联尺寸需要刷新)
+    lastHandSig = '';
+  }
 
   function loop(now) {
     try {
@@ -197,19 +220,21 @@ window.CR = window.CR || {};
       lastHandSig = sig;
       el.innerHTML = '';
       // 圣水条
+      const isMobile = window.innerWidth <= 860;
+      const orbSz = isMobile ? 11 : 14;
       const bar = document.createElement('div');
       bar.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;margin-bottom:4px;';
-      let barHtml = '<div style="display:flex;gap:1px;">';
+      let barHtml = '<div style="display:flex;gap:1px;flex-wrap:nowrap;">';
       for (let i = 0; i < 10; i++) {
         const filled = i < game.elixir[0];
-        barHtml += `<div style="width:14px;height:14px;border-radius:50%;background:${filled?'#d32f2f':'#555'};border:1px solid #333;"></div>`;
+        barHtml += `<div style="width:${orbSz}px;height:${orbSz}px;border-radius:50%;background:${filled?'#d32f2f':'#555'};border:1px solid #333;flex-shrink:0;"></div>`;
       }
-      barHtml += `</div><div style="margin-left:6px;color:#ff6666;font-weight:bold;">${game.elixir[0]}</div>`;
+      barHtml += `</div><div style="margin-left:6px;color:#ff6666;font-weight:bold;font-size:${orbSz+3}px;">${game.elixir[0]}</div>`;
       bar.innerHTML = barHtml;
       el.appendChild(bar);
 
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:6px;';
+      row.style.cssText = 'display:flex;gap:6px;max-width:100%;';
       for (let i = 0; i < playerHand.length; i++) {
         const cardId = playerHand[i];
         const card = CR.CARDS[cardId];
@@ -217,10 +242,11 @@ window.CR = window.CR || {};
         const canPlay = game.elixir[0] >= cost;
         const selected = i === selectedCardIdx;
         const d = document.createElement('div');
-        d.style.cssText = `width:80px;height:100px;background:${selected?'#4a6daa':'#2a2a4e'};border:2px solid ${selected?'#ffd700':'#555'};border-radius:6px;padding:4px;cursor:${canPlay?'pointer':'not-allowed'};opacity:${canPlay?1:0.5};position:relative;text-align:center;font-size:11px;display:flex;flex-direction:column;justify-content:space-between;`;
+        d.className = 'handCard';
+        d.style.cssText = `background:${selected?'#4a6daa':'#2a2a4e'};border:2px solid ${selected?'#ffd700':'#555'};opacity:${canPlay?1:0.5};cursor:${canPlay?'pointer':'not-allowed'};`;
         d.innerHTML = `
           <div style="font-weight:bold;color:${card.color};text-shadow:0 0 3px #000;">${card.name}</div>
-          <div style="width:30px;height:30px;border-radius:50%;background:${card.color};margin:0 auto;"></div>
+          <div class="cardOrb" style="background:${card.color};"></div>
           <div style="color:#ff6666;font-weight:bold;">💧${cost}</div>
         `;
         d.dataset.idx = i;
@@ -232,16 +258,16 @@ window.CR = window.CR || {};
         row.appendChild(d);
       }
       // next 卡
-      const nd = document.createElement('div');
-      nd.style.cssText = 'width:60px;height:100px;background:#1a1a2e;border:2px dashed #555;border-radius:6px;padding:4px;text-align:center;font-size:10px;display:flex;flex-direction:column;justify-content:center;opacity:0.7;';
       const nc = CR.CARDS[playerNext];
+      const nd = document.createElement('div');
+      nd.className = 'nextCard';
       nd.innerHTML = `<div>下一张</div><div style="font-weight:bold;color:${nc.color}">${nc.name}</div><div style="color:#ff6666">💧${nc.cost}</div>`;
       row.appendChild(nd);
       el.appendChild(row);
     }
   }
 
-  // 鼠标交互
+  // 鼠标/触摸交互
   function canvasToGrid(e) {
     const rect = canvas.getBoundingClientRect();
     const sx = (e.clientX - rect.left) / rect.width * CR.CANVAS_W;
@@ -252,6 +278,13 @@ window.CR = window.CR || {};
   canvas.addEventListener('mousemove', (e) => {
     mouseGrid = canvasToGrid(e);
   });
+  // 触屏:按下/移动时更新部署预览位置
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) mouseGrid = canvasToGrid(e.touches[0]);
+  }, { passive: true });
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) mouseGrid = canvasToGrid(e.touches[0]);
+  }, { passive: true });
   canvas.addEventListener('click', (e) => {
     if (selectedCardIdx < 0 || game.gameOver) return;
     const g = canvasToGrid(e);
