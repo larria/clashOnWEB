@@ -40,10 +40,10 @@ window.CR = window.CR || {};
     },
   };
 
-  // 塔属性
+  // 塔属性(对齐 wiki 11级 × 0.5:公主塔 3052/109/0.8s,国王塔约 4834/109/1.0s)
   const TOWER_STATS = {
-    princess: { hp: 1400, dmg: 50, hitSpeed: 0.8, range: 7.5, sightRange: 7.5, targets: CR.T.ALL, radius: 0.8 },
-    king:     { hp: 2400, dmg: 50, hitSpeed: 1.0, range: 7.0, sightRange: 7.0, targets: CR.T.ALL, radius: 1.0 },
+    princess: { hp: 1526, dmg: 54, hitSpeed: 0.8, range: 7.5, sightRange: 7.5, targets: CR.T.ALL, radius: 0.8 },
+    king:     { hp: 2417, dmg: 54, hitSpeed: 1.0, range: 7.0, sightRange: 7.0, targets: CR.T.ALL, radius: 1.0 },
   };
 
   // 圣水
