@@ -54,7 +54,9 @@ window.CR = window.CR || {};
       if (d <= (radius + e.radius) * (radius + e.radius)) {
         spellHits++;
         if (dmg > 0) {
-          e.hp -= dmg;
+          // 多段命中(万箭齐发 3 次/单位)
+          const totalDmg = dmg * ((sp && sp.hits) || 1);
+          e.hp -= totalDmg;
           if (e.hp <= 0 && !e.dead) { e.hp = 0; e.dead = true; spellKills.push(e.card.name); CR.onUnitDeath(e, game); }
         }
         // 击退
@@ -107,14 +109,15 @@ window.CR = window.CR || {};
       // 简化:范围内全部眩晕已处理
     }
 
-    // 伤害塔
+    // 伤害塔(皇冠塔减伤:法术对塔约 30% 伤害;多段命中同样适用)
     if (dmg > 0) {
       const towers = game.getEnemyTowers(side);
+      const towerDmg = dmg * 0.3 * ((sp && sp.hits) || 1);
       for (const tw of towers) {
         if (tw.dead) continue;
         const d = CR.dist2(x, y, tw.x, tw.y);
         if (d <= (radius + tw.radius) * (radius + tw.radius)) {
-          CR.dealTowerDamage(tw, dmg, game);
+          CR.dealTowerDamage(tw, towerDmg, game);
         }
       }
     }

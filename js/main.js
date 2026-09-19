@@ -379,7 +379,7 @@ window.CR = window.CR || {};
         <span style="font-size:15px;font-weight:700;letter-spacing:1px;">⏳ 剩余 ${m}:${s}</span>${de ? `<span style="background:rgba(255,80,80,0.18);padding:1px 8px;border-radius:8px;font-size:10px;color:#ff8a80;border:1px solid rgba(255,80,80,0.35);">⚡双倍圣水</span>` : ''}
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11.5px;">
-        <span style="color:#7fd4ff;">💧 你 <b>${game.elixir[0]}</b>/10</span>
+        <span style="color:#e07bff;">💧 你 <b>${game.elixir[0]}</b>/10</span>
         <span style="color:#ffab91;">AI <b>${game.elixir[1]}</b>/10 💧</span>
       </div>
       <div style="height:1px;background:rgba(255,255,255,0.1);margin:7px 0;"></div>
@@ -417,15 +417,15 @@ window.CR = window.CR || {};
       const orbSz = isMobile ? 11 : 14;
       const full = game.elixir[0] >= 10;
       const bar = document.createElement('div');
-      bar.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;margin-bottom:5px;padding:4px 8px;border-radius:10px;background:rgba(12,15,30,0.6);border:1px solid rgba(255,255,255,0.08);' + (full ? 'box-shadow:0 0 12px rgba(255,80,80,0.45);' : '');
+      bar.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;margin-bottom:5px;padding:4px 8px;border-radius:10px;background:rgba(12,15,30,0.6);border:1px solid rgba(255,255,255,0.08);' + (full ? 'box-shadow:0 0 12px rgba(210,76,255,0.5);' : '');
       let barHtml = '<div style="display:flex;gap:2px;flex-wrap:nowrap;">';
       for (let i = 0; i < 10; i++) {
         const filled = i < game.elixir[0];
         barHtml += `<div style="width:${orbSz}px;height:${orbSz}px;border-radius:50%;flex-shrink:0;${filled
-          ? `background:radial-gradient(circle at 35% 30%, #ff8a80, #e53935 60%, #b71c1c);box-shadow:0 1px 3px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(0,0,0,0.3);border:1px solid #7f1d1d;`
+          ? `background:radial-gradient(circle at 35% 30%, #f2a7ff, #d24cff 55%, #8a1ec9);box-shadow:0 1px 3px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(0,0,0,0.3);border:1px solid #5c1090;`
           : `background:radial-gradient(circle at 35% 30%, #3a4266, #262b4a);border:1px solid #1a1e38;`}"></div>`;
       }
-      barHtml += `</div><div style="margin-left:6px;color:#ff8a80;font-weight:800;font-size:${orbSz+4}px;text-shadow:0 0 8px rgba(255,80,80,0.6);">${game.elixir[0]}</div>`;
+      barHtml += `</div><div style="margin-left:6px;color:#e07bff;font-weight:800;font-size:${orbSz+4}px;text-shadow:0 0 8px rgba(210,76,255,0.6);">${game.elixir[0]}</div>`;
       bar.innerHTML = barHtml;
       el.appendChild(bar);
 
@@ -460,7 +460,7 @@ window.CR = window.CR || {};
       const nc = CR.CARDS[playerNext];
       const nd = document.createElement('div');
       nd.className = 'nextCard';
-      nd.innerHTML = `<div class="label">下一张</div><div style="font-weight:700;color:${nc.color}">${nc.name}</div><div style="color:#ff8a80;font-weight:700;">💧${nc.cost}</div>`;
+      nd.innerHTML = `<div class="label">下一张</div><div style="font-weight:700;color:${nc.color}">${nc.name}</div><div style="color:#e07bff;font-weight:700;">💧${nc.cost}</div>`;
       row.appendChild(nd);
       el.appendChild(row);
     }

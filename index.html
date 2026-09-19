@@ -20,22 +20,6 @@
   #wrap { align-self:center; }
 
   /* ===== 标题 ===== */
-  .titleBar {
-    display:flex; align-items:center; gap:10px; margin-bottom:10px;
-    padding:8px 22px; border-radius:14px;
-    background:linear-gradient(135deg, rgba(58,68,120,0.75), rgba(40,46,88,0.55));
-    border:1px solid rgba(255,214,79,0.25);
-    box-shadow:0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-  .titleBar .shield { font-size:24px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-  .titleBar h1 {
-    font-size:19px; font-weight:800; letter-spacing:1px;
-    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    text-shadow:none;
-  }
-  .titleBar .sub { font-size:11px; color:#9aa3c7; letter-spacing:2px; }
-
   #wrap { display:flex; gap:14px; align-items:flex-start; justify-content:center; }
   #gameCol { display:flex; flex-direction:column; align-items:center; min-width:0; }
   #handArea { width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; margin-top:8px; }
@@ -135,7 +119,22 @@
   #overlay.hidden { opacity:0; pointer-events:none; }
   .ovInner { text-align:center; animation:ovFloat .5s ease; }
   @keyframes ovFloat { from { transform:translateY(14px); opacity:0; } to { transform:none; opacity:1; } }
-  .ovIcon { font-size:52px; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6)); margin-bottom:8px; }
+  /* logo 徽章(仅覆盖层显示) */
+  .ovLogo {
+    display:flex; align-items:center; gap:14px; margin-bottom:18px;
+    padding:10px 26px; border-radius:16px;
+    background:linear-gradient(135deg, rgba(58,68,120,0.7), rgba(40,46,88,0.5));
+    border:1px solid rgba(255,214,79,0.3);
+    box-shadow:0 4px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .ovShield { font-size:38px; filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6)); }
+  .ovLogoTitle {
+    font-size:26px; font-weight:900; letter-spacing:3px; line-height:1.1;
+    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .ovLogoSub { font-size:10px; color:#9aa3c7; letter-spacing:3px; margin-top:2px; }
+  .ovIcon { display:none; }
   .ovTitle {
     font-size:30px; font-weight:900; letter-spacing:6px; margin-bottom:8px;
     background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
@@ -169,7 +168,7 @@
     box-shadow:inset -3px -4px 6px rgba(0,0,0,0.45), inset 2px 3px 5px rgba(255,255,255,0.35), 0 2px 5px rgba(0,0,0,0.4);
   }
   .handCard .cost {
-    color:#ff8f8f; font-weight:800; font-size:calc(var(--card-font) + 1px);
+    color:#e07bff; font-weight:800; font-size:calc(var(--card-font) + 1px);
     text-shadow:0 1px 2px rgba(0,0,0,0.8);
     display:flex; align-items:center; gap:2px; justify-content:center;
   }
@@ -245,9 +244,9 @@
   /* ===== 移动端:纵向堆叠布局 ===== */
   @media (max-width: 860px) {
     body { padding:5px; }
-    .titleBar { margin-bottom:6px; padding:6px 14px; }
-    .titleBar h1 { font-size:16px; }
-    .titleBar .sub { display:none; }
+    .ovLogo { padding:8px 18px; gap:10px; margin-bottom:14px; }
+    .ovShield { font-size:30px; }
+    .ovLogoTitle { font-size:21px; }
     #wrap { flex-direction:column; align-items:stretch; gap:8px; width:100%; }
     #gameCol { width:100%; align-items:center; }
     #side { width:100%; max-width:100%; flex-direction:row; flex-wrap:wrap; gap:6px; }
@@ -262,11 +261,6 @@
 </head>
 <body>
 <script>window.__errs=[];window.addEventListener('error',function(e){window.__errs.push(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno);});</script>
-<div class="titleBar">
-  <span class="shield">⚔️</span>
-  <h1>皇室战争</h1>
-  <span class="sub">SINGLE PLAYER EDITION</span>
-</div>
 <div id="wrap">
   <div id="gameCol">
     <div id="canvasWrap">
@@ -279,9 +273,16 @@
       </div>
       <!-- 中央大提示(双倍圣水/终场等) -->
       <div id="bigAnnounce"></div>
-      <!-- 开始/暂停覆盖层 -->
+      <!-- 开始/暂停覆盖层(皇室战争 logo 仅在此出现) -->
       <div id="overlay">
         <div class="ovInner">
+          <div class="ovLogo">
+            <span class="ovShield">⚔️</span>
+            <div class="ovLogoText">
+              <div class="ovLogoTitle">皇室战争</div>
+              <div class="ovLogoSub">SINGLE PLAYER EDITION</div>
+            </div>
+          </div>
           <div class="ovIcon" id="ovIcon">⚔️</div>
           <div class="ovTitle" id="ovTitle">准备战斗</div>
           <div class="ovDesc" id="ovDesc">选择卡组与 AI 强度后开始</div>

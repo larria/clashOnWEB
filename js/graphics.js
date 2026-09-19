@@ -237,9 +237,9 @@ window.CR = window.CR || {};
         ctx.beginPath(); ctx.moveTo(cx - r*0.3, cy - r*0.15); ctx.lineTo(cx + r*0.3, cy - r*0.15); ctx.stroke();
         break;
       }
-      case 'elixirCollector': { // 圣水滴
+      case 'elixirCollector': { // 圣水滴(官方紫色)
         const eg = ctx.createRadialGradient(cx, cy - r*0.1, 0, cx, cy, r*0.45);
-        eg.addColorStop(0, '#ff8a80'); eg.addColorStop(1, '#c62828');
+        eg.addColorStop(0, '#f2a7ff'); eg.addColorStop(1, '#a829e0');
         ctx.fillStyle = eg;
         ctx.beginPath();
         ctx.moveTo(cx, cy - r*0.5);

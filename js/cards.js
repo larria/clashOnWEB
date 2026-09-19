@@ -137,7 +137,8 @@ window.CR = window.CR || {};
     fireball: { id:'fireball', name:'火球', cost:4, rarity:'稀有', kind:KIND.SPELL,
       radius:2.5, dmg:344, knockback:0.6, color:'#ff6f00' },
     arrows: { id:'arrows', name:'万箭齐发', cost:3, rarity:'普通', kind:KIND.SPELL,
-      radius:4.0, dmg:61, knockback:0, color:'#bdbdbd' },
+      radius:4.0, dmg:61, knockback:0, color:'#bdbdbd',
+      special:{ hits:3 } }, // 每单位命中3次(122x3=366总伤,可秒亡灵)
     rocket: { id:'rocket', name:'火箭', cost:6, rarity:'稀有', kind:KIND.SPELL,
       radius:2.0, dmg:742, knockback:0.3, color:'#d50000' },
     lightning: { id:'lightning', name:'雷电法术', cost:6, rarity:'史诗', kind:KIND.SPELL,
