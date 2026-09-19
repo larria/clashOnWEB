@@ -179,16 +179,20 @@ window.CR = window.CR || {};
         if (u.atkCD > 0) u.atkCD -= dt;
         if (u.atkAnim > 0) u.atkAnim -= dt;
 
-        // 建筑存活时间
+        // 建筑存活时间:血量随剩余时间线性衰减(CR 建筑机制)
         if (u.lifetime > 0) {
           u.lifetime -= dt;
-          if (u.lifetime <= 0) {
+          // 每秒衰减 = 最大血量 / 总存活时间
+          const decay = u.maxHp * dt / u.card.lifetime;
+          u.hp -= decay;
+          if (u.lifetime <= 0 || u.hp <= 0) {
+            u.hp = Math.max(0, u.hp);
             u.dead = true;
-            // 墓碑死亡召唤
+            // 死亡召唤(墓碑/野蛮人小屋):到期自然消亡同样触发
             if (u.card.special && u.card.special.deathSummon) {
               const ds = u.card.special.deathSummon;
+              const positions = CR.getDeployPositions(u.x, u.y, ds.count, 0.3);
               for (let i = 0; i < ds.count; i++) {
-                const positions = CR.getDeployPositions(u.x, u.y, ds.count, 0.3);
                 const nu = new CR.Unit(ds.card, u.side, positions[i].x, positions[i].y);
                 this.addUnit(nu);
               }
@@ -201,10 +205,13 @@ window.CR = window.CR || {};
         if (u.card.special) {
           const sp = u.card.special;
           if (sp.spawn) {
+            // 首波较快(firstDelay),之后按 interval 循环
             u.specialTimer += dt;
-            if (u.specialTimer >= sp.spawn.interval) {
+            const first = sp.spawn.firstDelay != null ? sp.spawn.firstDelay : sp.spawn.interval;
+            const due = u.spawnedOnce ? sp.spawn.interval : first;
+            if (u.specialTimer >= due) {
               u.specialTimer = 0;
-              const child = CR.CARDS[sp.spawn.card];
+              u.spawnedOnce = true;
               for (let i = 0; i < sp.spawn.count; i++) {
                 const nu = new CR.Unit(sp.spawn.card, u.side, u.x, u.y + (u.side === 0 ? -0.8 : 0.8));
                 this.addUnit(nu);

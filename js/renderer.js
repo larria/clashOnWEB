@@ -104,14 +104,23 @@ window.CR = window.CR || {};
       if (tw.type === 'king') {
         ctx.fillRect(x-r, y-r, r*2, r*2);
         ctx.strokeRect(x-r, y-r, r*2, r*2);
-        // 皇冠标识
-        ctx.fillStyle = '#ffd700';
+        // 皇冠标识(未激活时暗色+睡眠符号)
+        ctx.fillStyle = tw.activated ? '#ffd700' : '#8a8a6a';
         ctx.beginPath();
         ctx.moveTo(x-r*0.4, y-r*0.2);
         ctx.lineTo(x, y-r*0.6);
         ctx.lineTo(x+r*0.4, y-r*0.2);
         ctx.closePath();
         ctx.fill();
+        if (!tw.activated) {
+          // 未激活:半透明遮罩 + "zZ" 睡眠标识
+          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.fillRect(x-r, y-r, r*2, r*2);
+          ctx.fillStyle = 'rgba(255,255,255,0.75)';
+          ctx.font = `bold ${Math.floor(r*0.55)}px sans-serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('💤', x, y + r*0.25);
+        }
       } else {
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI*2);

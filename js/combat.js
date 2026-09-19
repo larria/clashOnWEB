@@ -16,6 +16,13 @@ window.CR = window.CR || {};
     return (t & T.GROUND) !== 0;
   }
 
+  // 判断单位所在侧路:'left' | 'right' | 'mid'
+  function unitLane(unit) {
+    if (unit.x < 8) return 'left';
+    if (unit.x > 10) return 'right';
+    return 'mid';
+  }
+
   // 寻找最佳目标(最近的有效敌方单位/塔)
   function findTarget(unit, game) {
     const card = unit.card;
@@ -23,16 +30,14 @@ window.CR = window.CR || {};
     let best = null;
     let bestD = Infinity;
 
-    // 优先级:对于只攻击建筑的单位(giant/hogRider/balloon/golem),只考虑建筑和塔
+    // 只攻击建筑的单位(giant/hogRider/balloon/golem):只考虑建筑和塔
     const onlyBuilding = (card.targets === T.BUILDING);
 
-    // 敌方单位
+    // 敌方单位(含建筑单位——攻城单位可被敌方建筑牵引)
     const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
     for (const e of enemies) {
-      // 地狱塔/X连弩/迫击炮特殊:可打塔
       let valid = canTarget(unit, e.card, e.flying, e.isBuilding);
       if (!valid) continue;
-      // 只打建筑的单位不打普通部队(除非对方也是建筑)
       if (onlyBuilding && !e.isBuilding) continue;
       const d = CR.dist(unit, e);
       if (d <= sightR && d < bestD) {
@@ -43,11 +48,36 @@ window.CR = window.CR || {};
 
     // 敌方塔
     const towers = game.getEnemyTowers(unit.side);
+    // 攻城单位(只打建筑)的塔优先级:首选同侧公主塔,该塔被毁后才转国王塔/另一侧
+    if (onlyBuilding) {
+      const lane = unitLane(unit);
+      const sidePrincess = towers.filter(t => !t.dead && t.type === 'princess');
+      let preferred = null;
+      if (lane === 'left' && !towers.find(t => t.lane === 'left').dead) preferred = towers.find(t => t.lane === 'left');
+      else if (lane === 'right' && !towers.find(t => t.lane === 'right').dead) preferred = towers.find(t => t.lane === 'right');
+      else if (lane === 'mid') {
+        // 中路:选最近的存活公主塔;都毁则国王塔
+        preferred = sidePrincess.length > 0 ? sidePrincess.reduce((a,b) => CR.dist(unit,a) < CR.dist(unit,b) ? a : b) : towers.find(t => t.type === 'king' && !t.dead);
+      }
+      // 同侧公主塔已被推:打国王塔(若活着),否则打另一侧
+      if (!preferred) {
+        const king = towers.find(t => t.type === 'king' && !t.dead);
+        preferred = king || sidePrincess[0] || null;
+      }
+      if (preferred) {
+        const d = CR.dist(unit, preferred);
+        if (d <= sightR) {
+          best = { type: 'tower', ref: preferred, x: preferred.x, y: preferred.y, flying: false, isBuilding: true, lane: preferred.lane };
+        }
+      }
+      return best; // 攻城单位不做通用塔比较,直接返回(建筑目标已在前面的单位循环中处理)
+    }
+
+    // 普通单位:所有塔按最近优先
     for (const tw of towers) {
       if (tw.dead) continue;
       let valid = canTarget(unit, null, false, true);
       if (!valid) continue;
-      // 普通部队只有在公主塔被摧毁后才能直接攻击国王塔?简化:国王塔始终可被攻击,但优先打公主塔
       const d = CR.dist(unit, tw);
       if (d <= sightR && d < bestD) {
         bestD = d;
@@ -62,11 +92,12 @@ window.CR = window.CR || {};
   function findNearestEnemyUnit(unit, game) {
     const card = unit.card;
     const sightR = card.sightRange || 0;
-    // 只打建筑的单位(巨人/野猪/气球)无视部队
-    if (card.targets === T.BUILDING) return null;
     let best = null, bestD = Infinity;
     const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
+    // 只打建筑的单位(巨人/野猪/气球):只对敌方建筑感兴趣(被牵引)
+    const onlyBuilding = (card.targets === T.BUILDING);
     for (const e of enemies) {
+      if (onlyBuilding && !e.isBuilding) continue;
       if (!canTarget(unit, e.card, e.flying, e.isBuilding)) continue;
       const d = CR.dist(unit, e);
       if (d <= sightR && d < bestD) { bestD = d; best = e; }
@@ -74,12 +105,31 @@ window.CR = window.CR || {};
     return best;
   }
 
-  // 寻找行军目标(无敌人时向最近的敌方塔推进)
-  // 公主塔被推掉后,该路单位自然会选到更近的国王塔
+  // 寻找行军目标(无目标时向敌方塔推进)
   function getMarchTarget(unit, game) {
-    const towers = game.getEnemyTowers(unit.side).filter(t => !t.dead);
+    const allTowers = game.getEnemyTowers(unit.side);
+    const towers = allTowers.filter(t => !t.dead);
     if (towers.length === 0) return null;
-    // 选最近的存活塔(公主塔/国王塔统一比较)
+
+    // 攻城单位(只打建筑):首选同侧公主塔,该塔被毁后转国王塔
+    if (unit.card.targets === T.BUILDING) {
+      const lane = unitLane(unit);
+      const left = allTowers.find(t => t.lane === 'left');
+      const right = allTowers.find(t => t.lane === 'right');
+      const king = allTowers.find(t => t.type === 'king');
+      if (lane === 'left' && !left.dead) return left;
+      if (lane === 'right' && !right.dead) return right;
+      if (lane === 'mid') {
+        // 中路:最近的存活公主塔
+        const princess = towers.filter(t => t.type === 'princess');
+        if (princess.length > 0) return princess.reduce((a,b) => CR.dist(unit,a) < CR.dist(unit,b) ? a : b);
+      }
+      // 同侧公主塔已毁(或无公主塔):国王塔优先
+      if (king && !king.dead) return king;
+      return towers[0];
+    }
+
+    // 普通单位:最近的存活塔
     let best = towers[0], bd = CR.dist(unit, best);
     for (const t of towers) {
       const d = CR.dist(unit, t);
@@ -255,6 +305,8 @@ window.CR = window.CR || {};
   function dealTowerDamage(tower, dmg, game) {
     if (tower.dead) return;
     tower.hp -= dmg;
+    // 国王塔受到任何伤害(含法术)即激活
+    if (tower.onDamaged) tower.onDamaged();
     if (tower.hp <= 0) {
       tower.hp = 0;
       tower.dead = true;
@@ -277,6 +329,14 @@ window.CR = window.CR || {};
         const u = new CR.Unit(sp.summonOnDeath.card, unit.side,
           unit.x + (i - sp.summonOnDeath.count/2) * 0.6, unit.y);
         u.deployTimer = 0.3;
+        game.addUnit(u);
+      }
+    }
+    // 死亡召唤(墓碑->骷髅 / 野蛮人小屋->野蛮人):被击杀时同样触发
+    if (sp.deathSummon) {
+      const positions = CR.getDeployPositions(unit.x, unit.y, sp.deathSummon.count, 0.3);
+      for (let i = 0; i < sp.deathSummon.count; i++) {
+        const u = new CR.Unit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
         game.addUnit(u);
       }
     }
@@ -311,7 +371,14 @@ window.CR = window.CR || {};
   }
 
   function onTowerDeath(tower, game) {
-    // 公主塔被摧毁,激活同侧国王塔(简化:国王塔始终激活,这里仅记录)
+    // 公主塔被摧毁 → 激活同方国王塔
+    if (tower.type === 'princess') {
+      const king = game.towers[tower.side].king;
+      if (king && !king.dead && !king.activated) {
+        king.activated = true;
+        if (CR.log) CR.log((tower.side === 0 ? '你的' : 'AI的') + '国王塔被激活!', 'sys');
+      }
+    }
     game.onTowerDestroyed(tower);
   }
 

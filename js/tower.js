@@ -36,10 +36,16 @@ window.CR = window.CR || {};
       this.shotTarget = null; // 最近一次射击目标位置(弹道)
       this.isTower = true;
       this.dead = false;
-      this.activated = (pos.type === 'king'); // 国王塔默认激活,公主塔被摧毁会激活同侧国王塔(此处简化:始终激活)
+      // 国王塔默认未激活:某侧公主塔被摧毁、或国王塔自身受到伤害时激活
+      // 公主塔始终激活
+      this.activated = (pos.type !== 'king');
     }
-    get canAct() { return this.frozen <= 0 && this.stunned <= 0 && !this.dead; }
+    get canAct() { return this.activated && this.frozen <= 0 && this.stunned <= 0 && !this.dead; }
     get hitSpeed() { return this.rageTimer > 0 ? this._hitSpeed / 1.35 : this._hitSpeed; }
+    // 受到伤害:国王塔被击中即激活
+    onDamaged() {
+      if (!this.activated) this.activated = true;
+    }
   }
 
   CR.Tower = Tower;
