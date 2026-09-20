@@ -140,24 +140,24 @@ export const CARDS = {
 
   // ===== 法术 =====
   fireball: { id:'fireball', name:'火球', cost:4, rarity:'稀有', kind:KIND.SPELL,
-    radius:2.5, dmg:344, knockback:0.6, color:'#ff6f00', deployZone:'anywhere' },
+    radius:2.5, dmg:344, knockback:0.6, color:'#ff6f00', deployZone:'anywhere', projectile: 15 },  // 投射速度600(wiki),从国王塔飞出
   arrows: { id:'arrows', name:'万箭齐发', cost:3, rarity:'普通', kind:KIND.SPELL,
     radius:4.0, dmg:61, knockback:0, color:'#bdbdbd', deployZone:'anywhere',
-    special:{ hits:3 } }, // 每单位命中3次(61x3=183总伤,可秒亡灵)
+    special:{ hits:3 }, projectile: 27.5 },  // 投射速度1100(wiki);每单位命中3次
   rocket: { id:'rocket', name:'火箭', cost:6, rarity:'稀有', kind:KIND.SPELL,
-    radius:2.0, dmg:742, knockback:0.3, color:'#d50000', deployZone:'anywhere' },
+    radius:2.0, dmg:742, knockback:0.3, color:'#d50000', deployZone:'anywhere', projectile: 8.75 },  // 投射速度350(wiki),全场约3.2s
   lightning: { id:'lightning', name:'雷电法术', cost:6, rarity:'史诗', kind:KIND.SPELL,
     radius:3.0, dmg:528, knockback:0.8, color:'#ffd600', deployZone:'anywhere',
     special:{ chain:3, stun:1.0 } },
   zap: { id:'zap', name:'电击法术', cost:2, rarity:'普通', kind:KIND.SPELL,
     radius:2.5, dmg:96, knockback:0.4, color:'#29b6f6', deployZone:'anywhere',
-    special:{ stun:0.5 } },
+    special:{ stun:0.5 }, castTime: 0.5 },  // 施法时间0.5s(wiki)
   rage: { id:'rage', name:'狂暴法术', cost:2, rarity:'史诗', kind:KIND.SPELL,
     radius:5.0, dmg:0, knockback:0, color:'#ff1744', deployZone:'anywhere',
     special:{ buff:1.35, duration:6.0 } },
   freeze: { id:'freeze', name:'冰冻法术', cost:3, rarity:'史诗', kind:KIND.SPELL,
     radius:3.5, dmg:60, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
-    special:{ freeze:4.0 } },
+    special:{ freeze:4.0 }, castTime: 4.0 },  // 施法时间4s(wiki)
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },

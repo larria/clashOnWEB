@@ -29,10 +29,43 @@ export function castSpell(cardId, side, x, y, game, mirrorSource) {
 
   // 范围伤害法术
   if (card.dmg > 0 || card.special) {
-    applySpellEffect(card, side, x, y, game);
+    // 投射/施法延时(原版:火球/万箭/火箭从释放方国王塔飞出,飞行时间与
+    // 距离正相关;电击/冰冻有固定施法时间;雷电/狂暴即时)
+    const delay = getSpellDelay(card, side, x, y);
+    if (delay > 0) {
+      if (card.projectile) {
+        // 飞行投射:发射点 = 己方国王塔后方,渲染投射物动画,到达后结算
+        const from = { x: 9, y: side === 0 ? 30.5 : 1.5 };
+        game.addEffect({
+          type: 'spellProjectile', cardId: card.id, side,
+          fromX: from.x, fromY: from.y, toX: x, toY: y,
+          life: delay, maxLife: delay,
+        });
+      } else {
+        // 固定施法时间:目标点预警圈
+        game.addEffect({
+          type: 'spellCast', cardId: card.id, side,
+          x, y, radius: card.radius, life: delay, maxLife: delay, color: card.color,
+        });
+      }
+      game.schedule(delay, () => applySpellEffect(card, side, x, y, game));
+    } else {
+      applySpellEffect(card, side, x, y, game);
+    }
   }
 
   game.lastPlayedCard = cardId;
+}
+
+// 法术延迟:投射法术按距离/速度;固定施法时间法术用 castTime;其余即时
+function getSpellDelay(card, side, x, y) {
+  if (card.projectile) {
+    const from = { x: 9, y: side === 0 ? 30.5 : 1.5 }; // 己方国王塔
+    const d = Math.hypot(x - from.x, y - from.y);
+    return d / card.projectile;
+  }
+  if (card.castTime) return card.castTime;
+  return 0;
 }
 
 function applySpellEffect(card, side, x, y, game) {

@@ -683,6 +683,23 @@ export class Renderer {
       const t = e.life / e.maxLife;
       if (e.type === 'spell') {
         drawSpellFx(ctx, e.cardId, e.x*CELL, e.y*CELL, e.radius, t);
+      } else if (e.type === 'spellProjectile') {
+        this.drawSpellProjectile(e, t);
+      } else if (e.type === 'spellCast') {
+        // 固定施法时间:目标处预警圈(脉冲收缩)
+        const x = e.x*CELL, y = e.y*CELL, R = e.radius*CELL;
+        const tt = this.animTime;
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = e.color;
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([8, 5]); ctx.lineDashOffset = -tt*20;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 0.15 + 0.1*Math.sin(tt*6);
+        ctx.fillStyle = e.color;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
       } else if (e.type === 'deathBomb') {
         this.drawDeathBomb(e, t);
       } else if (e.type === 'elixirPop') {
@@ -718,6 +735,98 @@ export class Renderer {
       }
     }
     ctx.globalAlpha = 1;
+  }
+
+  // 法术投射物(从国王塔飞向目标):按卡型绘制 + 轨迹 + 落点预警
+  drawSpellProjectile(e, t) {
+    const ctx = this.ctx;
+    const p = 1 - t; // 0→1 飞行进度
+    const fx = e.fromX*CELL, fy = e.fromY*CELL;
+    const tx = e.toX*CELL, ty = e.toY*CELL;
+    const x = fx + (tx - fx) * p;
+    const y = fy + (ty - fy) * p;
+    const ang = Math.atan2(ty - fy, tx - fx);
+    const tt = this.animTime;
+    ctx.save();
+
+    // 落点预警圈(虚线,目标处)
+    const card = CARDS[e.cardId] || {};
+    const R = (card.radius || 2.5) * CELL;
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = card.color || '#fff';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]); ctx.lineDashOffset = -tt*15;
+    ctx.beginPath(); ctx.arc(tx, ty, R, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 飞行轨迹(渐隐尾迹)
+    ctx.globalAlpha = 0.35;
+    const trailN = 6;
+    for (let i = 1; i <= trailN; i++) {
+      const tp = Math.max(0, p - i * 0.04);
+      const txx = fx + (tx - fx) * tp, tyy = fy + (ty - fy) * tp;
+      ctx.fillStyle = card.color || '#fff';
+      ctx.globalAlpha = 0.3 * (1 - i / trailN);
+      ctx.beginPath(); ctx.arc(txx, tyy, Math.max(2, 10 - i*1.4), 0, Math.PI*2); ctx.fill();
+    }
+
+    // 投射物本体(按卡型)
+    ctx.globalAlpha = 1;
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    if (e.cardId === 'fireball') {
+      // 火球:橙红渐变球 + 火焰拖尾
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 11);
+      g.addColorStop(0, '#fff8e1'); g.addColorStop(0.4, '#ff9800'); g.addColorStop(1, 'rgba(230,81,0,0.1)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI*2); ctx.fill();
+      // 尾焰
+      ctx.fillStyle = 'rgba(255,152,0,0.5)';
+      ctx.beginPath();
+      ctx.moveTo(-4, -5); ctx.lineTo(-20, 0); ctx.lineTo(-4, 5);
+      ctx.closePath(); ctx.fill();
+    } else if (e.cardId === 'rocket') {
+      // 火箭:弹体 + 尾焰 + 烟迹
+      ctx.fillStyle = '#c62828';
+      ctx.beginPath();
+      ctx.moveTo(10, 0); ctx.lineTo(-2, -4); ctx.lineTo(-2, 4);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-2, -4, 4, 8);
+      const fg = ctx.createLinearGradient(-4, 0, -26, 0);
+      fg.addColorStop(0, '#ffee58'); fg.addColorStop(1, 'rgba(255,152,0,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath();
+      ctx.moveTo(-4, -3.5); ctx.lineTo(-26, 0); ctx.lineTo(-4, 3.5);
+      ctx.closePath(); ctx.fill();
+    } else if (e.cardId === 'arrows') {
+      // 万箭:一簇箭矢(扇形)
+      ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      for (let i = -2; i <= 2; i++) {
+        const off = i * 4;
+        ctx.beginPath();
+        ctx.moveTo(-8, off * 0.6 + Math.sin(i) * 2);
+        ctx.lineTo(8, off * 0.6);
+        ctx.stroke();
+      }
+      // 箭头
+      ctx.fillStyle = '#cfd8dc';
+      for (let i = -2; i <= 2; i++) {
+        const off = i * 4;
+        ctx.beginPath();
+        ctx.moveTo(12, off * 0.6);
+        ctx.lineTo(6, off * 0.6 - 2.5);
+        ctx.lineTo(6, off * 0.6 + 2.5);
+        ctx.closePath(); ctx.fill();
+      }
+    } else {
+      // 通用:发光球
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 9);
+      g.addColorStop(0, '#fff'); g.addColorStop(1, card.color || '#fff');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
   }
 
   // 延时死亡炸弹(气球/骷髅巨人):黑圆炸弹 + 引信火花闪烁 + 剩余时间环
