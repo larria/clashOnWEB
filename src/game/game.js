@@ -8,7 +8,7 @@
 // ===============================================
 import {
   T, GRID_W, GRID_H, RIVER_Y1, RIVER_Y2, TOWERS, MAX_ELIXIR, ELIXIR_RATE,
-  MATCH_TIME, DOUBLE_ELIXIR_AT, dist, isRiver, isBridge,
+  MATCH_TIME, DOUBLE_ELIXIR_AT, OVERTIME, TRIPLE_ELIXIR_AT, dist, isRiver, isBridge,
 } from '../core/constants.js';
 import { CARDS, KIND } from '../data/cards.js';
 import { EventBus } from '../core/events.js';
@@ -29,6 +29,8 @@ export class Game {
     this.elixirFloat = { 0: 5, 1: 5 };
     this.time = 0;
     this.doubleElixir = false;
+    this.tripleElixir = false;          // 加时最后 1 分钟三倍圣水
+    this.overtime = false;              // 加时(sudden death:先推塔者胜)
     this.lastPlayedCard = null;
     this.winner = null; // 0/1/-1/null
     this.gameOver = false;
@@ -188,14 +190,20 @@ export class Game {
       this.bus.emit('log', { who: 'sys', msg: '⚡ 双倍圣水开启!' });
       this.bus.emit('match:phase', { phase: 'double_elixir' });
     }
-    // 最后 1 分钟警告(只发一次)
-    if (!this._warned60 && this.time >= MATCH_TIME - 60) {
+    // 加时最后 1 分钟三倍圣水
+    if (this.overtime && this.time >= TRIPLE_ELIXIR_AT && !this.tripleElixir) {
+      this.tripleElixir = true;
+      this.bus.emit('log', { who: 'sys', msg: '⚡⚡ 加时三倍圣水!' });
+      this.bus.emit('match:phase', { phase: 'triple_elixir' });
+    }
+    // 常规时间最后 1 分钟警告(只发一次)
+    if (!this._warned60 && this.time >= MATCH_TIME - 60 && this.time < MATCH_TIME) {
       this._warned60 = true;
       this.bus.emit('match:phase', { phase: 'last_minute' });
     }
 
     // 圣水回复
-    const rate = ELIXIR_RATE * (this.doubleElixir ? 2 : 1);
+    const rate = ELIXIR_RATE * (this.tripleElixir ? 3 : (this.doubleElixir ? 2 : 1));
     this.elixirFloat[0] = Math.min(MAX_ELIXIR, this.elixirFloat[0] + rate * dt);
     this.elixirFloat[1] = Math.min(MAX_ELIXIR, this.elixirFloat[1] + rate * dt);
     this.elixir[0] = Math.floor(this.elixirFloat[0]);
@@ -209,9 +217,29 @@ export class Game {
     // 清理死亡单位
     this.units = this.units.filter(u => !u.dead);
 
-    // 超时判定
-    if (this.time >= MATCH_TIME && !this.gameOver) {
-      this.decideByDamage();
+    // 常规时间结束:皇冠领先即胜;平皇冠进加时(sudden death)
+    if (!this.overtime && this.time >= MATCH_TIME && !this.gameOver) {
+      const crowns0 = this._crowns(1); // 玩家皇冠
+      const crowns1 = this._crowns(0); // AI 皇冠
+      if (crowns0 !== crowns1) {
+        this.decideByDamage();
+      } else {
+        // 平皇冠 → 加时
+        this.overtime = true;
+        this.bus.emit('log', { who: 'sys', msg: '⏱ 常规时间结束,皇冠持平 — 进入加时(先摧毁任意塔者胜)!' });
+        this.bus.emit('match:phase', { phase: 'overtime' });
+      }
+    }
+    // 加时中任意塔被摧毁 → 塔方立即判负(onTowerDeath → checkWin 已处理国王塔;
+    // 公主塔需在此判定)
+    if (this.overtime && !this.gameOver) {
+      const anyDead = (s) => this.towers[s].left.dead || this.towers[s].right.dead;
+      if (anyDead(1)) { this.winner = 0; this.gameOver = true; this.bus.emit('match:end', { winner: 0, reason: 'overtime' }); }
+      else if (anyDead(0)) { this.winner = 1; this.gameOver = true; this.bus.emit('match:end', { winner: 1, reason: 'overtime' }); }
+      // 加时耗尽 → 最低塔血者负(简化 tiebreaker)
+      else if (this.time >= MATCH_TIME + OVERTIME) {
+        this.decideByDamage();
+      }
     }
   }
 
@@ -463,6 +491,8 @@ export class Game {
     }
 
     this.elixirFloat[side] -= cost;
+    // 下限保护:浮点边界下扣费可能轻微透支(如 9.99 圣水放 10 费镜像)
+    if (this.elixirFloat[side] < 0) this.elixirFloat[side] = 0;
     this.elixir[side] = Math.floor(this.elixirFloat[side]);
     this.bus.emit('card:played', { side, cardId, x, y, kind: card.kind });
     return true;

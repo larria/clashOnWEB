@@ -1,7 +1,7 @@
 // ===============================================
 // HUD - 倒计时/阶段标签 + 中央大提示 + 战斗信息面板
 // ===============================================
-import { MATCH_TIME } from '../core/constants.js';
+import { MATCH_TIME, OVERTIME } from '../core/constants.js';
 
 export class Hud {
   constructor({ hudTimer, hudPhase, bigAnnounce, info: infoEl }) {
@@ -13,15 +13,23 @@ export class Hud {
 
   /** 每帧调用(game 为当前局;仅 playing 时) */
   update(game) {
-    const remain = Math.max(0, MATCH_TIME - game.time);
+    // 加时:倒计时显示加时剩余(前缀 +)
+    const total = game.overtime ? MATCH_TIME + OVERTIME : MATCH_TIME;
+    const remain = Math.max(0, total - game.time);
     const m = String(Math.floor(remain/60)).padStart(2,'0');
     const s = String(Math.floor(remain%60)).padStart(2,'0');
-    this.timerEl.textContent = `${m}:${s}`;
+    this.timerEl.textContent = (game.overtime ? '+' : '') + `${m}:${s}`;
     // 危险态:最后60秒变红,最后10秒脉冲
     this.timerEl.classList.toggle('danger', remain <= 60);
     this.timerEl.classList.toggle('pulse', remain <= 10);
     // 阶段标签
-    if (game.doubleElixir) {
+    if (game.tripleElixir) {
+      this.phaseEl.textContent = '加时·三倍圣水 ×3';
+      this.phaseEl.classList.add('double');
+    } else if (game.overtime) {
+      this.phaseEl.textContent = '加时·突然死亡';
+      this.phaseEl.classList.add('double');
+    } else if (game.doubleElixir) {
       this.phaseEl.textContent = '双倍圣水 ×2';
       this.phaseEl.classList.add('double');
     } else {

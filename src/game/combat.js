@@ -244,7 +244,7 @@ export function attackTarget(attacker, target, game) {
   } else if (target.type === 'tower') {
     const tw = target.ref;
     if (card.splash && card.splash > 0) {
-      applySplash(game, attacker, tw.x, tw.y, card.splash, dmg, card.targets, tw);
+      applySplash(game, attacker, tw.x, tw.y, card.splash, dmg, card.targets);
     } else {
       game.dealTowerDamage(tw, dmg);
     }
@@ -257,8 +257,8 @@ export function attackTarget(attacker, target, game) {
   attacker.atkAnim = 0.3;
 }
 
-// 范围伤害
-export function applySplash(game, attacker, cx, cy, radius, dmg, targetsMask, ignoreTower) {
+// 范围伤害(单位与敌方塔)
+export function applySplash(game, attacker, cx, cy, radius, dmg, targetsMask) {
   // 伤害范围内敌方单位
   const enemies = game.units.filter(u => u.side !== attacker.side && !u.dead);
   for (const e of enemies) {

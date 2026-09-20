@@ -52,7 +52,9 @@ function applySpellEffect(card, side, x, y, game) {
       if (dmg > 0) {
         // 多段命中(万箭齐发 3 次/单位)
         const totalDmg = dmg * ((sp && sp.hits) || 1);
+        const hpBefore = e.hp;
         game.dealDamage(e, totalDmg, null, card);
+        if (e.hp <= 0 || e.dead) spellKills.push(e.card.name); // 记录击杀(日志用)
       }
       // 击退(重型单位免疫:巨人等大块头岿然不动)
       if (card.knockback && card.knockback > 0 && !e.isBuilding && !isHeavy(e)) {
@@ -105,10 +107,13 @@ function applySpellEffect(card, side, x, y, game) {
     }
   }
 
-  // 伤害塔(皇冠塔减伤:法术对塔约 30% 伤害;多段命中同样适用)
+  // 伤害塔(皇冠塔减伤:各法术倍率不同,对齐 wiki——
+  // 万箭 20% / 火箭 23% / 雷电 15% / 火球·电击·冰冻·狂暴 25%;多段命中同样适用)
   if (dmg > 0) {
+    const TOWER_MULT = { arrows: 0.20, rocket: 0.23, lightning: 0.15, fireball: 0.25, zap: 0.25, freeze: 0.25, rage: 0.25 };
+    const mult = TOWER_MULT[card.id] != null ? TOWER_MULT[card.id] : 0.3;
     const towers = game.getEnemyTowers(side);
-    const towerDmg = dmg * 0.3 * ((sp && sp.hits) || 1);
+    const towerDmg = dmg * mult * ((sp && sp.hits) || 1);
     for (const tw of towers) {
       if (tw.dead) continue;
       const d = dist2(x, y, tw.x, tw.y);

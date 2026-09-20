@@ -65,7 +65,7 @@ let aiLevel = settings.get('aiLevel');
 // phase: 'ready'(待开始) | 'playing' | 'paused' | 'over-wait' | 'over'
 let phase = 'ready';
 // 阶段提示状态
-let announcedDouble = false, announcedLastMinute = false, announcedTimeUp = false;
+let announcedDouble = false, announcedLastMinute = false, announcedTimeUp = false, announcedOvertime = false;
 
 // ===== 卡组管理 =====
 let DECKS = {};
@@ -250,6 +250,7 @@ function startGame() {
   announcedDouble = false;
   announcedLastMinute = false;
   announcedTimeUp = false;
+  announcedOvertime = false;
   audio.play('battle_start');
   audio.playMusic();
 }
@@ -300,12 +301,16 @@ function loop(now) {
         announcedDouble = true;
         hud.announce('⚡ 双倍圣水', 'DOUBLE ELIXIR', '#ff8a80');
       }
-      if (!announcedLastMinute && remain <= 60) {
+      if (!announcedLastMinute && remain <= 60 && remain > 0) {
         announcedLastMinute = true;
         // 双倍圣水提示(120s)与本提示同时刻,错开播放避免覆盖
         setTimeout(() => { if (phase === 'playing') hud.announce('⏰ 最后 1 分钟', 'FINAL MINUTE', '#ffe082'); }, 2800);
       }
-      if (!announcedTimeUp && game.gameOver && game.time >= MATCH_TIME - 0.01) {
+      if (!announcedOvertime && game.overtime) {
+        announcedOvertime = true;
+        hud.announce('⏱ 加时赛', 'SUDDEN DEATH · 先摧毁任意塔者胜', '#ff8a80');
+      }
+      if (!announcedTimeUp && game.gameOver && game.time >= MATCH_TIME - 0.01 && !game.overtime) {
         announcedTimeUp = true;
         hud.announce('⏱ 时间到!', '判定胜负…', '#eceef5');
       }

@@ -49,9 +49,11 @@ export const TOWER_STATS = {
 export const MAX_ELIXIR = 10;
 export const ELIXIR_RATE = 1 / 2.8; // 每秒增长(2.8秒1费),双倍圣水时翻倍
 
-// 比赛时长(秒)与双倍圣水时间
+// 比赛时长(秒)、双倍圣水、加时(sudden death 2 分钟,最后 1 分钟三倍圣水)
 export const MATCH_TIME = 180;
 export const DOUBLE_ELIXIR_AT = 120;
+export const OVERTIME = 120;
+export const TRIPLE_ELIXIR_AT = MATCH_TIME + OVERTIME - 60; // 加时第 60 秒起三倍
 
 // 渲染尺寸
 export const CELL = 38;
