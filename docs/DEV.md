@@ -1,4 +1,7 @@
-# 架构说明
+# 开发文档
+
+面向开发者的技术规格:架构、约定、扩展指南、验证方法。
+只描述当前版本,历史变更见 `docs/LOG.md`。
 
 ## 目录结构
 
@@ -37,7 +40,7 @@ clash/
 │   │   └── input.js      Pointer Events 抽象(拖拽放兵扩展点)
 │   └── audio/
 │       └── audio.js      音频系统(桩:事件点已接,待接资源)
-└── docs/                 数据存档与文档
+└── docs/                 DEV.md / PRODUCT.md / LOG.md / 数值存档
 ```
 
 ## 核心约定
@@ -53,14 +56,15 @@ audio.js ←──────┴──────────────┘ (
 ```
 
 - Game 及 game/* 模块**不 import** render/ui/audio 任何东西
-- 游戏内沟通全部走 `game.bus`(EventBus):`unit:killed`、`tower:destroyed`、`spell:hit`、`card:played`、`log`、`match:end` 等
+- 游戏内沟通全部走 `game.bus`(EventBus):`unit:killed`、`tower:destroyed`、
+  `spell:hit`、`card:played`、`log`、`match:end` 等,事件清单见 events.js 头部注释
 - 应用级(跨局)事件走 `appBus`:`settings:changed`、`decks:changed`
-- 事件清单见 events.js 头部注释
+- 伤害结算统一入口 `game.dealDamage` / `game.dealTowerDamage`,死亡效果由 abilities 接管
 
 ### 2. 能力系统(abilities.js)
 
-卡牌特殊效果不再散落在 game/combat/spells 的 if-chain,统一由 abilities.js 解释:
-- 卡牌数据 `special` 里的键 → abilities.js 里的执行逻辑
+卡牌特殊效果统一由 abilities.js 解释,不散落在 game/combat/spells 的 if-chain:
+- 卡牌数据 `special` 里的键 → abilities.js 里的执行逻辑(键清单见该文件头部注释)
 - **新卡牌效果已有键** → 只改 data/cards.js 填参数
 - **全新机制** → abilities.js 注册 + 对应系统留一个挂钩点
 
@@ -73,14 +77,21 @@ audio.js ←──────┴──────────────┘ (
 ### 4. 部署规则(data 驱动)
 
 `card.deployZone`:`undefined`(己方半场,默认)| `'anywhere'`(法术、矿工、飞桶)
-`canDeploy(side, x, y, enemyTowers, {zone})` 统一解释。
+`canDeploy(side, x, y, enemyTowers, {zone})` 统一解释,游戏与渲染共用同一判定。
 
 ### 5. 设置
 
-`core/settings.js` 定义项 → `ui/settingsui.js` 自动渲染控件 → `settings:changed` 事件
-驱动各处(音频开关、部署区显示、AI 强度)。新增设置只改 definitions + 一个订阅处。
+`core/settings.js` 定义项 → `ui/settingsui.js` 自动渲染控件 → `settings:changed`
+事件驱动各处(音频开关、部署区显示、AI 强度)。新增设置只改 definitions + 一个订阅处。
 
-## 添加新卡牌
+### 6. 数值口径
+
+游戏内数值 = 官方 wiki 11 级 × 0.5(四舍五入)。数据来源与换算规则见
+`docs/CARD-STATS.md`,原始快照 `docs/card-stats.json`(离线可查,无需重新抓取)。
+
+## 常见扩展指南
+
+### 添加新卡牌
 
 1. `data/cards.js` 加卡(数值照 docs/card-stats.json 换算)
 2. 特殊效果:special 填已有能力键;全新机制在 `game/abilities.js` 注册
@@ -88,7 +99,41 @@ audio.js ←──────┴──────────────┘ (
 4. 部署特殊(矿工/飞桶):`deployZone:'anywhere'`
 5. AI 认识它:`game/ai.js` 的 COUNTERS/ROLE 表加条目
 
+### 添加新设置项
+
+1. `core/settings.js` 的 DEFINITIONS 加一项(key/def/label)
+2. 在消费处 `settings.get(key)` 或订阅 `settings:changed`
+3. 设置页控件自动出现,无需改 settingsui.js
+
+### 添加新领域事件
+
+1. `game` 内 `this.bus.emit('xxx', payload)`(事件名与 payload 注释加到 events.js 头部清单)
+2. 表现层订阅,回调内不得反向修改游戏状态
+
 ## 回归验证
 
-headless 方式:浏览器 evaluate 直接驱动 `CR._dbg.game.update(dt)` + `ai.decide()`,
-跑完整一局确认无异常(见会话记录的验证脚本模式)。
+headless 方式:浏览器 evaluate 直接驱动 `CR._dbg.game.update(dt)` + `ai.decide()`
+(`CR._dbg` 是 main.js 留的调试出口),跑完整一局确认无异常。发版前至少:
+- 3 局完整对战无 JS 错误
+- 机制抽查:万箭秒亡灵 / 野猪跳河 / 国王塔激活时序 / 推塔部署解锁 /
+  圣水收集器产费 / 墓碑死亡召唤
+- UI 链路:选牌→部署、卡组编辑器、设置页开关
+
+## 运行与部署
+
+无构建、无依赖,静态托管即用:
+
+```bash
+cd clash && python3 -m http.server 8000   # 本地
+```
+
+线上:GitHub Pages 自动部署自 main 分支(https://larria.github.io/clashOnWEB/)。
+注意 ES Modules 要求 http(s) 协议,file:// 直开不可用。
+
+## 文档维护规则
+
+**每次改动需评估是否同步文档:**
+- 改架构/依赖关系/模块职责 → 本文档(DEV.md)
+- 改玩法规则/卡牌/界面功能 → PRODUCT.md
+- 完成一个阶段的工作 → LOG.md 追加一条
+- 开发与产品文档只对当前版本负责,不写历史(历史只进 LOG.md)

@@ -424,6 +424,17 @@ els.openDeckEditor.addEventListener('click', () => {
 document.getElementById('openSettings').addEventListener('click', () => settingsScreen.open());
 document.getElementById('againBtn').addEventListener('click', () => location.reload());
 
+// 侧栏 AI 强度下拉 ↔ settings 双向同步(设置页改动时联动)
+const aiLevelSelect = document.getElementById('aiLevel');
+aiLevelSelect.value = String(settings.get('aiLevel'));
+aiLevelSelect.addEventListener('change', () => {
+  const v = parseFloat(aiLevelSelect.value);
+  if (!isNaN(v)) settings.set('aiLevel', v);
+});
+appBus.on('settings:changed', ({ key, value }) => {
+  if (key === 'aiLevel') aiLevelSelect.value = String(value);
+});
+
 // 卡组编辑器数据变化 → 刷新下拉与预览
 appBus.on('decks:changed', () => {
   refreshDecks();
