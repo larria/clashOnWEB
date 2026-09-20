@@ -11,12 +11,15 @@
  *   off(); // 取消订阅
  *
  * 领域事件清单(见 docs/EVENTS.md):
- *   match:start / match:end / match:pause / match:resume
+ *   match:start / match:end {winner, reason} / match:phase {phase: double_elixir|last_minute}
  *   card:played {side, cardId, x, y, kind, role}
  *   unit:deployed {unit}
+ *   unit:attack {attacker, isTower, isKing}   // 每次攻击结算(音效订阅)
  *   unit:killed  {unit, attacker}
  *   tower:damaged {tower}
  *   tower:destroyed {tower, crowns}
+ *   king:activated {tower}                    // 国王塔激活(音效订阅)
+ *   elixir:produced {side, amount}            // 收集器产费
  *   spell:hit {cardId, side, x, y, hits, kills}
  *   log {who, msg}           // 游戏逻辑想输出的日志(原 CR.log 全局函数)
  *   announce {main, sub, color}

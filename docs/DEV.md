@@ -40,7 +40,7 @@ clash/
 │   ├── input/
 │   │   └── input.js      Pointer Events 抽象(拖拽放兵扩展点)
 │   └── audio/
-│       └── audio.js      音频系统(桩:事件点已接,待接资源)
+│       └── audio.js      音频系统(WebAudio:懒加载/节流/事件订阅/音乐循环)
 └── docs/                 DEV.md / PRODUCT.md / LOG.md / 数值存档
 ```
 

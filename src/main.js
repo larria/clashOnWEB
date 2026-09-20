@@ -232,16 +232,19 @@ function startGame() {
   announcedDouble = false;
   announcedLastMinute = false;
   announcedTimeUp = false;
+  audio.play('battle_start');
   audio.playMusic();
 }
 
 function togglePause() {
   if (phase === 'playing') {
     setPhase('paused');
+    audio.stopMusic();
     gameLog.push('⏸ 游戏已暂停', 'sys');
   } else if (phase === 'paused') {
     lastTime = performance.now();
     setPhase('playing');
+    audio.playMusic();
     gameLog.push('▶ 继续战斗', 'sys');
   }
 }
@@ -337,7 +340,9 @@ function onHandCardClick(i) {
   const cardId = playerHand[i];
   if (!cardId) return;
   if (game.elixir[0] < CARDS[cardId].cost) { flashMsg('圣水不足'); return; }
+  const newlySelected = selectedCardIdx !== i;
   selectedCardIdx = (selectedCardIdx === i ? -1 : i);
+  if (newlySelected) audio.cardSelect();
 }
 
 const input = new InputController(canvas, {

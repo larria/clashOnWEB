@@ -76,6 +76,7 @@ export class Game {
 
   addElixir(side, amount) {
     this.elixirFloat[side] = Math.min(MAX_ELIXIR, this.elixirFloat[side] + amount);
+    this.bus.emit('elixir:produced', { side, amount });
   }
 
   getEnemyTowers(side) {
@@ -143,6 +144,7 @@ export class Game {
       const king = this.towers[tower.side].king;
       if (king && !king.dead && !king.activated) {
         king.activated = true;
+        this.bus.emit('king:activated', { tower: king });
         this.bus.emit('log', { who: 'sys', msg: (tower.side === 0 ? '你的' : 'AI的') + '国王塔被激活!' });
       }
     }
@@ -174,6 +176,12 @@ export class Game {
     if (this.time > DOUBLE_ELIXIR_AT && !this.doubleElixir) {
       this.doubleElixir = true;
       this.bus.emit('log', { who: 'sys', msg: '⚡ 双倍圣水开启!' });
+      this.bus.emit('match:phase', { phase: 'double_elixir' });
+    }
+    // 最后 1 分钟警告(只发一次)
+    if (!this._warned60 && this.time >= MATCH_TIME - 60) {
+      this._warned60 = true;
+      this.bus.emit('match:phase', { phase: 'last_minute' });
     }
 
     // 圣水回复
@@ -250,6 +258,8 @@ export class Game {
               // 记录弹道(射击方向与目标位置,用于渲染)
               tw.shotFlash = 0.25;
               tw.shotTarget = { x: tRef.x, y: tRef.y };
+              // 攻击事件(音效订阅;isKing 区分国王塔)
+              this.bus.emit('unit:attack', { attacker: tw, isTower: true, isKing: tw.type === 'king' });
             }
           }
         } else {
@@ -336,6 +346,8 @@ export class Game {
             u.atkCD = u.hitSpeed;
             // 充能重置(攻击后取消冲锋)
             if (u.charged) { u.charged = false; u.chargeTimer = 0; }
+            // 攻击事件(音效订阅)
+            this.bus.emit('unit:attack', { attacker: u, isTower: false, isKing: false });
           }
         } else {
           // 不在范围,移动接近
