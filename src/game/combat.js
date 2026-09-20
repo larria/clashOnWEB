@@ -215,7 +215,16 @@ export function moveUnit(unit, game, dt) {
     unit.chargeTimer += dt;
     if (unit.chargeTimer > 1.5 && !unit.charged) {
       unit.charged = true;
+      game.bus.emit('unit:charge', { unit }); // 冲锋音效
     }
+  }
+  // 脚步声:大单位行进间按步频播放(速度越快步频越高)
+  if (!unit._stepAcc) unit._stepAcc = 0;
+  unit._stepAcc += dt;
+  const stepInterval = 1.1 / Math.max(0.6, unit.speed); // 每步约 1.1 格
+  if (unit._stepAcc >= stepInterval) {
+    unit._stepAcc = 0;
+    game.bus.emit('unit:step', { unit });
   }
 }
 

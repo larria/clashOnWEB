@@ -93,6 +93,7 @@ export class Game {
   dealDamage(unit, dmg, attacker, sourceCard) {
     if (unit.dead) return;
     unit.hp -= dmg;
+    this.bus.emit('unit:damaged', { unit, dmg, attacker }); // 受击音效
     if (unit.hp <= 0) {
       unit.hp = 0;
       unit.dead = true;
@@ -349,16 +350,14 @@ export class Game {
             // 攻击事件(音效订阅)
             this.bus.emit('unit:attack', { attacker: u, isTower: false, isKing: false });
           }
+          // 停下来攻击:充能计时暂停(不清零,保持充能进度)
         } else {
-          // 不在范围,移动接近
+          // 不在范围,移动接近(充能计时在 moveUnit 内累计)
           moveUnit(u, this, dt);
-          // 移动后若脱离充能方向,重置充能
-          if (!u.charged) u.chargeTimer = 0;
         }
       } else {
         // 无目标,推进
         moveUnit(u, this, dt);
-        if (!u.charged) u.chargeTimer = 0;
       }
     }
     // 单位碰撞分离:地面单位互不重叠,后进单位被挤出(模拟 CR 部队互相阻挡)

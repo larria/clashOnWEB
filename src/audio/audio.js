@@ -41,6 +41,17 @@ const SFX_FILES = [
   'battle_start','battle_end_horn','victory','defeat','crown_get','elixir_double',
   'warn_60s','unit_die','unit_die_big','enemy_deploy','card_select','ui_click',
   'elixir_collect','deploy_generic',
+  // 行走/脚步(大单位行进间播放)
+  'step_knight','step_barbarians','step_giant','step_miniPekka','step_valkyrie',
+  'step_hogRider','step_wizard','step_pekka','step_prince','step_babyDragon',
+  'step_witch','step_golem','step_giantSkeleton','step_goblins','step_spearGoblins',
+  'step_musketeer',
+  // 受击
+  'hit_knight','hit_giant','hit_miniPekka','hit_valkyrie','hit_pekka','hit_prince',
+  'hit_giantSkeleton',
+  // 专属死亡/冲锋/召唤/建筑
+  'die_golem','charge_prince','charge_hit_prince','building_destroyed','death_bomb',
+  'hut_spawn','summon_skeletons','tesla_open',
   // 音乐
   'music_battle',
 ];
@@ -185,13 +196,47 @@ class AudioSystem {
       }
     });
 
+    // 行走脚步:大单位行进间播放(低音量;杂兵不播防嘈杂)
+    bus.on('unit:step', ({ unit }) => {
+      if (!unit || !unit.card) return;
+      if (unit.card.cost < 3) return; // 低费杂兵不播
+      this.play('step_' + unit.cardId, { throttle: 60, volume: 0.32, fallback: null });
+    });
+
+    // 受击:大单位专属受击音(小单位不播,避免战斗音墙)
+    bus.on('unit:damaged', ({ unit, dmg }) => {
+      if (!unit || !unit.card) return;
+      if (unit.card.cost < 4) return;             // 小单位不播
+      this.play('hit_' + unit.cardId, { throttle: 250, volume: 0.5, fallback: null });
+    });
+
+    // 王子冲锋
+    bus.on('unit:charge', ({ unit }) => {
+      if (unit && unit.cardId === 'prince') this.play('charge_prince', { volume: 0.9 });
+    });
+
+    // 小屋产兵 / 女巫召唤
+    bus.on('unit:spawned', ({ spawner }) => {
+      if (spawner && spawner.cardId === 'goblinHut') this.play('hut_spawn', { throttle: 200, volume: 0.6 });
+    });
+    bus.on('unit:summoned', ({ spawner }) => {
+      if (spawner && spawner.cardId === 'witch') this.play('summon_skeletons', { throttle: 200, volume: 0.7 });
+    });
+
+    // 死亡爆炸(气球/骷髅巨人/戈仑)与建筑被毁
+    bus.on('unit:deathBomb', () => this.play('death_bomb', { throttle: 150, volume: 0.9 }));
+    bus.on('unit:killed', ({ unit }) => {
+      if (unit && unit.isBuilding) this.play('building_destroyed', { throttle: 200, volume: 0.8 });
+    });
+
     // 单位死亡:对齐原版——只有 ≥7 费的非建筑单体(皮卡/戈仑/骷髅巨人等)
     // 阵亡才有专属死亡音;其余单位死亡不发声(群体单位的碎裂声由攻击音覆盖)
     bus.on('unit:killed', ({ unit }) => {
       if (!unit || !unit.card) return;
-      if (unit.isBuilding) return;               // 建筑消亡不播死亡音
+      if (unit.isBuilding) return;               // 建筑消亡走 building_destroyed
       if (unit.card.cost >= 7) {
-        this.play('unit_die_big', { throttle: 200 });
+        // 戈仑有专属死亡音
+        this.play(unit.cardId === 'golem' ? 'die_golem' : 'unit_die_big', { throttle: 200 });
       }
     });
 

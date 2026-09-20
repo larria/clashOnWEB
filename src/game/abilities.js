@@ -48,6 +48,7 @@ export function tickPeriodic(unit, game, dt) {
       for (let i = 0; i < sp.spawn.count; i++) {
         game.spawnUnit(sp.spawn.card, unit.side, unit.x, unit.y + (unit.side === 0 ? -0.8 : 0.8));
       }
+      game.bus.emit('unit:spawned', { spawner: unit, card: sp.spawn.card }); // 产兵音效
       produced = true;
     }
   }
@@ -67,6 +68,7 @@ export function tickPeriodic(unit, game, dt) {
         game.spawnUnit(sp.summon.card, unit.side,
           unit.x + (Math.random() - 0.5), unit.y + (unit.side === 0 ? -1 : 1) * 0.5);
       }
+      game.bus.emit('unit:summoned', { spawner: unit, card: sp.summon.card }); // 召唤音效
       produced = true;
     }
   }
@@ -80,6 +82,7 @@ export function applyDeathAbilities(unit, game) {
 
   if (sp.deathDamage) {
     game.applyAreaDamage(unit, sp.deathDamage.dmg, sp.deathDamage.splash, sp.deathDamage.targets);
+    game.bus.emit('unit:deathBomb', { unit }); // 死亡爆炸音效(气球/骷髅巨人/戈仑)
   }
   if (sp.summonOnDeath) {
     for (let i = 0; i < (sp.summonOnDeath.count || 1); i++) {
