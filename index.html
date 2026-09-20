@@ -4,340 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>皇室战争 单机版</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html, body { touch-action:manipulation; }
-  body {
-    background:
-      radial-gradient(1200px 600px at 20% -10%, #2c3a6b 0%, transparent 55%),
-      radial-gradient(1000px 500px at 90% 110%, #3d2a4f 0%, transparent 50%),
-      linear-gradient(160deg, #171a2e 0%, #14172a 50%, #191430 100%);
-    background-attachment:fixed;
-    color:#eceef5; font-family:'PingFang SC','Microsoft YaHei',sans-serif;
-    display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:10px;
-    overflow:auto;
-  }
-  #wrap { align-self:center; }
-
-  /* ===== 标题 ===== */
-  #wrap { display:flex; gap:14px; align-items:flex-start; justify-content:center; }
-  #gameCol { display:flex; flex-direction:column; align-items:center; min-width:0; }
-  #handArea { width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; margin-top:8px; }
-
-  /* ===== 侧栏 ===== */
-  #side {
-    width:230px; max-width:230px; display:flex; flex-direction:column; gap:10px; font-size:13px; flex-shrink:0;
-  }
-  .panel {
-    background:linear-gradient(160deg, rgba(46,52,94,0.72), rgba(34,38,72,0.72));
-    backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
-    padding:12px; border-radius:12px;
-    border:1px solid rgba(255,255,255,0.09);
-    box-shadow:0 6px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
-  }
-  .panel h3 {
-    font-size:13px; margin-bottom:8px; letter-spacing:0.5px;
-    color:#ffd54f; display:flex; align-items:center; gap:5px;
-  }
-  .panel h3::after { content:''; flex:1; height:1px; background:linear-gradient(90deg, rgba(255,213,79,0.35), transparent); }
-
-  /* ===== 画布 ===== */
-  #canvasWrap {
-    position:relative;
-    background:#000;
-    border:3px solid #3a4266;
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow:
-      0 10px 34px rgba(0,0,0,0.5),
-      0 0 0 1px rgba(255,255,255,0.06),
-      inset 0 0 24px rgba(0,0,0,0.35);
-  }
-  canvas { display:block; }
-  #status {
-    position:absolute; top:42px; left:50%; transform:translateX(-50%);
-    background:rgba(10,14,26,0.82); padding:4px 14px; border-radius:16px; font-size:12px;
-    border:1px solid rgba(255,255,255,0.15);
-    pointer-events:none; z-index:6;
-    box-shadow:0 2px 10px rgba(0,0,0,0.4);
-    max-width:88%; white-space:nowrap; /* 单行,超长由下面 ellipsis */
-    overflow:hidden; text-overflow:ellipsis;
-  }
-
-  /* ===== HUD 倒计时(canvas 顶部中央空地,单行紧凑) ===== */
-  #hud {
-    position:absolute; top:4px; left:50%; transform:translateX(-50%);
-    z-index:5; pointer-events:none;
-    display:flex; align-items:center; gap:10px;
-    background:rgba(10,14,26,0.72);
-    border:1px solid rgba(255,255,255,0.12);
-    border-radius:16px; padding:2px 14px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.35);
-    backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
-    white-space:nowrap;
-  }
-  #hudTimer {
-    font-size:17px; font-weight:800; letter-spacing:1px; line-height:1.2;
-    color:#ffe082; text-shadow:0 0 10px rgba(255,213,79,0.35);
-    font-variant-numeric:tabular-nums;
-    transition:color .3s;
-  }
-  #hudTimer.danger { color:#ff5a4f; text-shadow:0 0 14px rgba(255,80,60,0.7); }
-  #hudTimer.pulse { animation:timerPulse 1s infinite; }
-  @keyframes timerPulse {
-    0%,100% { transform:scale(1); }
-    50% { transform:scale(1.1); }
-  }
-  #hudPhase { font-size:10px; color:#9aa3c7; letter-spacing:2px; }
-  #hudPhase.double { color:#ff8a80; font-weight:700; }
-
-  /* ===== 中央大提示 ===== */
-  #bigAnnounce {
-    position:absolute; top:38%; left:50%; transform:translate(-50%,-50%);
-    z-index:8; pointer-events:none; text-align:center; opacity:0;
-    width:94%; /* 限制宽度,超长文案折行 */
-  }
-  #bigAnnounce.show { animation:announceIn 2.6s ease forwards; }
-  #bigAnnounce .baMain {
-    /* 响应式字号:窄屏自动缩小,长文案不溢出 */
-    font-size:clamp(20px, 7.5vw, 42px); font-weight:900; letter-spacing:4px;
-    text-shadow:0 4px 20px rgba(0,0,0,0.7), 0 0 30px currentColor;
-    line-height:1.3; text-wrap:balance;
-  }
-  #bigAnnounce .baSub { font-size:clamp(10px, 2.6vw, 14px); letter-spacing:3px; color:#eceef5; opacity:0.85; margin-top:6px; text-wrap:balance; }
-  @keyframes announceIn {
-    0% { opacity:0; transform:translate(-50%,-50%) scale(0.6); }
-    12% { opacity:1; transform:translate(-50%,-50%) scale(1.08); }
-    20% { transform:translate(-50%,-50%) scale(1); }
-    78% { opacity:1; }
-    100% { opacity:0; transform:translate(-50%,-60%) scale(1.05); }
-  }
-
-  /* ===== 开始/暂停覆盖层 ===== */
-  #overlay {
-    position:absolute; inset:0; z-index:20;
-    background:rgba(10,13,26,0.72);
-    backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
-    display:flex; flex-direction:column; align-items:center;
-    justify-content:space-between;
-    padding:28px 12px 36px;
-    transition:opacity .25s;
-  }
-  #overlay.hidden { opacity:0; pointer-events:none; }
-  /* logo 固定在覆盖层顶部 */
-  .ovLogo {
-    display:flex; align-items:center; gap:14px;
-    padding:10px 26px; border-radius:16px;
-    background:linear-gradient(135deg, rgba(58,68,120,0.7), rgba(40,46,88,0.5));
-    border:1px solid rgba(255,214,79,0.3);
-    box-shadow:0 4px 18px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-  .ovShield { font-size:38px; filter:drop-shadow(0 3px 8px rgba(0,0,0,0.6)); }
-  .ovLogoTitle {
-    font-size:26px; font-weight:900; letter-spacing:3px; line-height:1.1;
-    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
-  .ovLogoSub { font-size:10px; color:#9aa3c7; letter-spacing:3px; margin-top:2px; }
-  /* 内容组在中下部 */
-  .ovInner { text-align:center; animation:ovFloat .5s ease; margin-top:auto; margin-bottom:auto; }
-  @keyframes ovFloat { from { transform:translateY(14px); opacity:0; } to { transform:none; opacity:1; } }
-  .ovIcon { display:none; }
-  .ovTitle {
-    font-size:30px; font-weight:900; letter-spacing:6px; margin-bottom:8px;
-    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    white-space:nowrap; /* 短标题不折行;过长时由 JS 缩字号 */
-  }
-  .ovDesc { font-size:13px; color:#9aa3c7; margin-bottom:22px; letter-spacing:1px;
-    max-width:82%; margin-left:auto; margin-right:auto; line-height:1.6;
-    text-wrap:balance; /* 折行时均衡断行,避免孤字 */ }
-  .ovHint { font-size:11px; color:#6b7399; margin-top:16px; letter-spacing:1px; }
-
-  /* ===== 手牌卡(CSS 变量控制尺寸)===== */
-  :root { --card-w:80px; --card-h:100px; --card-font:11px; --orb-size:30px; }
-  .handCard {
-    width:var(--card-w); height:var(--card-h);
-    border-radius:9px; padding:5px 4px; position:relative; text-align:center;
-    font-size:var(--card-font); font-weight:600;
-    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
-    flex-shrink:0; user-select:none; -webkit-user-select:none;
-    border:2px solid #4a5178;
-    background:linear-gradient(165deg, #343a5e 0%, #262b4a 60%, #202440 100%);
-    box-shadow:0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-    cursor:pointer;
-  }
-  .handCard:hover { transform:translateY(-4px); border-color:#6a74a8; box-shadow:0 7px 14px rgba(0,0,0,0.5); }
-  .handCard:active { transform:translateY(-1px) scale(0.98); }
-  .handCard .cardName {
-    color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.8);
-    line-height:1.15; max-width:100%; overflow:hidden;
-  }
-  .cardOrb {
-    width:var(--orb-size); height:var(--orb-size); border-radius:50%; margin:0 auto; flex-shrink:0;
-    box-shadow:inset -3px -4px 6px rgba(0,0,0,0.45), inset 2px 3px 5px rgba(255,255,255,0.35), 0 2px 5px rgba(0,0,0,0.4);
-  }
-  .handCard .cost {
-    color:#e07bff; font-weight:800; font-size:calc(var(--card-font) + 1px);
-    text-shadow:0 1px 2px rgba(0,0,0,0.8);
-    display:flex; align-items:center; gap:2px; justify-content:center;
-  }
-  .nextCard {
-    width:calc(var(--card-w) * 0.72); height:var(--card-h);
-    background:linear-gradient(165deg, rgba(38,43,74,0.6), rgba(28,32,58,0.6));
-    border:2px dashed rgba(255,255,255,0.22); border-radius:9px; padding:4px;
-    text-align:center; font-size:calc(var(--card-font) - 1px);
-    display:flex; flex-direction:column; justify-content:center; gap:3px;
-    opacity:0.72; flex-shrink:0;
-  }
-  .nextCard .label { color:#8a93b8; font-size:9px; letter-spacing:1px; }
-
-  /* ===== 日志 ===== */
-  #log {
-    height:270px; overflow-y:auto; font-size:11px; line-height:1.65;
-    font-family:'SF Mono', Menlo, Consolas, monospace;
-    background:rgba(12,15,30,0.55); border-radius:8px; padding:6px 8px;
-    border:1px solid rgba(255,255,255,0.06);
-    scrollbar-width:thin; scrollbar-color:#4a5178 transparent;
-  }
-  #log::-webkit-scrollbar { width:5px; }
-  #log::-webkit-scrollbar-thumb { background:#4a5178; border-radius:3px; }
-  #log div { padding:1px 4px; border-radius:3px; }
-  .me { color:#7fd4ff; }
-  .ai { color:#ffab91; }
-  .sys { color:#ffe082; font-weight:700; }
-  .kill { color:#ff8a80; }
-  .spell { color:#e1bee7; }
-
-  /* ===== 信息面板 ===== */
-  #info { font-size:12px; line-height:1.8; }
-  #info b { color:#fff; }
-
-  /* ===== 按钮/表单 ===== */
-  .btn {
-    background:linear-gradient(180deg, #4f9e4a 0%, #3d8a39 55%, #33722f 100%);
-    color:#fff; border:none; padding:9px 16px; border-radius:9px;
-    cursor:pointer; font-size:13px; font-weight:600; letter-spacing:0.5px;
-    box-shadow:0 3px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.22);
-    transition:filter .12s, transform .08s;
-    text-shadow:0 1px 2px rgba(0,0,0,0.4);
-  }
-  .btn:hover { filter:brightness(1.12); }
-  .btn:active { transform:translateY(1px); }
-  .btn-blue {
-    background:linear-gradient(180deg, #4a6fb5 0%, #3a5a99 55%, #2e4879 100%);
-  }
-  select {
-    background:linear-gradient(180deg, #2a2f52, #22264380);
-    background-color:#262b4a; color:#eceef5; border:1px solid #4a5178; padding:6px 8px;
-    border-radius:8px; width:100%; font-size:12px; outline:none;
-    box-shadow:inset 0 1px 3px rgba(0,0,0,0.3);
-    cursor:pointer; appearance:none; -webkit-appearance:none;
-    background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a93b8'/%3E%3C/svg%3E");
-    background-repeat:no-repeat; background-position:right 10px center; padding-right:26px;
-  }
-  select:focus { border-color:#7984c0; }
-  label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-spacing:0.5px; }
-
-  /* ===== 结算弹窗 ===== */
-  #result {
-    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.9);
-    background:linear-gradient(165deg, rgba(40,46,88,0.96), rgba(24,28,54,0.96));
-    padding:34px 52px; border-radius:18px; text-align:center; display:none; z-index:100;
-    border:1px solid rgba(255,213,79,0.35);
-    box-shadow:0 20px 60px rgba(0,0,0,0.6);
-    opacity:0; transition:opacity .25s, transform .25s;
-  }
-  #result.show { display:block; opacity:1; transform:translate(-50%,-50%) scale(1); }
-  #result h2 { font-size:38px; margin-bottom:18px; letter-spacing:2px; text-shadow:0 4px 16px rgba(0,0,0,0.5); }
-
-  /* ===== 卡组编辑器 ===== */
-  #deckEditor { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center;
-    background:rgba(8,10,20,0.78); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
-  #deckEditor.show { display:flex; }
-  #deckEditorBox {
-    width:min(760px, 94vw); max-height:92vh; overflow:auto;
-    background:linear-gradient(165deg, rgba(40,46,88,0.97), rgba(24,28,54,0.97));
-    border:1px solid rgba(255,213,79,0.35); border-radius:16px; padding:18px 20px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.65);
-    scrollbar-width:thin; scrollbar-color:#4a5178 transparent;
-  }
-  #deckEditorBox::-webkit-scrollbar { width:6px; }
-  #deckEditorBox::-webkit-scrollbar-thumb { background:#4a5178; border-radius:3px; }
-  .deTitle { font-size:20px; font-weight:900; letter-spacing:3px; margin-bottom:4px;
-    background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .deSub { font-size:11px; color:#9aa3c7; margin-bottom:12px; letter-spacing:0.5px; }
-  #deSlots { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
-  .deSlot {
-    flex:1 1 100px; min-width:96px; padding:8px 6px; border-radius:10px; text-align:center;
-    background:rgba(12,15,30,0.55); border:2px solid #3a4266; cursor:pointer;
-    transition:border-color .12s, box-shadow .12s;
-  }
-  .deSlot:hover { border-color:#6a74a8; }
-  .deSlot.active { border-color:#ffd54f; box-shadow:0 0 12px rgba(255,213,79,0.3); }
-  .deSlot .deSlotName { font-size:12px; font-weight:700; color:#eceef5;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .deSlot .deSlotCount { font-size:10px; color:#9aa3c7; margin-top:3px; }
-  .deSlot.active .deSlotCount { color:#ffd54f; font-weight:700; }
-  .deCurLabel { font-size:11px; color:#ffd54f; margin:2px 0 6px; letter-spacing:0.5px; }
-  #deDeckRow { display:flex; gap:6px; flex-wrap:wrap; min-height:66px; margin-bottom:10px;
-    padding:8px; border-radius:10px; background:rgba(12,15,30,0.5); border:1px dashed rgba(255,255,255,0.15); }
-  .deDeckCard {
-    width:52px; height:64px; border-radius:8px; border:2px solid #4a5178; cursor:pointer;
-    background:linear-gradient(165deg, #343a5e 0%, #262b4a 60%, #202440 100%);
-    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
-    padding:3px 2px; font-size:9px; text-align:center; position:relative; flex-shrink:0;
-    transition:transform .1s, border-color .1s;
-  }
-  .deDeckCard:hover { transform:translateY(-2px); border-color:#ff7b7b; }
-  .deDeckCard .deName { color:#fff; line-height:1.15; max-width:100%; overflow:hidden; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
-  .deDeckCard .deOrb { width:22px; height:22px; border-radius:50%; flex-shrink:0;
-    box-shadow:inset -2px -3px 4px rgba(0,0,0,0.45), inset 1px 2px 3px rgba(255,255,255,0.35); }
-  .deDeckCard .deCost { color:#e07bff; font-weight:800; }
-  .deDeckCard .deRm { position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%;
-    background:#c62828; color:#fff; font-size:11px; line-height:16px; text-align:center; display:none;
-    box-shadow:0 1px 4px rgba(0,0,0,0.5); }
-  .deDeckCard:hover .deRm { display:block; }
-  .deCardGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(58px, 1fr)); gap:6px; margin-bottom:14px; }
-  .dePoolCard {
-    height:62px; border-radius:8px; border:2px solid #3a4266; cursor:pointer; position:relative;
-    background:linear-gradient(165deg, #2e3454 0%, #232847 60%, #1e233d 100%);
-    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
-    padding:3px 2px; font-size:9px; text-align:center;
-    transition:transform .1s, border-color .1s, opacity .1s;
-  }
-  .dePoolCard:hover { transform:translateY(-2px); border-color:#7fd4ff; }
-  .dePoolCard.inDeck { opacity:0.35; border-color:#2a2f52; cursor:not-allowed; }
-  .dePoolCard.inDeck::after { content:'✓'; position:absolute; top:2px; right:5px; color:#7fff9e; font-size:11px; font-weight:900; }
-  .dePoolCard .deName { color:#eceef5; line-height:1.15; max-width:100%; overflow:hidden; }
-  .dePoolCard .deOrb { width:20px; height:20px; border-radius:50%; flex-shrink:0;
-    box-shadow:inset -2px -3px 4px rgba(0,0,0,0.45), inset 1px 2px 3px rgba(255,255,255,0.35); }
-  .dePoolCard .deCost { color:#e07bff; font-weight:800; }
-  .deRarityTag { position:absolute; top:2px; left:5px; width:6px; height:6px; border-radius:50%; }
-  .deFooter { display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
-  .deAvg { font-size:11px; color:#9aa3c7; margin-right:auto; }
-  .deAvg b { color:#e07bff; }
-  .btn-sm { padding:7px 13px; font-size:12px; }
-
-  /* ===== 移动端:纵向堆叠布局 ===== */
-  @media (max-width: 860px) {
-    body { padding:5px; }
-    .ovLogo { padding:8px 18px; gap:10px; margin-bottom:14px; }
-    .ovShield { font-size:30px; }
-    .ovLogoTitle { font-size:21px; }
-    #wrap { flex-direction:column; align-items:stretch; gap:8px; width:100%; }
-    #gameCol { width:100%; align-items:center; }
-    #side { width:100%; max-width:100%; flex-direction:row; flex-wrap:wrap; gap:6px; }
-    #side .panel { flex:1 1 45%; min-width:150px; font-size:12px; padding:9px; }
-    #side .panel:last-child { flex:1 1 100%; }
-    #log { height:110px; }
-    #canvasWrap { border-width:2px; }
-    #result { padding:24px 34px; }
-    #result h2 { font-size:28px; }
-  }
-</style>
+<link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 <script>window.__errs=[];window.addEventListener('error',function(e){window.__errs.push(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno);});</script>
@@ -353,7 +20,7 @@
       </div>
       <!-- 中央大提示(双倍圣水/终场等) -->
       <div id="bigAnnounce"></div>
-      <!-- 开始/暂停覆盖层(皇室战争 logo 仅在此出现) -->
+      <!-- 开始/暂停覆盖层(皇室战争 logo 仅在此出现;未来游戏封面) -->
       <div id="overlay">
         <div class="ovLogo">
           <span class="ovShield">⚔️</span>
@@ -361,6 +28,10 @@
             <div class="ovLogoTitle">皇室战争</div>
             <div class="ovLogoSub">SINGLE PLAYER EDITION</div>
           </div>
+        </div>
+        <!-- 覆盖层右上角:设置入口(音乐音效等开关) -->
+        <div class="ovCornerBtns">
+          <button class="ovIconBtn" id="openSettings" title="设置">⚙</button>
         </div>
         <div class="ovInner">
           <div class="ovTitle" id="ovTitle">准备战斗</div>
@@ -408,7 +79,7 @@
 <div id="result">
   <h2 id="resultText"></h2>
   <div id="resultSub" style="font-size:12px;letter-spacing:4px;margin:-10px 0 18px;opacity:0.8;"></div>
-  <button class="btn" onclick="location.reload()">再来一局</button>
+  <button class="btn" id="againBtn">再来一局</button>
 </div>
 
 <!-- 卡组编辑器 -->
@@ -430,17 +101,19 @@
   </div>
 </div>
 
-<script src="js/constants.js"></script>
-<script src="js/cards.js"></script>
-<script src="js/unit.js"></script>
-<script src="js/tower.js"></script>
-<script src="js/combat.js"></script>
-<script src="js/spells.js"></script>
-<script src="js/game.js"></script>
-<script src="js/deckeditor.js"></script>
-<script src="js/ai.js"></script>
-<script src="js/graphics.js"></script>
-<script src="js/renderer.js"></script>
-<script src="js/main.js"></script>
+<!-- 设置页(独立界面,入口在开始遮罩右上角) -->
+<div id="settingsScreen">
+  <div id="settingsBox">
+    <div class="deTitle">⚙ 设置</div>
+    <div class="deSub">音乐音效等偏好,自动保存到本机</div>
+    <div id="settingsList"></div>
+    <div class="settingsFooter">
+      <button class="btn btn-sm" id="settingsClose">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 应用入口(ES Modules,无构建) -->
+<script type="module" src="src/main.js"></script>
 </body>
 </html>
