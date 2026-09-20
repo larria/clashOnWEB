@@ -511,15 +511,19 @@ export class Renderer {
         ctx.beginPath(); ctx.arc(x, cy, rr, 0, Math.PI*2); ctx.stroke();
       } else if (isBuilding) {
         // 建筑:卡图 + 阵营色方形底框
-        const bg = ctx.createLinearGradient(x-r, y-r, x+r, y+r);
+        // 视觉尺寸与碰撞半径解耦:3×3 建筑视觉与火枪手卡图同大(≈81px),
+        // 特斯拉(2×2)更小(≈64px);碰撞半径(1.35/0.9)不变
+        const isSmall = u.radius < 1.1; // 特斯拉 2×2
+        const vr = (isSmall ? 0.84 : 1.07) * CELL; // 视觉半宽(格 × CELL)
+        const bg = ctx.createLinearGradient(x-vr, y-vr, x+vr, y+vr);
         bg.addColorStop(0, sc.light); bg.addColorStop(0.5, sc.base); bg.addColorStop(1, sc.dark);
         ctx.fillStyle = bg;
-        roundRect(ctx, x-r, cy-r, r*2, r*2, 6); ctx.fill();
+        roundRect(ctx, x-vr, cy-vr, vr*2, vr*2, 6); ctx.fill();
         ctx.strokeStyle = sc.dark; ctx.lineWidth = 2; ctx.stroke();
         // 卡图裁入圆角方形
         ctx.save();
-        roundRect(ctx, x-r+2, cy-r+2, r*2-4, r*2-4, 4); ctx.clip();
-        drawCardImage(ctx, art, x, cy, r*2 - 4, { cropSquare: true });
+        roundRect(ctx, x-vr+2, cy-vr+2, vr*2-4, vr*2-4, 4); ctx.clip();
+        drawCardImage(ctx, art, x, cy, vr*2 - 4, { cropSquare: true });
         ctx.restore();
       } else {
         // 单体部队:完整卡图(等比,含卡框),宽度按单位大小缩放
@@ -556,8 +560,9 @@ export class Renderer {
       drawUnitIcon(ctx, u.cardId, x, cy, r * (isBuilding ? 0.85 : 1));
     }
 
-    // 攻击闪光(扩大到卡图范围)
-    const fxR = art ? Math.max(r, (isSwarm ? r*2.1 : r*2.6)) : r;
+    // 攻击闪光(扩大到卡图范围;建筑用视觉半径,部队用卡图半径)
+    const buildVR = isBuilding ? (u.radius < 1.1 ? 0.84 : 1.07) * CELL : 0;
+    const fxR = art ? (isBuilding ? buildVR : Math.max(r, (isSwarm ? r*2.1 : r*2.6))) : r;
     if (u.atkAnim > 0) {
       const a = u.atkAnim / 0.3;
       ctx.strokeStyle = `rgba(255,235,59,${a*0.8})`;
@@ -602,7 +607,7 @@ export class Renderer {
 
     // 血条(受损才显示;按视觉尺寸上移)
     if (u.hp < u.maxHp - 0.5) {
-      const topR = art ? (isSwarm ? r*2.1 : r*2.6) : r;
+      const topR = art ? (isBuilding ? buildVR : (isSwarm ? r*2.1 : r*2.6)) : r;
       this.drawHpBar(x, cy - topR - 8, Math.max(r*1.9, 18), 4, u.hp/u.maxHp, u.side);
     }
   }
@@ -690,8 +695,11 @@ export class Renderer {
       const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone });
       // 预览卡图(半透明,按单位视觉尺寸;多体单位显示小圆头像示意)
       const isSwarm = (card.count || 1) > 1;
+      const isBuildingCard = card.kind === KIND.BUILDING;
       const art = getCardImage(p.cardId);
-      const fxR = art ? (isSwarm ? r*2.1 : r*2.6) : r;
+      // 建筑预览视觉半径与实际渲染一致(3×3→1.07 格,特斯拉 0.84)
+      const bvr = ((card.radius || 0.4) < 1.1 ? 0.84 : 1.07) * CELL;
+      const fxR = art ? (isSwarm ? r*2.1 : (isBuildingCard ? bvr : r*2.6)) : r;
       if (art && !p.invalid) {
         ctx.globalAlpha = ok ? 0.65 : 0.3;
         if (isSwarm) {
@@ -709,6 +717,12 @@ export class Renderer {
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.arc(px, py, rr*0.72, 0, Math.PI*2); ctx.stroke();
           }
+        } else if (isBuildingCard) {
+          // 建筑:圆角方形裁剪预览(与实际渲染一致的底座尺寸)
+          ctx.save();
+          roundRect(ctx, x-bvr+2, y-bvr+2, bvr*2-4, bvr*2-4, 5); ctx.clip();
+          drawCardImage(ctx, art, x, y, bvr*2 - 4, { cropSquare: true });
+          ctx.restore();
         } else {
           drawCardImage(ctx, art, x, y, fxR*2);
         }
