@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-09-20 音效修正(死亡规则 + 部署音)
+
+- 死亡音对齐原版:仅 ≥7 费非建筑单体(皮卡/戈仑/骷髅巨人)阵亡播死亡音;
+  其余单位与建筑死亡不再发声(此前每个单位死都有叹息声)
+- 修复部署音几乎无声:初版误选了英雄解锁动画的音乐片段
+  (card_hero_*_deploy_jingle,5s+ 低电平配乐);从素材库重选 12 个
+  真正的部署落地音(knight/goblins/wizard/witch/giant/tombstone/
+  giantSkeleton/bomber/musketeer/golem/minionHorde 等,0.5-2s)
+- 新增 deploy_generic 通用落地音兜底:play() 支持 fallback 参数,
+  专属部署音缺失时自动回退
+- 验证:3 费骑士/建筑死亡无 fetch,7 费皮卡死亡触发 unit_die_big;
+  对局中部署音实际拉取(knight/musketeer/miniPekka/generic);回归无异常
+
 ## 2026-09-20 卡组槽扩至 10 + 选中记忆
 
 - 卡组编辑器 5 槽 → 10 槽:1-5 预填经典卡组,6-10 空白待编辑

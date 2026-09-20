@@ -40,7 +40,7 @@ const SFX_FILES = [
   // 通用
   'battle_start','battle_end_horn','victory','defeat','crown_get','elixir_double',
   'warn_60s','unit_die','unit_die_big','enemy_deploy','card_select','ui_click',
-  'elixir_collect',
+  'elixir_collect','deploy_generic',
   // 音乐
   'music_battle',
 ];
@@ -90,13 +90,19 @@ class AudioSystem {
       .finally(() => this._loading.delete(name));
   }
 
-  /** 播放音效。opts: { volume, throttle(ms,默认80) } */
+  /** 播放音效。opts: { volume, throttle(ms,默认80), fallback(缺资源时回退播放的音名) } */
   play(name, opts = {}) {
     if (!this._sfxOn || !name) return;
     const ctx = this._ensureCtx();
     if (!ctx) return;
     this._load(name);
-    const buf = this._buffers.get(name);
+    let buf = this._buffers.get(name);
+    // 资源缺失(加载失败/不存在):回退到 fallback
+    if (!buf && opts.fallback && !this._loading.has(name)) {
+      this._load(opts.fallback);
+      buf = this._buffers.get(opts.fallback);
+      name = opts.fallback;
+    }
     if (!buf) return;
     // 节流:同名音效 80ms 内不重复(默认)
     const throttle = opts.throttle != null ? opts.throttle : 80;
@@ -150,11 +156,11 @@ class AudioSystem {
   bindGame(bus) {
     this._gameBus = bus;
 
-    // 出牌:玩家用卡牌专属部署音,AI 用敌方部署音
+    // 出牌:玩家用卡牌专属部署音(缺失时回退通用落地音),AI 用敌方部署音
     bus.on('card:played', ({ side, cardId, kind }) => {
       if (side === 0) {
         if (kind === 'spell') return; // 法术音在 spell:hit 播(命中才有意义)
-        this.play('deploy_' + cardId, { throttle: 150 });
+        this.play('deploy_' + cardId, { throttle: 150, fallback: 'deploy_generic' });
       } else {
         this.play('enemy_deploy', { throttle: 250 });
       }
@@ -179,13 +185,13 @@ class AudioSystem {
       }
     });
 
-    // 单位死亡:高费大单位用大死亡音,杂兵用短音(节流防刷屏)
+    // 单位死亡:对齐原版——只有 ≥7 费的非建筑单体(皮卡/戈仑/骷髅巨人等)
+    // 阵亡才有专属死亡音;其余单位死亡不发声(群体单位的碎裂声由攻击音覆盖)
     bus.on('unit:killed', ({ unit }) => {
       if (!unit || !unit.card) return;
-      if (unit.card.cost >= 5 || unit.isBuilding) {
+      if (unit.isBuilding) return;               // 建筑消亡不播死亡音
+      if (unit.card.cost >= 7) {
         this.play('unit_die_big', { throttle: 200 });
-      } else {
-        this.play('unit_die', { throttle: 300, volume: 0.6 });
       }
     });
 
