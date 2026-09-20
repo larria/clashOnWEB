@@ -218,9 +218,9 @@ class AudioSystem {
       this.play('spell_' + cardId, { throttle: 120, volume: 1.1 });
     });
 
-    // 圣水收集器产费(玩家侧才播,别帮对手配音)
+    // 圣水收集器产费(玩家侧才播,别帮对手配音;音量提到 0.85 增强存在感)
     bus.on('elixir:produced', ({ side }) => {
-      if (side === 0) this.play('elixir_collect', { throttle: 400, volume: 0.6 });
+      if (side === 0) this.play('elixir_collect', { throttle: 300, volume: 0.85 });
     });
 
     // 单位攻击:attacker 为单位时播卡牌攻击音;塔攻击播塔音

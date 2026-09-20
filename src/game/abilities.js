@@ -56,7 +56,7 @@ export function tickPeriodic(unit, game, dt) {
     unit.specialTimer += dt;
     if (unit.specialTimer >= sp.produceElixir.interval) {
       unit.specialTimer = 0;
-      game.addElixir(unit.side, sp.produceElixir.amount);
+      game.addElixir(unit.side, sp.produceElixir.amount, unit);
       produced = true;
     }
   }

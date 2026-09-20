@@ -685,6 +685,36 @@ export class Renderer {
         drawSpellFx(ctx, e.cardId, e.x*CELL, e.y*CELL, e.radius, t);
       } else if (e.type === 'deathBomb') {
         this.drawDeathBomb(e, t);
+      } else if (e.type === 'elixirPop') {
+        // 圣水收集器产费:紫色圣水滴升腾 + 光晕闪现
+        const x = e.x*CELL, y = e.y*CELL;
+        const p = 1 - t; // 0→1 上升进度
+        ctx.save();
+        // 地面光晕(紫色,渐隐)
+        ctx.globalAlpha = t * 0.5;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, 26);
+        g.addColorStop(0, 'rgba(242,167,255,0.9)'); g.addColorStop(1, 'rgba(138,30,201,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI*2); ctx.fill();
+        // 升腾的圣水滴(3 滴错开)
+        for (let i = 0; i < 3; i++) {
+          const ph = Math.min(1, p * 1.3 - i * 0.12);
+          if (ph <= 0 || ph >= 1) continue;
+          const dx = Math.sin(i * 2.1) * 8;
+          const dy = -ph * 46;
+          const dropR = 4.5 * (1 - ph * 0.5);
+          ctx.globalAlpha = (1 - ph) * 0.95;
+          const dg = ctx.createRadialGradient(x + dx - dropR*0.3, y + dy - dropR*0.4, 0, x + dx, y + dy, dropR);
+          dg.addColorStop(0, '#f2a7ff'); dg.addColorStop(0.55, '#d24cff'); dg.addColorStop(1, '#8a1ec9');
+          ctx.fillStyle = dg;
+          // 水滴形(上尖下圆)
+          ctx.beginPath();
+          ctx.moveTo(x + dx, y + dy - dropR*1.4);
+          ctx.quadraticCurveTo(x + dx + dropR, y + dy - dropR*0.2, x + dx, y + dy + dropR);
+          ctx.quadraticCurveTo(x + dx - dropR, y + dy - dropR*0.2, x + dx, y + dy - dropR*1.4);
+          ctx.fill();
+        }
+        ctx.restore();
       }
     }
     ctx.globalAlpha = 1;

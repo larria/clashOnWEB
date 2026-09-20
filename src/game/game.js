@@ -74,9 +74,13 @@ export class Game {
   addEffect(e) { this.effects.push(e); }
   getDeployPositions(cx, cy, count, r) { return getDeployPositions(cx, cy, count, r); }
 
-  addElixir(side, amount) {
+  addElixir(side, amount, source) {
     this.elixirFloat[side] = Math.min(MAX_ELIXIR, this.elixirFloat[side] + amount);
-    this.bus.emit('elixir:produced', { side, amount });
+    this.bus.emit('elixir:produced', { side, amount, source });
+    // 视觉:圣水滴从收集器升起(渲染层消费)
+    if (source && !source.dead) {
+      this.addEffect({ type: 'elixirPop', x: source.x, y: source.y, life: 0.8, maxLife: 0.8, side });
+    }
   }
 
   getEnemyTowers(side) {
