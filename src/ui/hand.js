@@ -4,6 +4,7 @@
 // 出牌回调由外部注入(保持 UI 无游戏逻辑)
 // ===============================================
 import { CARDS } from '../data/cards.js';
+import { getCardUrl } from '../render/cardart.js';
 
 export class HandUI {
   /**
@@ -66,8 +67,8 @@ export class HandUI {
         ? `border-color:#ffd54f;transform:translateY(-6px);box-shadow:0 8px 18px rgba(0,0,0,0.55), 0 0 14px rgba(255,213,79,0.35);`
         : (canPlay ? '' : 'opacity:0.45;filter:grayscale(0.5);cursor:not-allowed;');
       d.innerHTML = `
+        <div class="cardArt" style="background-image:url('${getCardUrl(cardId)}');"></div>
         <div class="cardName">${card.name}</div>
-        <div class="cardOrb" style="background:${card.color};"></div>
         <div class="cost">💧${cost}</div>
       `;
       d.dataset.idx = i;
@@ -79,7 +80,10 @@ export class HandUI {
     const nc = CARDS[s.next];
     const nd = document.createElement('div');
     nd.className = 'nextCard';
-    nd.innerHTML = `<div class="label">下一张</div><div style="font-weight:700;color:${nc.color}">${nc.name}</div><div style="color:#e07bff;font-weight:700;">💧${nc.cost}</div>`;
+    nd.innerHTML = `<div class="label">下一张</div>` +
+      `<div class="nextArt" style="background-image:url('${getCardUrl(s.next)}');"></div>` +
+      `<div style="font-weight:700;color:${nc.color};font-size:calc(var(--card-font) - 1px);">${nc.name}</div>` +
+      `<div style="color:#e07bff;font-weight:700;">💧${nc.cost}</div>`;
     row.appendChild(nd);
     el.appendChild(row);
   }

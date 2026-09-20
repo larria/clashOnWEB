@@ -5,6 +5,7 @@
 // ===============================================
 import { CARDS, SELECTABLE_CARDS } from '../data/cards.js';
 import { appBus } from '../core/events.js';
+import { getCardUrl } from '../render/cardart.js';
 
 const LS_KEY = 'CR_CUSTOM_DECKS_V1';
 const DECK_SIZE = 8;
@@ -117,8 +118,8 @@ export class DeckEditor {
   _cardChipHtml(id) {
     const c = CARDS[id];
     return `<div class="deDeckCard" data-card="${id}">
+      <div class="deArt" style="background-image:url('${getCardUrl(id)}');"></div>
       <div class="deName">${c.name}</div>
-      <div class="deOrb" style="background:${c.color};"></div>
       <div class="deCost">💧${c.cost}</div>
       <div class="deRm">✕</div>
     </div>`;
@@ -131,8 +132,8 @@ export class DeckEditor {
       const c = CARDS[id];
       return `<div class="dePoolCard ${inDeck.has(id) ? 'inDeck' : ''}" data-card="${id}">
         <div class="deRarityTag" style="background:${rarityColor(c.rarity)};"></div>
+        <div class="deArt" style="background-image:url('${getCardUrl(id)}');"></div>
         <div class="deName">${c.name}</div>
-        <div class="deOrb" style="background:${c.color};"></div>
         <div class="deCost">💧${c.cost}</div>
       </div>`;
     }).join('');

@@ -10,6 +10,7 @@ import {
 import { CARDS, KIND } from '../data/cards.js';
 import { settings } from '../core/settings.js';
 import { PAL, sideColors, orbFill, shade, roundRect, drawUnitIcon, drawSpellFx } from './graphics.js';
+import { getCardImage, drawCardImage } from './cardart.js';
 
 export class Renderer {
   constructor(canvas, game) {
@@ -467,6 +468,9 @@ export class Renderer {
     const cy = y - (u.flying ? r*0.55 : 0) + bob;
     const sc = sideColors(u.side);
     const isBuilding = u.isBuilding;
+    const art = getCardImage(u.cardId);
+    // 多体单位(骷髅/亡灵/哥布林等):单个单位以小圆形头像展示
+    const isSwarm = (u.card.count || 1) > 1;
 
     ctx.save();
     ctx.globalAlpha = u.deployTimer > 0 ? 0.55 : 1;
@@ -485,59 +489,99 @@ export class Renderer {
       ctx.beginPath(); ctx.arc(x, y, r*0.6 + p*r*1.4, 0, Math.PI*2); ctx.stroke();
     }
 
-    if (isBuilding) {
-      // ===== 建筑方形底座 =====
-      const bg = ctx.createLinearGradient(x-r, y-r, x+r, y+r);
-      bg.addColorStop(0, sc.light); bg.addColorStop(0.5, sc.base); bg.addColorStop(1, sc.dark);
-      ctx.fillStyle = bg;
-      roundRect(ctx, x-r, cy-r, r*2, r*2, 5); ctx.fill();
-      ctx.strokeStyle = sc.dark; ctx.lineWidth = 2; ctx.stroke();
-      // 顶部高光
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      roundRect(ctx, x-r*0.7, cy-r*0.85, r*1.4, r*0.5, 3); ctx.fill();
+    if (art) {
+      // ===== 卡图渲染 =====
+      // 视觉尺寸:单位碰撞半径 × 放大系数,大单位(巨人 r=0.55)明显大于小的(火枪手 r=0.38)
+      // 多体小单位画得更小(它们以"群体"出现,单个是杂兵)
+      const artScale = isSwarm ? 2.1 : 2.8;          // 半径 → 卡图宽(像素)
+      const artW = r * artScale * 2;                  // 卡图宽度
+      if (isSwarm) {
+        // 群体单位:小圆形头像(中央正方形裁剪 + 圆形 clip)
+        const rr = r * 2.1;                           // 圆半径
+        ctx.save();
+        // 阵营描边圆底
+        ctx.fillStyle = sc.dark;
+        ctx.beginPath(); ctx.arc(x, cy, rr + 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x, cy, rr, 0, Math.PI*2); ctx.clip();
+        drawCardImage(ctx, art, x, cy, rr*2, { cropSquare: true });
+        ctx.restore();
+        // 阵营细环
+        ctx.strokeStyle = u.side === 0 ? 'rgba(111,168,224,0.9)' : 'rgba(224,130,120,0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, cy, rr, 0, Math.PI*2); ctx.stroke();
+      } else if (isBuilding) {
+        // 建筑:卡图 + 阵营色方形底框
+        const bg = ctx.createLinearGradient(x-r, y-r, x+r, y+r);
+        bg.addColorStop(0, sc.light); bg.addColorStop(0.5, sc.base); bg.addColorStop(1, sc.dark);
+        ctx.fillStyle = bg;
+        roundRect(ctx, x-r, cy-r, r*2, r*2, 6); ctx.fill();
+        ctx.strokeStyle = sc.dark; ctx.lineWidth = 2; ctx.stroke();
+        // 卡图裁入圆角方形
+        ctx.save();
+        roundRect(ctx, x-r+2, cy-r+2, r*2-4, r*2-4, 4); ctx.clip();
+        drawCardImage(ctx, art, x, cy, r*2 - 4, { cropSquare: true });
+        ctx.restore();
+      } else {
+        // 单体部队:完整卡图(等比,含卡框),宽度按单位大小缩放
+        // 底部阵营光环(区分敌我)
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.beginPath(); ctx.ellipse(x, y + r*0.42, r*0.8, r*0.3, 0, 0, Math.PI*2); ctx.fill();
+        drawCardImage(ctx, art, x, cy, artW);
+        // 阵营色描边弧(贴在图底部,不遮卡面)
+        ctx.strokeStyle = u.side === 0 ? 'rgba(111,168,224,0.95)' : 'rgba(224,130,120,0.95)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(x, cy + artW*0.36, r*0.62, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+      }
     } else {
-      // ===== 阵营底环 =====
-      ctx.fillStyle = sc.base;
-      ctx.strokeStyle = sc.dark; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(x, y + (u.flying ? r*0.55 : r*0.42), r*0.8, r*0.3, 0, 0, Math.PI*2);
-      ctx.fill(); ctx.stroke();
-      // ===== 身体(立体球) =====
-      ctx.fillStyle = orbFill(ctx, x, cy, r, u.card.color, shade(u.card.color, 55));
-      ctx.beginPath(); ctx.arc(x, cy, r, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = shade(u.card.color, -45); ctx.lineWidth = 2; ctx.stroke();
-      // 高光
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.beginPath(); ctx.ellipse(x - r*0.3, cy - r*0.4, r*0.28, r*0.18, -0.6, 0, Math.PI*2); ctx.fill();
+      // ===== 回退:图片未加载完时用原 orb 样式 =====
+      if (isBuilding) {
+        const bg = ctx.createLinearGradient(x-r, y-r, x+r, y+r);
+        bg.addColorStop(0, sc.light); bg.addColorStop(0.5, sc.base); bg.addColorStop(1, sc.dark);
+        ctx.fillStyle = bg;
+        roundRect(ctx, x-r, cy-r, r*2, r*2, 5); ctx.fill();
+        ctx.strokeStyle = sc.dark; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        roundRect(ctx, x-r*0.7, cy-r*0.85, r*1.4, r*0.5, 3); ctx.fill();
+      } else {
+        ctx.fillStyle = sc.base;
+        ctx.strokeStyle = sc.dark; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(x, y + (u.flying ? r*0.55 : r*0.42), r*0.8, r*0.3, 0, 0, Math.PI*2);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle = orbFill(ctx, x, cy, r, u.card.color, shade(u.card.color, 55));
+        ctx.beginPath(); ctx.arc(x, cy, r, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = shade(u.card.color, -45); ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.beginPath(); ctx.ellipse(x - r*0.3, cy - r*0.4, r*0.28, r*0.18, -0.6, 0, Math.PI*2); ctx.fill();
+      }
+      drawUnitIcon(ctx, u.cardId, x, cy, r * (isBuilding ? 0.85 : 1));
     }
 
-    // 类型图形
-    drawUnitIcon(ctx, u.cardId, x, cy, r * (isBuilding ? 0.85 : 1));
-
-    // 攻击闪光
+    // 攻击闪光(扩大到卡图范围)
+    const fxR = art ? Math.max(r, (isSwarm ? r*2.1 : r*2.6)) : r;
     if (u.atkAnim > 0) {
       const a = u.atkAnim / 0.3;
       ctx.strokeStyle = `rgba(255,235,59,${a*0.8})`;
       ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(x, cy, r + 5*a, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, cy, fxR + 5*a, 0, Math.PI*2); ctx.stroke();
     }
     // 冲锋状态(王子)
     if (u.charged) {
       ctx.strokeStyle = 'rgba(255,152,0,0.85)';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]);
-      ctx.beginPath(); ctx.arc(x, cy, r + 4, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, cy, fxR + 4, 0, Math.PI*2); ctx.stroke();
       ctx.setLineDash([]);
     }
     // 冰冻
     if (u.frozen > 0) {
       ctx.fillStyle = 'rgba(100,200,255,0.42)';
-      ctx.beginPath(); ctx.arc(x, cy, r+2, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, cy, fxR+2, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = '#e1f5fe'; ctx.lineWidth = 1.5;
       for (let i = 0; i < 5; i++) {
         const a = (i/5)*Math.PI*2 + 0.5;
         ctx.beginPath();
-        ctx.moveTo(x + Math.cos(a)*r*0.2, cy + Math.sin(a)*r*0.2);
-        ctx.lineTo(x + Math.cos(a)*(r+2), cy + Math.sin(a)*(r+2));
+        ctx.moveTo(x + Math.cos(a)*fxR*0.2, cy + Math.sin(a)*fxR*0.2);
+        ctx.lineTo(x + Math.cos(a)*(fxR+2), cy + Math.sin(a)*(fxR+2));
         ctx.stroke();
       }
     }
@@ -548,7 +592,7 @@ export class Renderer {
         const ph = (this.animTime*2.5 + i*0.33 + (u.uid%10)*0.1) % 1;
         ctx.globalAlpha = (u.deployTimer > 0 ? 0.55 : 1) * (1-ph) * 0.9;
         ctx.beginPath();
-        ctx.arc(x + Math.sin(ph*9+i)*r*0.5, cy - r - ph*r*1.3, 2.2, 0, Math.PI*2);
+        ctx.arc(x + Math.sin(ph*9+i)*fxR*0.5, cy - fxR - ph*fxR*1.3, 2.2, 0, Math.PI*2);
         ctx.fill();
       }
       ctx.globalAlpha = u.deployTimer > 0 ? 0.55 : 1;
@@ -556,9 +600,10 @@ export class Renderer {
 
     ctx.restore();
 
-    // 血条(受损才显示)
+    // 血条(受损才显示;按视觉尺寸上移)
     if (u.hp < u.maxHp - 0.5) {
-      this.drawHpBar(x, cy - r - 8, Math.max(r*1.9, 18), 4, u.hp/u.maxHp, u.side);
+      const topR = art ? (isSwarm ? r*2.1 : r*2.6) : r;
+      this.drawHpBar(x, cy - topR - 8, Math.max(r*1.9, 18), 4, u.hp/u.maxHp, u.side);
     }
   }
 
@@ -643,11 +688,37 @@ export class Renderer {
       ctx.save();
       // 合法/非法标识(含推塔解锁区;卡牌级部署规则由 canDeploy 解释)
       const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone });
+      // 预览卡图(半透明,按单位视觉尺寸;多体单位显示小圆头像示意)
+      const isSwarm = (card.count || 1) > 1;
+      const art = getCardImage(p.cardId);
+      const fxR = art ? (isSwarm ? r*2.1 : r*2.6) : r;
+      if (art && !p.invalid) {
+        ctx.globalAlpha = ok ? 0.65 : 0.3;
+        if (isSwarm) {
+          // 群体单位:画 count 个小圆头像围绕部署点(示意分布)
+          const n = Math.min(card.count, 5);
+          const rr = r * 2.1;
+          for (let i = 0; i < n; i++) {
+            const a = (i/n) * Math.PI*2 - Math.PI/2;
+            const px = x + Math.cos(a) * r*1.9, py = y + Math.sin(a) * r*1.9;
+            ctx.save();
+            ctx.beginPath(); ctx.arc(px, py, rr*0.72, 0, Math.PI*2); ctx.clip();
+            drawCardImage(ctx, art, px, py, rr*1.44, { cropSquare: true });
+            ctx.restore();
+            ctx.strokeStyle = ok ? 'rgba(127,255,158,0.8)' : 'rgba(255,123,123,0.8)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(px, py, rr*0.72, 0, Math.PI*2); ctx.stroke();
+          }
+        } else {
+          drawCardImage(ctx, art, x, y, fxR*2);
+        }
+      }
+      // 光圈
       ctx.globalAlpha = 0.9;
       ctx.strokeStyle = ok ? '#7fff9e' : '#ff7b7b';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]); ctx.lineDashOffset = -t*20;
-      ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, (isSwarm ? r*3.4 : fxR) + 6, 0, Math.PI*2); ctx.stroke();
       ctx.setLineDash([]);
       // 多体指示
       if (card.count > 1) {
@@ -655,7 +726,7 @@ export class Renderer {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('×' + card.count, x + r + 8, y - r - 4);
+        ctx.fillText('×' + card.count, x + (isSwarm ? r*3.4 : fxR) + 8, y - (isSwarm ? r*3.4 : fxR) - 4);
       }
       ctx.restore();
     }

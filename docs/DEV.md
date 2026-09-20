@@ -28,7 +28,8 @@ clash/
 │   │   └── ai.js         AI 决策
 │   ├── render/           表现层
 │   │   ├── renderer.js   Canvas 渲染(只读 Game 状态)
-│   │   └── graphics.js   绘制原语/调色板/单位图形/法术特效
+│   │   ├── graphics.js   绘制原语/调色板/单位图形/法术特效(orb 回退样式)
+│   │   └── cardart.js    卡牌图片资源(assets/cards/,统一加载与绘制)
 │   ├── ui/               DOM 界面
 │   │   ├── screens.js    遮罩(开始/暂停,未来封面)与结算
 │   │   ├── hand.js       手牌/圣水条
@@ -94,10 +95,12 @@ audio.js ←──────┴──────────────┘ (
 ### 添加新卡牌
 
 1. `data/cards.js` 加卡(数值照 docs/card-stats.json 换算)
-2. 特殊效果:special 填已有能力键;全新机制在 `game/abilities.js` 注册
-3. 图形:`render/graphics.js` drawUnitIcon 加一个 case
-4. 部署特殊(矿工/飞桶):`deployZone:'anywhere'`
-5. AI 认识它:`game/ai.js` 的 COUNTERS/ROLE 表加条目
+2. 卡图:下载官方 wiki 卡图存为 `assets/cards/<cardId>.png`(最大边 ≤300px),
+   cardart.js 自动加载;无图时自动回退 orb 样式
+3. 特殊效果:special 填已有能力键;全新机制在 `game/abilities.js` 注册
+4. 图形(回退样式):`render/graphics.js` drawUnitIcon 加一个 case
+5. 部署特殊(矿工/飞桶):`deployZone:'anywhere'`
+6. AI 认识它:`game/ai.js` 的 COUNTERS/ROLE 表加条目
 
 ### 添加新设置项
 

@@ -159,13 +159,13 @@ canvas { display:block; }
 .ovIconBtn:hover { filter:brightness(1.25); }
 .ovIconBtn:active { transform:scale(0.94); }
 
-/* ===== 手牌卡 ===== */
-:root { --card-w:80px; --card-h:100px; --card-font:11px; --orb-size:30px; }
+/* ===== 手牌卡(卡图主导) ===== */
+:root { --card-w:80px; --card-h:104px; --card-font:11px; --orb-size:30px; }
 .handCard {
   width:var(--card-w); height:var(--card-h);
-  border-radius:9px; padding:5px 4px; position:relative; text-align:center;
+  border-radius:9px; padding:3px; position:relative; text-align:center;
   font-size:var(--card-font); font-weight:600;
-  display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
   flex-shrink:0; user-select:none; -webkit-user-select:none;
   border:2px solid #4a5178;
   background:linear-gradient(165deg, #343a5e 0%, #262b4a 60%, #202440 100%);
@@ -175,13 +175,14 @@ canvas { display:block; }
 }
 .handCard:hover { transform:translateY(-4px); border-color:#6a74a8; box-shadow:0 7px 14px rgba(0,0,0,0.5); }
 .handCard:active { transform:translateY(-1px) scale(0.98); }
+.handCard .cardArt {
+  width:100%; flex:1; min-height:0;
+  background-size:contain; background-repeat:no-repeat; background-position:center;
+  border-radius:6px;
+}
 .handCard .cardName {
   color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.8);
-  line-height:1.15; max-width:100%; overflow:hidden;
-}
-.cardOrb {
-  width:var(--orb-size); height:var(--orb-size); border-radius:50%; margin:0 auto; flex-shrink:0;
-  box-shadow:inset -3px -4px 6px rgba(0,0,0,0.45), inset 2px 3px 5px rgba(255,255,255,0.35), 0 2px 5px rgba(0,0,0,0.4);
+  line-height:1.15; max-width:100%; overflow:hidden; white-space:nowrap;
 }
 .handCard .cost {
   color:#e07bff; font-weight:800; font-size:calc(var(--card-font) + 1px);
@@ -193,10 +194,15 @@ canvas { display:block; }
   background:linear-gradient(165deg, rgba(38,43,74,0.6), rgba(28,32,58,0.6));
   border:2px dashed rgba(255,255,255,0.22); border-radius:9px; padding:4px;
   text-align:center; font-size:calc(var(--card-font) - 1px);
-  display:flex; flex-direction:column; justify-content:center; gap:3px;
-  opacity:0.72; flex-shrink:0;
+  display:flex; flex-direction:column; justify-content:center; gap:2px;
+  opacity:0.85; flex-shrink:0;
 }
 .nextCard .label { color:#8a93b8; font-size:9px; letter-spacing:1px; }
+.nextCard .nextArt {
+  width:calc(var(--card-w) * 0.6); aspect-ratio:252/300; margin:0 auto; flex-shrink:0;
+  background-size:contain; background-repeat:no-repeat; background-position:center;
+  border-radius:5px;
+}
 
 /* ===== 日志 ===== */
 #log {
@@ -288,37 +294,38 @@ label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-s
 #deDeckRow { display:flex; gap:6px; flex-wrap:wrap; min-height:66px; margin-bottom:10px;
   padding:8px; border-radius:10px; background:rgba(12,15,30,0.5); border:1px dashed rgba(255,255,255,0.15); }
 .deDeckCard {
-  width:52px; height:64px; border-radius:8px; border:2px solid #4a5178; cursor:pointer;
+  width:56px; height:74px; border-radius:8px; border:2px solid #4a5178; cursor:pointer;
   background:linear-gradient(165deg, #343a5e 0%, #262b4a 60%, #202440 100%);
-  display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
   padding:3px 2px; font-size:9px; text-align:center; position:relative; flex-shrink:0;
   transition:transform .1s, border-color .1s;
 }
 .deDeckCard:hover { transform:translateY(-2px); border-color:#ff7b7b; }
-.deDeckCard .deName { color:#fff; line-height:1.15; max-width:100%; overflow:hidden; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
-.deDeckCard .deOrb { width:22px; height:22px; border-radius:50%; flex-shrink:0;
-  box-shadow:inset -2px -3px 4px rgba(0,0,0,0.45), inset 1px 2px 3px rgba(255,255,255,0.35); }
+.deArt {
+  width:100%; flex:1; min-height:0;
+  background-size:contain; background-repeat:no-repeat; background-position:center;
+  border-radius:5px;
+}
+.deDeckCard .deName { color:#fff; line-height:1.15; max-width:100%; overflow:hidden; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,0.8); }
 .deDeckCard .deCost { color:#e07bff; font-weight:800; }
 .deDeckCard .deRm { position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%;
   background:#c62828; color:#fff; font-size:11px; line-height:16px; text-align:center; display:none;
   box-shadow:0 1px 4px rgba(0,0,0,0.5); }
 .deDeckCard:hover .deRm { display:block; }
-.deCardGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(58px, 1fr)); gap:6px; margin-bottom:14px; }
+.deCardGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(64px, 1fr)); gap:6px; margin-bottom:14px; }
 .dePoolCard {
-  height:62px; border-radius:8px; border:2px solid #3a4266; cursor:pointer; position:relative;
+  height:76px; border-radius:8px; border:2px solid #3a4266; cursor:pointer; position:relative;
   background:linear-gradient(165deg, #2e3454 0%, #232847 60%, #1e233d 100%);
-  display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+  display:flex; flex-direction:column; align-items:center; gap:1px;
   padding:3px 2px; font-size:9px; text-align:center;
   transition:transform .1s, border-color .1s, opacity .1s;
 }
 .dePoolCard:hover { transform:translateY(-2px); border-color:#7fd4ff; }
 .dePoolCard.inDeck { opacity:0.35; border-color:#2a2f52; cursor:not-allowed; }
 .dePoolCard.inDeck::after { content:'✓'; position:absolute; top:2px; right:5px; color:#7fff9e; font-size:11px; font-weight:900; }
-.dePoolCard .deName { color:#eceef5; line-height:1.15; max-width:100%; overflow:hidden; }
-.dePoolCard .deOrb { width:20px; height:20px; border-radius:50%; flex-shrink:0;
-  box-shadow:inset -2px -3px 4px rgba(0,0,0,0.45), inset 1px 2px 3px rgba(255,255,255,0.35); }
+.dePoolCard .deName { color:#eceef5; line-height:1.15; max-width:100%; overflow:hidden; white-space:nowrap; }
 .dePoolCard .deCost { color:#e07bff; font-weight:800; }
-.deRarityTag { position:absolute; top:2px; left:5px; width:6px; height:6px; border-radius:50%; }
+.deRarityTag { position:absolute; top:2px; left:5px; width:6px; height:6px; border-radius:50%; z-index:1; }
 .deFooter { display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
 .deAvg { font-size:11px; color:#9aa3c7; margin-right:auto; }
 .deAvg b { color:#e07bff; }
