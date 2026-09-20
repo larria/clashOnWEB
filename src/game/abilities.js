@@ -64,9 +64,12 @@ export function tickPeriodic(unit, game, dt) {
     unit.specialTimer += dt;
     if (unit.specialTimer >= sp.summon.interval) {
       unit.specialTimer = 0;
+      // 召唤在女巫前方(行进方向)约 1.5 格,远离自身碰撞盒,
+      // 避免被碰撞分离挤到身后/侧面
+      const fwd = (unit.side === 0 ? -1 : 1);
       for (let i = 0; i < sp.summon.count; i++) {
         game.spawnUnit(sp.summon.card, unit.side,
-          unit.x + (Math.random() - 0.5), unit.y + (unit.side === 0 ? -1 : 1) * 0.5);
+          unit.x + (i - (sp.summon.count - 1) / 2) * 0.7, unit.y + fwd * 1.5);
       }
       game.bus.emit('unit:summoned', { spawner: unit, card: sp.summon.card }); // 召唤音效
       produced = true;
@@ -81,8 +84,15 @@ export function applyDeathAbilities(unit, game) {
   if (!sp) return;
 
   if (sp.deathDamage) {
-    game.applyAreaDamage(unit, sp.deathDamage.dmg, sp.deathDamage.splash, sp.deathDamage.targets);
-    game.bus.emit('unit:deathBomb', { unit }); // 死亡爆炸音效(气球/骷髅巨人/戈仑)
+    const dd = sp.deathDamage;
+    if (dd.delay > 0) {
+      // 延时炸弹(气球/骷髅巨人):掉落可见炸弹,数秒后爆炸
+      dropDeathBomb(unit, game, dd);
+    } else {
+      // 即时死亡伤害(戈仑/小戈仑)
+      game.applyAreaDamage(unit, dd.dmg, dd.splash, dd.targets);
+      game.bus.emit('unit:deathBomb', { unit });
+    }
   }
   if (sp.summonOnDeath) {
     for (let i = 0; i < (sp.summonOnDeath.count || 1); i++) {
@@ -97,6 +107,22 @@ export function applyDeathAbilities(unit, game) {
       game.spawnUnit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
     }
   }
+}
+
+// 掉落延时炸弹(原版:气球/骷髅巨人 3 秒引信;骷髅巨人对塔双倍伤害)
+// 炸弹作为视觉效果存在(game.effects),伤害由 game.schedule 延迟结算
+function dropDeathBomb(unit, game, dd) {
+  const x = unit.x, y = unit.y;
+  const delay = dd.delay;
+  // 视觉:炸弹实体(渲染层画黑圆+火花+引信闪烁),爆炸时转爆炸特效
+  game.addEffect({ type: 'deathBomb', x, y, radius: dd.splash, life: delay, maxLife: delay, side: unit.side });
+  game.bus.emit('unit:deathBombDrop', { unit }); // 落地音(轻微)
+  game.schedule(delay, () => {
+    // 爆炸:范围伤害(骷髅巨人 towerMult 对塔加成)
+    game.applyAreaDamageAt(x, y, dd.dmg, dd.splash, dd.targets, unit.side, dd.towerMult || 1);
+    game.addEffect({ type: 'spell', cardId: 'deathBomb', x, y, radius: dd.splash, life: 0.5, maxLife: 0.5, color: '#ff6f00' });
+    game.bus.emit('unit:deathBomb', { unit });
+  });
 }
 
 // 建筑到期自然消亡也触发死亡召唤(墓碑/野蛮人小屋机制)

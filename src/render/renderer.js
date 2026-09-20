@@ -422,9 +422,22 @@ export class Renderer {
         ctx.stroke();
       }
     }
+    // 狂暴(受 rage 法术):红光脉冲闪烁
+    if (tw.rageTimer > 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.animTime * 9);
+      ctx.globalAlpha = 0.25 + 0.2 * pulse;
+      ctx.fillStyle = '#ff1744';
+      ctx.beginPath(); ctx.arc(x, y, r+2, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.6 + 0.35 * pulse;
+      ctx.strokeStyle = '#ff1744'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, r+4, 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
 
     // 血条
-    this.drawHpBar(x, y - r - 20, r*2, 5, tw.hp/tw.maxHp, tw.side);
+    // 血条:玩家塔放下方(上方易被 HUD/单位遮挡),AI 塔保持上方
+    const barY = tw.side === 0 ? y + r + 12 : y - r - 20;
+    this.drawHpBar(x, barY, r*2, 5, tw.hp/tw.maxHp, tw.side);
   }
 
   drawRubble(tw) {
@@ -590,8 +603,22 @@ export class Renderer {
         ctx.stroke();
       }
     }
-    // 狂暴粒子
+    // 狂暴状态:单位泛红脉冲闪烁(原版视觉)+ 上升粒子
     if (u.rageTimer > 0) {
+      // 红色泛光圈(呼吸脉冲闪烁)+ 内部淡红罩
+      const pulse = 0.5 + 0.5 * Math.sin(this.animTime * 9 + u.uid);
+      ctx.save();
+      // 外圈(亮红,闪烁)
+      ctx.globalAlpha = 0.5 + 0.4 * pulse;
+      ctx.strokeStyle = '#ff1744';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, cy, fxR + 3, 0, Math.PI*2); ctx.stroke();
+      // 内部淡红罩(半透明,不遮死卡图)
+      ctx.globalAlpha = 0.22 + 0.18 * pulse;
+      ctx.fillStyle = '#ff1744';
+      ctx.beginPath(); ctx.arc(x, cy, fxR + 1, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      // 粒子
       ctx.fillStyle = 'rgba(255,80,80,0.85)';
       for (let i = 0; i < 3; i++) {
         const ph = (this.animTime*2.5 + i*0.33 + (u.uid%10)*0.1) % 1;
@@ -656,9 +683,52 @@ export class Renderer {
       const t = e.life / e.maxLife;
       if (e.type === 'spell') {
         drawSpellFx(ctx, e.cardId, e.x*CELL, e.y*CELL, e.radius, t);
+      } else if (e.type === 'deathBomb') {
+        this.drawDeathBomb(e, t);
       }
     }
     ctx.globalAlpha = 1;
+  }
+
+  // 延时死亡炸弹(气球/骷髅巨人):黑圆炸弹 + 引信火花闪烁 + 剩余时间环
+  drawDeathBomb(e, t) {
+    const ctx = this.ctx;
+    const x = e.x * CELL, y = e.y * CELL;
+    const R = 13;
+    const tt = this.animTime;
+    ctx.save();
+    // 地面阴影
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(x, y + R*0.8, R*0.9, R*0.35, 0, 0, Math.PI*2); ctx.fill();
+    // 炸弹本体(黑球+高光)
+    const g = ctx.createRadialGradient(x - R*0.3, y - R*0.4, R*0.1, x, y, R);
+    g.addColorStop(0, '#5c6470'); g.addColorStop(0.6, '#2b3038'); g.addColorStop(1, '#14171c');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath(); ctx.ellipse(x - R*0.3, y - R*0.4, R*0.24, R*0.15, -0.6, 0, Math.PI*2); ctx.fill();
+    // 引信 + 火花(临近爆炸闪烁加快)
+    const flash = t < 0.35 ? (Math.sin(tt*24) > 0) : (Math.sin(tt*8) > 0);
+    ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y - R); ctx.quadraticCurveTo(x + R*0.3, y - R*1.4, x + R*0.55, y - R*1.2); ctx.stroke();
+    if (flash) {
+      const fg = ctx.createRadialGradient(x + R*0.55, y - R*1.2, 0, x + R*0.55, y - R*1.2, R*0.5);
+      fg.addColorStop(0, '#fff59d'); fg.addColorStop(0.6, '#ff9800'); fg.addColorStop(1, 'rgba(255,87,34,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.arc(x + R*0.55, y - R*1.2, R*0.5, 0, Math.PI*2); ctx.fill();
+    }
+    // 剩余引信时间环(红,逐渐消耗)
+    ctx.strokeStyle = 'rgba(255,82,82,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, R + 5, -Math.PI/2, -Math.PI/2 + t * Math.PI*2); ctx.stroke();
+    // 爆炸范围提示(淡)
+    ctx.strokeStyle = 'rgba(255,111,0,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.arc(x, y, e.radius*CELL, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   // ===== 部署预览 =====

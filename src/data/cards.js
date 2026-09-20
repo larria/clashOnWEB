@@ -86,11 +86,11 @@ export const CARDS = {
   balloon: { id:'balloon', name:'气球兵', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:840, dmg:320, hitSpeed:2.0, range:0.6, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.BUILDING, flying:true, count:1, splash:1.5, deployTime:1, color:'#26a69a', radius:0.50,
-    special:{ deathDamage:{ dmg:320, splash:1.5, targets:T.ALL } } },
+    special:{ deathDamage:{ dmg:320, splash:1.5, targets:T.ALL, delay:3 } } },  // 3秒引信
   giantSkeleton: { id:'giantSkeleton', name:'骷髅巨人', cost:6, rarity:'史诗', kind:KIND.TROOP,
     hp:1680, dmg:138, hitSpeed:1.4, range:1.32, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#cfd8dc', radius:0.52,
-    special:{ deathDamage:{ dmg:138, splash:2.5, targets:T.ALL } } },
+    special:{ deathDamage:{ dmg:138, splash:2.5, targets:T.ALL, delay:3, towerMult:2 } } },  // 对塔双倍
   golem: { id:'golem', name:'戈仑石人', cost:8, rarity:'史诗', kind:KIND.TROOP,
     hp:2560, dmg:156, hitSpeed:2.5, range:1.35, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#558b2f', radius:0.60,

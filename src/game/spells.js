@@ -72,7 +72,7 @@ function applySpellEffect(card, side, x, y, game) {
     }
   }
 
-  // 狂暴:增益己方单位
+  // 狂暴:增益己方单位与塔(移动/攻击加速,原版对塔同样生效)
   if (sp && sp.buff) {
     const allies = game.units.filter(u => u.side === side && !u.dead && !u.isSpell);
     for (const a of allies) {
@@ -81,6 +81,16 @@ function applySpellEffect(card, side, x, y, game) {
         a.rageTimer = Math.max(a.rageTimer, sp.duration);
       }
     }
+    // 己方塔(公主塔/激活的国王塔)
+    const myTowers = [game.towers[side].left, game.towers[side].right, game.towers[side].king];
+    for (const tw of myTowers) {
+      if (tw.dead) continue;
+      const d = dist2(x, y, tw.x, tw.y);
+      if (d <= (radius + tw.radius) * (radius + tw.radius)) {
+        tw.rageTimer = Math.max(tw.rageTimer, sp.duration);
+      }
+    }
+    game.bus.emit('rage:applied', { side, x, y, radius });
   }
 
   // 冰冻:也冻结敌方塔

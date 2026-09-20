@@ -116,6 +116,11 @@ export class Game {
 
   // 区域伤害(死亡伤害等;对双方单位生效 + 敌方塔)
   applyAreaDamage(source, dmg, radius, targetsMask) {
+    this.applyAreaDamageAt(source.x, source.y, dmg, radius, targetsMask, source.side, 1, source);
+  }
+
+  // 按坐标的区域伤害(延时炸弹爆炸;towerMult:对塔伤害倍率)
+  applyAreaDamageAt(cx, cy, dmg, radius, targetsMask, side, towerMult = 1, source) {
     for (const e of this.units) {
       if (e.dead || e === source) continue;
       let valid;
@@ -123,18 +128,18 @@ export class Game {
       else if (e.flying) valid = (targetsMask & T.AIR) !== 0;
       else valid = (targetsMask & T.GROUND) !== 0;
       if (!valid) continue;
-      const d = dist2s(source.x, source.y, e.x, e.y);
+      const d = dist2s(cx, cy, e.x, e.y);
       if (d <= (radius + e.radius) * (radius + e.radius)) {
         this.dealDamage(e, dmg, source);
       }
     }
-    // 塔(只伤害敌方塔)
-    const towers = this.getEnemyTowers(source.side);
+    // 塔(只伤害施放方的敌方塔;支持 towerMult 如骷髅巨人双倍)
+    const towers = this.getEnemyTowers(side);
     for (const tw of towers) {
       if (tw.dead) continue;
-      const d = dist2s(source.x, source.y, tw.x, tw.y);
+      const d = dist2s(cx, cy, tw.x, tw.y);
       if (d <= (radius + tw.radius) * (radius + tw.radius)) {
-        this.dealTowerDamage(tw, dmg);
+        this.dealTowerDamage(tw, dmg * towerMult);
       }
     }
   }
