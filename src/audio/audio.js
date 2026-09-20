@@ -61,6 +61,7 @@ class AudioSystem {
     this.ctx = null;
     this._buffers = new Map();   // name -> AudioBuffer
     this._loading = new Set();   // 加载中
+    this._pending = new Map();   // name -> {opts} 加载完成前排队的播放请求
     this._lastPlay = new Map();  // name -> timestamp(节流)
     this._musicSource = null;
     this._musicGain = null;
@@ -96,39 +97,68 @@ class AudioSystem {
     fetch(`assets/sfx/${name}.ogg`)
       .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
       .then(ab => this._ensureCtx().decodeAudioData(ab))
-      .then(buf => { this._buffers.set(name, buf); })
+      .then(buf => {
+        this._buffers.set(name, buf);
+        // 补播:加载完成前到达的播放请求(每音一个,防堆积)
+        const pend = this._pending && this._pending.get(name);
+        if (pend) {
+          this._pending.delete(name);
+          this._start(name, pend.opts);
+        }
+      })
       .catch(() => { /* 缺资源静默 */ })
       .finally(() => this._loading.delete(name));
   }
 
-  /** 播放音效。opts: { volume, throttle(ms,默认80), fallback(缺资源时回退播放的音名) } */
+  /** 批量预加载(开局/选牌时提前拉取,消除首次播放的加载延迟) */
+  preload(names) {
+    for (const n of names) this._load(n);
+  }
+
+  /** 实际的播放执行(buffer 已就绪;失败静默) */
+  _start(name, opts) {
+    const buf = this._buffers.get(name);
+    if (!buf || !this.ctx) return;
+    try {
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      const gain = this.ctx.createGain();
+      gain.gain.value = (opts.volume != null ? opts.volume : 1) * SFX_VOLUME;
+      src.connect(gain).connect(this.ctx.destination);
+      src.start();
+    } catch (e) { /* 播放失败静默 */ }
+  }
+
+  /** 播放音效。opts: { volume, throttle(ms,默认80), fallback(缺资源回退),
+   *  queueOnLoad(默认 true):资源尚在加载时排队,加载完补播(修复首次播放被吞) } */
   play(name, opts = {}) {
     if (!this._sfxOn || !name) return;
     const ctx = this._ensureCtx();
     if (!ctx) return;
-    this._load(name);
-    let buf = this._buffers.get(name);
-    // 资源缺失(加载失败/不存在):回退到 fallback
-    if (!buf && opts.fallback && !this._loading.has(name)) {
-      this._load(opts.fallback);
-      buf = this._buffers.get(opts.fallback);
-      name = opts.fallback;
-    }
-    if (!buf) return;
-    // 节流:同名音效 80ms 内不重复(默认)
+    // 节流(含排队路径,防解码风暴)
     const throttle = opts.throttle != null ? opts.throttle : 80;
     const now = performance.now();
     const last = this._lastPlay.get(name) || 0;
     if (now - last < throttle) return;
     this._lastPlay.set(name, now);
-    try {
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      const gain = ctx.createGain();
-      gain.gain.value = (opts.volume != null ? opts.volume : 1) * SFX_VOLUME;
-      src.connect(gain).connect(ctx.destination);
-      src.start();
-    } catch (e) { /* 播放失败静默 */ }
+
+    this._load(name);
+    let buf = this._buffers.get(name);
+    let playName = name;
+    // 资源缺失(加载失败/不存在):回退到 fallback
+    if (!buf && opts.fallback && !this._loading.has(name)) {
+      this._load(opts.fallback);
+      buf = this._buffers.get(opts.fallback);
+      playName = opts.fallback;
+    }
+    if (!buf) {
+      // 尚在加载:排队补播(高频脚步音 queueOnLoad:false,静默跳过)
+      if (opts.queueOnLoad !== false && !this._pending.has(playName)) {
+        this._pending.set(playName, { opts });
+      }
+      return;
+    }
+    this._start(playName, opts);
   }
 
   // ===== 战斗音乐 =====
@@ -167,6 +197,12 @@ class AudioSystem {
   bindGame(bus) {
     this._gameBus = bus;
 
+    // 开局预加载高频核心音(消除开场前几秒的首次播放延迟)
+    this.preload([
+      'battle_start', 'tower_fire', 'king_fire', 'enemy_deploy', 'deploy_generic',
+      'unit_die_big', 'crown_get', 'princess_destroyed', 'king_activate',
+      'elixir_double', 'warn_60s', 'victory', 'defeat', 'battle_end_horn',
+    ]);
     // 出牌:玩家用卡牌专属部署音(缺失时回退通用落地音),AI 用敌方部署音
     bus.on('card:played', ({ side, cardId, kind }) => {
       if (side === 0) {
@@ -261,7 +297,14 @@ class AudioSystem {
   }
 
   /** UI 音(选牌/按钮,直接调用) */
-  cardSelect() { this.play('card_select'); }
+  /** 选牌:播选牌音,并预载该卡的部署/攻击/脚步音
+   *  (选卡到落卡有几秒窗口,提前拉取让部署音必定就绪) */
+  cardSelect(cardId) {
+    this.play('card_select');
+    if (cardId) {
+      this.preload(['deploy_' + cardId, 'atk_' + cardId, 'step_' + cardId, 'spell_' + cardId]);
+    }
+  }
   uiClick() { this.play('ui_click'); }
 }
 

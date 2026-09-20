@@ -360,7 +360,7 @@ function onHandCardClick(i) {
   if (game.elixir[0] < CARDS[cardId].cost) { flashMsg('圣水不足'); return; }
   const newlySelected = selectedCardIdx !== i;
   selectedCardIdx = (selectedCardIdx === i ? -1 : i);
-  if (newlySelected) audio.cardSelect();
+  if (newlySelected) audio.cardSelect(cardId);
 }
 
 const input = new InputController(canvas, {
