@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-09-20 女巫召唤参数对齐官方
+
+- 用户报告女巫首波骷髅偏晚:查 wiki 确认官方数据——
+  每 7 秒召唤 4 只骷髅,首波部署后 1 秒(原文:"first wave of Skeletons
+  will spawn 1 second after she is deployed")
+- 修正:间隔 5→7 秒、每波 2→4 只、新增 firstDelay:1(此前无首波加速,
+  首波要等整个 interval,5 秒起手 → 现 1 秒部署+1 秒 = 2 秒起手)
+- abilities 的 summon 分支支持 firstDelay(与 spawn 产兵同模式)
+- 验证:首波 2.03 秒 4 只、波间隔 7.0-7.1 秒;2 局回归(含 1 局加时)无异常
+
 ## 2026-09-20 全面 review:修复 5 项 + 加时赛
 
 全面审查全部模块(combat/game/spells/ai/main/renderer),发现并处理:

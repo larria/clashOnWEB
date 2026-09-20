@@ -62,8 +62,12 @@ export function tickPeriodic(unit, game, dt) {
   }
   if (sp.summon && unit.deployTimer <= 0) { // 女巫召唤骷髅
     unit.specialTimer += dt;
-    if (unit.specialTimer >= sp.summon.interval) {
+    // 首波有 firstDelay(女巫:部署后 1 秒出第一波;之后按 interval 循环)
+    const first = sp.summon.firstDelay != null ? sp.summon.firstDelay : sp.summon.interval;
+    const due = unit.summonedOnce ? sp.summon.interval : first;
+    if (unit.specialTimer >= due) {
       unit.specialTimer = 0;
+      unit.summonedOnce = true;
       // 召唤在女巫前方(行进方向)约 1.5 格,远离自身碰撞盒,
       // 避免被碰撞分离挤到身后/侧面
       const fwd = (unit.side === 0 ? -1 : 1);

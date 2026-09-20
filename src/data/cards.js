@@ -82,7 +82,7 @@ export const CARDS = {
   witch: { id:'witch', name:'女巫', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:420, dmg:68, hitSpeed:1.1, range:5.4, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, color:'#6a1b9a', radius:0.40,
-    special:{ summon:{ card:'skeletons', count:2, interval:5 } } },
+    special:{ summon:{ card:'skeletons', count:4, interval:7, firstDelay:1 } } }, // wiki:每7秒4只,首波部署后1秒
   balloon: { id:'balloon', name:'气球兵', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:840, dmg:320, hitSpeed:2.0, range:0.6, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.BUILDING, flying:true, count:1, splash:1.5, deployTime:1, color:'#26a69a', radius:0.50,
