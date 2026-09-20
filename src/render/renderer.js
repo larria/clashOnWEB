@@ -70,6 +70,17 @@ export class Renderer {
     ctx.setLineDash([10, 6]); ctx.lineDashOffset = -t * 30;
     ctx.strokeRect(x0*CELL+1, y0*CELL, w*CELL-2, h*CELL);
     ctx.setLineDash([]);
+    // 该侧桥面也闪烁(解锁后桥面可部署,与 canDeploy 一致)
+    const bridgeXs = uf.lane === 'left' ? BRIDGE_LEFT : BRIDGE_RIGHT;
+    for (const bx of bridgeXs) {
+      ctx.fillStyle = `rgba(${uf.color},${alpha})`;
+      ctx.fillRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
+      ctx.strokeStyle = `rgba(${uf.color},${Math.min(1, alpha*3)})`;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 5]); ctx.lineDashOffset = -t * 30;
+      ctx.strokeRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
+      ctx.setLineDash([]);
+    }
     // 区域文字
     ctx.globalAlpha = Math.min(1, p * 2) * (0.75 + 0.25*Math.sin(t*6));
     ctx.fillStyle = `rgba(${uf.color},0.95)`;
@@ -112,6 +123,17 @@ export class Renderer {
       ctx.setLineDash([8, 5]);
       ctx.strokeRect(u.x*CELL+1, unlockTop*CELL, u.w*CELL-2, unlockH*CELL);
       ctx.setLineDash([]);
+      // 解锁侧桥面高亮(该侧公主塔被推后桥面也可部署,与 canDeploy 一致)
+      const bridgeXs = u.x === 0 ? BRIDGE_LEFT : BRIDGE_RIGHT;
+      for (const bx of bridgeXs) {
+        ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
+        ctx.fillRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
+        ctx.strokeStyle = `rgba(255,213,79,${0.5 + 0.2*Math.sin(t*3)})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
+        ctx.setLineDash([]);
+      }
       // 解锁区标记文字
       ctx.fillStyle = 'rgba(255,213,79,0.9)';
       ctx.font = 'bold 14px sans-serif';

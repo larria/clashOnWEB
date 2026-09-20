@@ -80,6 +80,12 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}) {
   const isLeftLane = x < 9;
   if (isLeftLane && !leftUnlocked) return false;
   if (!isLeftLane && !rightUnlocked) return false;
+  // 河道:仅解锁侧的桥面可部署(桥与该侧公主塔同 x 对齐)
+  if (y >= RIVER_Y1 && y < RIVER_Y2) {
+    return isLeftLane
+      ? BRIDGE_LEFT.includes(Math.floor(x))
+      : BRIDGE_RIGHT.includes(Math.floor(x));
+  }
   // 该侧公主塔身前到河边的区域(连续坐标:含岸边整排)
   if (side === 'player') {
     return y >= 5 && y < RIVER_Y1;
