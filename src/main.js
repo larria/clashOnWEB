@@ -14,7 +14,7 @@ import { AI } from './game/ai.js';
 import { Renderer } from './render/renderer.js';
 import { InputController } from './input/input.js';
 import { audio } from './audio/audio.js';
-import { loadDecks, deckEditor } from './ui/deckeditor.js';
+import { loadDecks, deckEditor, getLastDeck, saveLastDeck } from './ui/deckeditor.js';
 import { settingsScreen } from './ui/settingsui.js';
 import { GameLog } from './ui/gamelog.js';
 import { HandUI } from './ui/hand.js';
@@ -74,6 +74,15 @@ function refreshDecks() {
   DECKS = {};
   list.forEach((d, i) => { DECKS['slot' + i] = d; });
   buildDeckSelect();
+  // 恢复上次选中的卡组(无效 key 或空卡组时保持当前)
+  const last = getLastDeck();
+  if (last && DECKS[last] && DECKS[last].cards.length > 0) {
+    els.deckSelect.value = last;
+  } else if (DECKS[els.deckSelect.value] && DECKS[els.deckSelect.value].cards.length === 0) {
+    // 当前选中是空卡组:切到第一个非空
+    const firstOk = Object.keys(DECKS).find(k => DECKS[k].cards.length > 0);
+    if (firstOk) els.deckSelect.value = firstOk;
+  }
 }
 function buildDeckSelect() {
   const sel = els.deckSelect;
@@ -82,7 +91,8 @@ function buildDeckSelect() {
   Object.keys(DECKS).forEach((k, i) => {
     const opt = document.createElement('option');
     opt.value = k;
-    opt.textContent = `卡组${i + 1} · ${DECKS[k].name}`;
+    const d = DECKS[k];
+    opt.textContent = `卡组${i + 1} · ${d.name}${d.cards.length === 0 ? '(空)' : ''}`;
     sel.appendChild(opt);
   });
   if (prev && DECKS[prev]) sel.value = prev;
@@ -120,12 +130,20 @@ function playerCycle(playedCardId, idx) {
 }
 
 // ===== 建局 =====
+// 选择用于开局的卡组:空卡组(未编辑完)回退到第一个非空
+function pickPlayableDeckKey() {
+  const cur = els.deckSelect.value;
+  if (DECKS[cur] && DECKS[cur].cards.length > 0) return cur;
+  return Object.keys(DECKS).find(k => DECKS[k].cards.length > 0) || 'slot0';
+}
+
 function initGame() {
-  const deckKey = els.deckSelect.value;
+  const deckKey = pickPlayableDeckKey();
+  if (els.deckSelect.value !== deckKey) els.deckSelect.value = deckKey;
   playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
   aiLevel = settings.get('aiLevel');
-  // AI 每局从 5 套卡组中随机选择一套(不再与玩家同卡组)
-  const presetKeys = Object.keys(DECKS);
+  // AI 每局从非空卡组中随机选择一套(不再与玩家同卡组)
+  const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length > 0);
   const pickKey = presetKeys[Math.floor(Math.random() * presetKeys.length)];
   aiDeck = sanitizeDeck(DECKS[pickKey].cards);
 
@@ -431,6 +449,8 @@ window.addEventListener('keydown', (e) => {
   }
 });
 els.deckSelect.addEventListener('change', () => {
+  // 记住选中的卡组(下次默认使用)
+  saveLastDeck(els.deckSelect.value);
   // ready 态切卡组直接重建预览
   if (phase === 'ready') { initGame(); handUI.invalidate(); renderer.draw(null, 0); }
   else if (confirm('切换卡组将重新开始,确定?')) { setPhase('ready'); initGame(); handUI.invalidate(); renderer.draw(null, 0); }

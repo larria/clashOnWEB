@@ -314,8 +314,16 @@ label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-s
 .deSlot .deSlotName { font-size:12px; font-weight:700; color:#eceef5;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .deSlot .deSlotCount { font-size:10px; color:#9aa3c7; margin-top:3px; }
+.deSlot .deSlotCount.empty { color:#5c6488; font-style:italic; }
 .deSlot.active .deSlotCount { color:#ffd54f; font-weight:700; }
+.deSlot.active .deSlotCount.empty { color:#9aa3c7; }
 .deCurLabel { font-size:11px; color:#ffd54f; margin:2px 0 6px; letter-spacing:0.5px; }
+.deNameInput {
+  background:#262b4a; color:#ffe082; border:1px solid #4a5178; border-radius:6px;
+  padding:2px 8px; font-size:12px; font-weight:700; width:110px; outline:none;
+  margin-left:4px;
+}
+.deNameInput:focus { border-color:#ffd54f; }
 #deDeckRow { display:flex; gap:6px; flex-wrap:wrap; min-height:66px; margin-bottom:10px;
   padding:8px; border-radius:10px; background:rgba(12,15,30,0.5); border:1px dashed rgba(255,255,255,0.15); }
 .deDeckCard {
