@@ -728,6 +728,29 @@ export class Renderer {
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('×' + card.count, x + (isSwarm ? r*3.4 : fxR) + 8, y - (isSwarm ? r*3.4 : fxR) - 4);
       }
+      // 吸附提示:指针在区域外附近,部署点已吸附到最近边缘 —— 画引导线 + 标记
+      if (p.snapped && p.pointer) {
+        const px = p.pointer.x * CELL, py = p.pointer.y * CELL;
+        ctx.globalAlpha = 0.75;
+        ctx.strokeStyle = '#7fff9e';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(x, y); ctx.stroke();
+        ctx.setLineDash([]);
+        // 指针处小叉(原点击位置)
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = '#9aa3c7'; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(px-4, py-4); ctx.lineTo(px+4, py+4);
+        ctx.moveTo(px+4, py-4); ctx.lineTo(px-4, py+4);
+        ctx.stroke();
+        // 吸附点标签
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = '#7fff9e';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('吸附部署', x, y - (isSwarm ? r*3.4 : fxR) - 8);
+      }
       ctx.restore();
     }
   }

@@ -94,6 +94,65 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}) {
   }
 }
 
+// ===== 部署点吸附 =====
+// 点击在可部署区域外附近时,吸附到最近的合法边缘(宽容操作,减少部署失败挫败感)
+// 返回吸附后的 {x, y};若点击点本身合法,原样返回;离区域太远(maxSnap 格)返回 null
+// 与 canDeploy 同源判定:己方半场 + 解锁区(含解锁侧桥面)
+export function snapToDeployZone(side, x, y, enemyTowers, opts = {}, maxSnap = 2.5) {
+  if (canDeploy(side, x, y, enemyTowers, opts)) return { x, y };
+
+  // 候选锚点:沿可部署区域边缘采样,取最近的合法点
+  let best = null, bestD2 = Infinity;
+  const consider = (cx, cy) => {
+    if (!canDeploy(side, cx, cy, enemyTowers, opts)) return;
+    const d2 = (cx-x)*(cx-x) + (cy-y)*(cy-y);
+    if (d2 < bestD2) { bestD2 = d2; best = { x: cx, y: cy }; }
+  };
+
+  const leftUnlocked = enemyTowers && enemyTowers.left && enemyTowers.left.dead;
+  const rightUnlocked = enemyTowers && enemyTowers.right && enemyTowers.right.dead;
+  const mySide = side === 'player' ? 'bottom' : 'top';
+
+  // 1. 己方半场边缘:河道上/下沿线(对应侧),x 全宽采样
+  const riverEdge = mySide === 'bottom' ? RIVER_Y2 : RIVER_Y1 - 0.05;
+  const riverFar = mySide === 'bottom' ? RIVER_Y2 - 0.05 : RIVER_Y1;
+  for (let sx = 0.3; sx <= GRID_W - 0.3; sx += 0.5) {
+    consider(sx, riverEdge);
+    consider(sx, riverFar);
+  }
+  // 2. 地图左右边缘(己方半场段)
+  for (let sy = mySide === 'bottom' ? RIVER_Y2 + 0.3 : 0.3;
+       sy <= (mySide === 'bottom' ? GRID_H - 0.3 : RIVER_Y1 - 0.3); sy += 0.5) {
+    consider(0.3, sy);
+    consider(GRID_W - 0.3, sy);
+  }
+  // 3. 地图底线
+  for (let sx = 0.3; sx <= GRID_W - 0.3; sx += 0.5) {
+    consider(sx, mySide === 'bottom' ? GRID_H - 0.3 : 0.3);
+  }
+  // 4. 解锁区(敌方侧):塔前线 + 该侧桥面
+  if (leftUnlocked || rightUnlocked) {
+    const lanes = leftUnlocked && rightUnlocked ? ['l', 'r'] : (leftUnlocked ? ['l'] : ['r']);
+    for (const lane of lanes) {
+      const x0 = lane === 'l' ? 0.3 : 9.3, x1 = lane === 'l' ? 8.7 : GRID_W - 0.3;
+      // 塔前横线(敌方侧)
+      const frontY = side === 'player' ? 5.05 : 26.7;
+      const bankY = side === 'player' ? RIVER_Y1 - 0.05 : RIVER_Y2 + 0.3;
+      for (let sx = x0; sx <= x1; sx += 0.5) {
+        consider(sx, frontY);
+        consider(sx, bankY);
+      }
+      // 桥面(解锁侧)
+      const bx = lane === 'l' ? BRIDGE_LEFT : BRIDGE_RIGHT;
+      const midY = (RIVER_Y1 + RIVER_Y2) / 2;
+      for (const bxx of bx) consider(bxx + 0.5, midY);
+    }
+  }
+
+  if (!best || bestD2 > maxSnap * maxSnap) return null;
+  return best;
+}
+
 // 是否在河道(阻挡地面单位)
 export function isRiver(x, y) {
   return y > RIVER_Y1 && y < RIVER_Y2;

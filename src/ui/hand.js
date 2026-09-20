@@ -76,14 +76,25 @@ export class HandUI {
       d.addEventListener('click', () => this.onPlay(i));
       row.appendChild(d);
     }
-    // next 卡
+    // next 卡(仅预览:加暗色遮罩 + 角标 + 禁点,防止误当成手牌点击)
     const nc = CARDS[s.next];
     const nd = document.createElement('div');
     nd.className = 'nextCard';
+    nd.title = '下一张(预览,不可点击)';
     nd.innerHTML = `<div class="label">下一张</div>` +
-      `<div class="nextArt" style="background-image:url('${getCardUrl(s.next)}');"></div>` +
+      `<div class="nextWrap"><div class="nextArt" style="background-image:url('${getCardUrl(s.next)}');"></div>` +
+      `<div class="nextVeil"><span>NEXT</span></div></div>` +
       `<div style="font-weight:700;color:${nc.color};font-size:calc(var(--card-font) - 1px);">${nc.name}</div>` +
       `<div style="color:#e07bff;font-weight:700;">💧${nc.cost}</div>`;
+    nd.addEventListener('click', () => {
+      // 明确反馈:不是可打出的牌
+      const el = nd.querySelector('.nextVeil span');
+      if (el) {
+        el.textContent = '不可点击';
+        nd.classList.add('shake');
+        setTimeout(() => { el.textContent = 'NEXT'; nd.classList.remove('shake'); }, 900);
+      }
+    });
     row.appendChild(nd);
     el.appendChild(row);
   }

@@ -5,7 +5,7 @@
 //   Game(逻辑) ← bus 事件 → UI/HUD/日志/音频(表现)
 //   main 只做编排:创建实例、转发输入、驱动循环
 // ===============================================
-import { MATCH_TIME, CANVAS_W, CANVAS_H, canDeploy } from './core/constants.js';
+import { MATCH_TIME, CANVAS_W, CANVAS_H, canDeploy, snapToDeployZone } from './core/constants.js';
 import { CARDS, KIND } from './data/cards.js';
 import { settings } from './core/settings.js';
 import { appBus } from './core/events.js';
@@ -313,6 +313,7 @@ function loop(now) {
 }
 
 // ===== 部署预览 =====
+// 部队/建筑:若指针在可部署区外附近,预览显示吸附后的位置(与实际部署一致)
 function getPreview() {
   if (selectedCardIdx < 0) return null;
   const cardId = playerHand[selectedCardIdx];
@@ -320,6 +321,14 @@ function getPreview() {
   const card = CARDS[cardId];
   const cost = card.cost;
   if (game.elixir[0] < cost) return { cardId, x: mouseGrid.x, y: mouseGrid.y, invalid: true };
+  if (card.kind !== KIND.SPELL) {
+    const snapped = snapToDeployZone('player', mouseGrid.x, mouseGrid.y, game.towers[1], { zone: card.deployZone });
+    if (snapped) {
+      const moved = Math.abs(snapped.x - mouseGrid.x) > 0.01 || Math.abs(snapped.y - mouseGrid.y) > 0.01;
+      return { cardId, x: snapped.x, y: snapped.y, invalid: false, snapped: moved, pointer: mouseGrid };
+    }
+    return { cardId, x: mouseGrid.x, y: mouseGrid.y, invalid: true };
+  }
   return { cardId, x: mouseGrid.x, y: mouseGrid.y, invalid: false };
 }
 
@@ -344,10 +353,15 @@ const input = new InputController(canvas, {
       return;
     }
     // 部署区域检查(法术可全场;卡牌级部署规则由 canDeploy 解释)
+    // 越界附近点击:自动吸附到最近的合法边缘(snapToDeployZone)
     if (card.kind !== KIND.SPELL) {
       if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone })) {
-        flashMsg('只能在己方半场(或已解锁区域)部署');
-        return;
+        const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone });
+        if (!snapped) {
+          flashMsg('只能在己方半场(或已解锁区域)部署');
+          return;
+        }
+        g = snapped;
       }
     }
     const ok = game.playCard(0, cardId, g.x, g.y);

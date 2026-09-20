@@ -196,12 +196,37 @@ canvas { display:block; }
   text-align:center; font-size:calc(var(--card-font) - 1px);
   display:flex; flex-direction:column; justify-content:center; gap:2px;
   opacity:0.85; flex-shrink:0;
+  cursor:default; user-select:none; -webkit-user-select:none;
 }
-.nextCard .label { color:#8a93b8; font-size:9px; letter-spacing:1px; }
+.nextCard .label { color:#8a93b8; font-size:9px; letter-spacing:1px; font-weight:700; }
+.nextWrap { position:relative; width:calc(var(--card-w) * 0.6); margin:0 auto; flex-shrink:0; }
 .nextCard .nextArt {
-  width:calc(var(--card-w) * 0.6); aspect-ratio:252/300; margin:0 auto; flex-shrink:0;
+  width:100%; aspect-ratio:252/300;
   background-size:contain; background-repeat:no-repeat; background-position:center;
   border-radius:5px;
+}
+/* 暗色遮罩 + NEXT 角标:强烈暗示这是预览不是可打的手牌 */
+.nextVeil {
+  position:absolute; inset:0; border-radius:5px;
+  background:rgba(8,10,22,0.55);
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.nextVeil span {
+  font-size:calc(var(--card-font) - 1px); font-weight:900; letter-spacing:2px;
+  color:#8a93b8; text-shadow:0 1px 3px rgba(0,0,0,0.9);
+  border:1.5px solid rgba(138,147,184,0.6); border-radius:6px; padding:2px 7px;
+  background:rgba(12,15,30,0.5);
+  transition:color .15s, border-color .15s;
+}
+.nextCard.shake { animation:nextShake .5s ease; border-color:rgba(255,123,123,0.6); }
+.nextCard.shake .nextVeil span { color:#ff7b7b; border-color:rgba(255,123,123,0.8); }
+@keyframes nextShake {
+  0%,100% { transform:translateX(0); }
+  20% { transform:translateX(-3px); }
+  40% { transform:translateX(3px); }
+  60% { transform:translateX(-2px); }
+  80% { transform:translateX(2px); }
 }
 
 /* ===== 日志 ===== */
