@@ -21,24 +21,28 @@ export const RIVER_Y2 = 17; // 河道下沿(不含)
 export const BRIDGE_LEFT = [3, 4];     // 中心 3.5,对齐左公主塔
 export const BRIDGE_RIGHT = [14, 15];  // 中心 14.5,对齐右公主塔
 
-// 塔位置(格坐标,塔心)
+// 塔位置(格坐标,塔心)—— 对齐真实 CR 场地测量:
+//   公主塔 3×3,中心距侧墙 3.5、距中线 y 6.5(射程 7.5 覆盖到距河 1 格,
+//   即 wiki 所述 "ranges extend up to a point just before the river")
+//   国王塔 4×4,位于半场中心后方,距底线 1 格(中心 y=3 / 29)
 export const TOWERS = {
   ai: {
-    left:  { x: 3.5, y: 4,    type: 'princess', lane: 'left'  },
-    right: { x: 14.5, y: 4,   type: 'princess', lane: 'right' },
-    king:  { x: 9,   y: 1.5,  type: 'king',     lane: 'king'  },
+    left:  { x: 3.5, y: 6.5,  type: 'princess', lane: 'left'  },
+    right: { x: 14.5, y: 6.5, type: 'princess', lane: 'right' },
+    king:  { x: 9,   y: 3,    type: 'king',     lane: 'king'  },
   },
   player: {
-    left:  { x: 3.5, y: 27,   type: 'princess', lane: 'left'  },
-    right: { x: 14.5, y: 27,  type: 'princess', lane: 'right' },
-    king:  { x: 9,   y: 30.5, type: 'king',     lane: 'king'  },
+    left:  { x: 3.5, y: 25.5, type: 'princess', lane: 'left'  },
+    right: { x: 14.5, y: 25.5, type: 'princess', lane: 'right' },
+    king:  { x: 9,   y: 29,   type: 'king',     lane: 'king'  },
   },
 };
 
-// 塔属性(对齐 wiki 11级 × 0.5)
+// 塔属性(wiki 11级 × 0.5;射程 7.5/7 为官方值)
+// radius 为碰撞半径(略小于视觉:公主 3×3/国王 4×4)
 export const TOWER_STATS = {
-  princess: { hp: 1526, dmg: 54, hitSpeed: 0.8, range: 7.5, sightRange: 7.5, targets: T.ALL, radius: 0.8 },
-  king:     { hp: 2417, dmg: 54, hitSpeed: 1.0, range: 7.0, sightRange: 7.0, targets: T.ALL, radius: 1.0 },
+  princess: { hp: 1526, dmg: 54, hitSpeed: 0.8, range: 7.5, sightRange: 7.5, targets: T.ALL, radius: 1.2 },
+  king:     { hp: 2417, dmg: 54, hitSpeed: 1.0, range: 7.0, sightRange: 7.0, targets: T.ALL, radius: 1.6 },
 };
 
 // 圣水
@@ -87,6 +91,7 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}) {
       : BRIDGE_RIGHT.includes(Math.floor(x));
   }
   // 该侧公主塔身前到河边的区域(连续坐标:含岸边整排)
+  // 真实 CR "pocket":河到公主塔前沿(公主塔中心 6.5,3×3 前沿 5;玩家侧镜像 27)
   if (side === 'player') {
     return y >= 5 && y < RIVER_Y1;
   } else {
