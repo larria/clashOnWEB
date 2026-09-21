@@ -5,7 +5,7 @@
 //   Game(逻辑) ← bus 事件 → UI/HUD/日志/音频(表现)
 //   main 只做编排:创建实例、转发输入、驱动循环
 // ===============================================
-import { MATCH_TIME, CANVAS_W, CANVAS_H, canDeploy, snapToDeployZone } from './core/constants.js';
+import { MATCH_TIME, CANVAS_W, CANVAS_H, CELL, canDeploy, snapToDeployZone } from './core/constants.js';
 import { loadProgress } from './render/cardart.js';
 import { CARDS, KIND } from './data/cards.js';
 import { settings } from './core/settings.js';
@@ -48,7 +48,7 @@ const els = {
 
 // ===== 模块实例 =====
 const gameLog = new GameLog(els.log);
-const handUI = new HandUI(els.handArea, onHandCardClick);
+const handUI = new HandUI(els.handArea, onHandCardClick, onHandCardDrag);
 const hud = new Hud(els);
 const screens = new Screens(els);
 
@@ -343,10 +343,25 @@ function loop(now) {
 }
 
 // ===== 部署预览 =====
+// 预览时机:指针位于战场 canvas 内,且(已选牌 或 正在拖拽携带)——
+// 点击选牌/拖拽开始时不显示,移入战场才跟随
+let pointerOnCanvas = false;   // 指针是否在战场 canvas 范围内
+let draggingCardIdx = -1;      // 拖拽携带中的手牌 idx(-1 无)
+
+function previewGridFor() {
+  return mouseGrid;
+}
+
+function activeCardIdx() {
+  return draggingCardIdx >= 0 ? draggingCardIdx : selectedCardIdx;
+}
+
 // 部队/建筑:若指针在可部署区外附近,预览显示吸附后的位置(与实际部署一致)
 function getPreview() {
-  if (selectedCardIdx < 0) return null;
-  const cardId = playerHand[selectedCardIdx];
+  if (!pointerOnCanvas) return null;
+  const idx = activeCardIdx();
+  if (idx < 0) return null;
+  const cardId = playerHand[idx];
   if (!cardId) return null;
   const card = CARDS[cardId];
   const cost = card.cost;
@@ -372,42 +387,96 @@ function onHandCardClick(i) {
   if (newlySelected) audio.cardSelect(cardId);
 }
 
+// 手牌拖拽:进入携带模式 → 战场跟随预览 → 松手部署(合法时)
+function onHandCardDrag(i, dragPhase, e) {
+  if (dragPhase === 'start') {
+    if (!game || phase !== 'playing' || game.gameOver) return;   // 仅对局中
+    const cardId = playerHand[i];
+    if (!cardId || game.elixir[0] < CARDS[cardId].cost) return;
+    draggingCardIdx = i;
+    selectedCardIdx = -1;             // 拖拽优先于点击选牌
+    audio.cardSelect(cardId);
+  } else if (dragPhase === 'move' && e) {
+    updatePointerFromClient(e.clientX, e.clientY);
+  } else if (dragPhase === 'end') {
+    if (draggingCardIdx >= 0 && pointerOnCanvas && phase === 'playing' && game && !game.gameOver) {
+      deployAtMouse(draggingCardIdx);
+    }
+    draggingCardIdx = -1;
+    pointerOnCanvas = false;
+    handUI.invalidate();   // 拖拽期间被抑制的重建(圣水变化等)此刻补上
+  }
+}
+
+// 屏幕坐标 → 格坐标(并记录指针是否在 canvas 内)
+function updatePointerFromClient(cx, cy) {
+  const rect = canvas.getBoundingClientRect();
+  const inside = cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
+  if (!inside) { pointerOnCanvas = false; return; }
+  pointerOnCanvas = true;
+  mouseGrid = {
+    x: ((cx - rect.left) / rect.width) * CANVAS_W / CELL,
+    y: ((cy - rect.top) / rect.height) * CANVAS_H / CELL,
+  };
+}
+
+// 在当前指针位置部署指定手牌(拖拽松手/点击战场共用)
+function deployAtMouse(idx) {
+  const cardId = playerHand[idx];
+  if (!cardId || !game || game.gameOver) return;
+  const card = CARDS[cardId];
+  if (game.elixir[0] < card.cost) { flashMsg('圣水不足'); return; }
+  let g = mouseGrid;
+  if (card.kind !== KIND.SPELL) {
+    if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0])) {
+      const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0]);
+      if (!snapped) { flashMsg('只能在己方半场(或已解锁区域)部署'); return; }
+      g = snapped;
+    }
+  }
+  const ok = game.playCard(0, cardId, g.x, g.y);
+  if (ok) {
+    playerCycle(cardId, idx);
+    if (selectedCardIdx === idx) selectedCardIdx = -1;
+  } else {
+    flashMsg('部署失败');
+  }
+}
+
+// 移动端长按默认行为:禁用系统呼出菜单(iOS/Android 长按震动源)
+document.addEventListener('contextmenu', (e) => {
+  const t = e.target;
+  // 输入框内保留(粘贴菜单)
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+  e.preventDefault();
+});
+// 双击缩放兜底(部分浏览器忽略 viewport meta)
+document.addEventListener('dblclick', (e) => {
+  if (e.target && e.target.tagName !== 'INPUT') e.preventDefault();
+});
+
 const input = new InputController(canvas, {
-  onPointer: (g) => { mouseGrid = g; },
-  onDragStart: (g) => { mouseGrid = g; }, // 拖拽放兵扩展点:onDragStart 可携带手牌来源
+  onPointer: (g, e) => {
+    mouseGrid = g;
+    pointerOnCanvas = true;   // canvas 上指针事件仅在指针位于其上时发生
+  },
+  onDragStart: (g) => { mouseGrid = g; },
   onTap: (g) => {
-    if (phase !== 'playing') return;
-    if (selectedCardIdx < 0 || game.gameOver) return;
-    const cardId = playerHand[selectedCardIdx];
-    const card = CARDS[cardId];
-    if (game.elixir[0] < card.cost) {
-      flashMsg('圣水不足');
-      return;
-    }
-    // 部署区域检查(法术可全场;卡牌级部署规则由 canDeploy 解释)
-    // 越界附近点击:自动吸附到最近的合法边缘(snapToDeployZone)
-    if (card.kind !== KIND.SPELL) {
-      if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0])) {
-        const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0]);
-        if (!snapped) {
-          flashMsg('只能在己方半场(或已解锁区域)部署');
-          return;
-        }
-        g = snapped;
-      }
-    }
-    const ok = game.playCard(0, cardId, g.x, g.y);
-    if (ok) {
-      playerCycle(cardId, selectedCardIdx);
-      selectedCardIdx = -1;
-    } else {
-      flashMsg('部署失败');
-    }
+    if (phase !== 'playing' || !game || game.gameOver) return;
+    const idx = activeCardIdx();
+    if (idx < 0) return;
+    mouseGrid = g;
+    deployAtMouse(idx);
   },
   onPressEscape: () => {
     if (phase === 'playing' || phase === 'paused') togglePause();
   },
 });
+// 指针离开战场 → 预览隐藏(点击选牌模式下移出即不显示)
+canvas.addEventListener('pointerleave', () => {
+  if (draggingCardIdx < 0) pointerOnCanvas = false;
+});
+// 桌面:选牌后鼠标进入战场才开始跟随(canvas pointerenter 已覆盖于 onPointer)
 
 // 顶部提示
 let flashTimer = null;

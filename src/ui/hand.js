@@ -8,12 +8,17 @@ import { getCardUrl } from '../render/cardart.js';
 
 export class HandUI {
   /**
-   * @param el       #handArea 容器
-   * @param onPlay   (handIndex) => void  点击手牌(选牌)回调
+   * @param el        #handArea 容器
+   * @param onPlay    (handIndex) => void  点击手牌(选牌)回调
+   * @param onDragCard (handIndex|null, phase) => void
+   *                  拖拽手牌事件:phase 'start'|'move'|'end'
+   *                  上层据此进入"携带卡牌"模式并在战场显示跟随预览
    */
-  constructor(el, onPlay) {
+  constructor(el, onPlay, onDragCard) {
     this.el = el;
     this.onPlay = onPlay;
+    this.onDragCard = onDragCard || null;
+    this.dragIdx = -1;          // 拖拽中的手牌 idx(-1 无)
     this.lastSig = '';
     this.lastBarSig = '';
     this.lastElixirShown = -1; // 圣水数字徽章上次显示值(检测变化触发弹跳)
@@ -26,8 +31,12 @@ export class HandUI {
     const s = this.state;
     const sig = s.hand.join(',') + '|' + s.selectedIdx + '|' + s.elixir;
     if (sig !== this.lastSig) {
-      this.lastSig = sig;
-      this._render();
+      // 拖拽进行中不重建 DOM(重建会销毁被 pointer-capture 的卡牌,中断拖拽);
+      // 拖拽结束后 invalidate 会补上这次重建
+      if (this.dragIdx < 0) {
+        this.lastSig = sig;
+        this._render();
+      }
     }
     this._updateElixirBar();
   }
@@ -111,7 +120,14 @@ export class HandUI {
       `;
       d.dataset.idx = i;
       // 始终绑定点击,内部判断圣水
-      d.addEventListener('click', () => this.onPlay(i));
+      d.addEventListener('click', () => {
+        // 拖拽过(发生了移动)的 pointerup 不触发选牌,由 pointer 逻辑处理
+        if (d._dragConsumed) { d._dragConsumed = false; return; }
+        this.onPlay(i);
+      });
+      // 拖拽部署:pointerdown 起,移动超阈值即进入携带模式,松手结束
+      // (移动阈值防误触:轻点仍走 click 选牌)
+      this._bindDrag(d, i, canPlay);
       row.appendChild(d);
     }
     // next 卡(仅预览:加暗色遮罩 + 角标 + 禁点,防止误当成手牌点击)
@@ -135,6 +151,40 @@ export class HandUI {
     });
     row.appendChild(nd);
     el.appendChild(row);
+  }
+
+  /** 手牌拖拽:按下→移动超阈值进入携带→全局 move/up 追踪 */
+  _bindDrag(d, i, canPlay) {
+    let startX = 0, startY = 0, active = false;
+    d.addEventListener('pointerdown', (e) => {
+      if (!canPlay) return;                      // 圣水不足不可拖
+      if (e.button !== undefined && e.button !== 0) return; // 仅主键/触摸
+      startX = e.clientX; startY = e.clientY;
+      active = true;
+      // capture 保证 move/up 持续派发给本元素;失败(如合成事件)不中断
+      try { d.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    });
+    d.addEventListener('pointermove', (e) => {
+      if (!active) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (this.dragIdx < 0 && (dx*dx + dy*dy) > 12*12) {  // 12px 阈值
+        this.dragIdx = i;
+        d._dragConsumed = true;
+        d.classList.add('dragging');
+        if (this.onDragCard) this.onDragCard(i, 'start');
+      }
+      if (this.dragIdx === i && this.onDragCard) this.onDragCard(i, 'move', e);
+    });
+    const end = (e) => {
+      active = false;
+      if (this.dragIdx === i) {
+        d.classList.remove('dragging');
+        this.dragIdx = -1;
+        if (this.onDragCard) this.onDragCard(i, 'end', e);
+      }
+    };
+    d.addEventListener('pointerup', end);
+    d.addEventListener('pointercancel', end);
   }
 
   /** 卡片尺寸适配(canvas 缩放联动,全屏布局统一按 canvas 宽算) */

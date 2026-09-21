@@ -7,6 +7,9 @@
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { touch-action:manipulation; height:100%; overflow:hidden; }
+/* 移动端长按默认行为(呼出菜单/系统震动/文本选择)全部禁用 */
+body { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
+.handCard, .nextCard, #game, #handArea { touch-action:none; }
 body {
   background:
     radial-gradient(1200px 600px at 20% -10%, #2c3a6b 0%, transparent 55%),
@@ -400,6 +403,12 @@ canvas { display:block; }
 }
 .handCard:hover { transform:translateY(-4px); border-color:#6a74a8; box-shadow:0 7px 14px rgba(0,0,0,0.5); }
 .handCard:active { transform:translateY(-1px) scale(0.98); }
+/* 拖拽携带中:原位半透明缩微(卡已"拿在手里") */
+.handCard.dragging {
+  opacity:0.3; transform:scale(0.9);
+  border-color:rgba(255,213,79,0.8);
+  cursor:grabbing;
+}
 .handCard .cardArt {
   width:100%; flex:1; min-height:0;
   background-size:contain; background-repeat:no-repeat; background-position:center;
@@ -547,6 +556,7 @@ label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-s
   background:#262b4a; color:#ffe082; border:1px solid #4a5178; border-radius:6px;
   padding:2px 8px; font-size:12px; font-weight:700; width:110px; outline:none;
   margin-left:4px;
+  -webkit-user-select:text; user-select:text;   /* 输入框恢复系统选择 */
 }
 .deNameInput:focus { border-color:#ffd54f; }
 #deDeckRow { display:flex; gap:6px; flex-wrap:wrap; min-height:66px; margin-bottom:10px;

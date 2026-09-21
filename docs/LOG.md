@@ -5,6 +5,37 @@
 
 ---
 
+## 2026-09-21 交互升级:拖拽部署 / 预览时机 / 长按默认行为
+
+**拖拽部署(对齐原版核心操作)**
+- 手牌 pointerdown → 移动超 12px 阈值进入"携带"模式(原位卡半透明缩微)→
+  拖到战场时跟随预览 → 松手部署(合法时);松手在战场外/圣水不足则取消
+- HandUI 新增 onDragCard(start/move/end)回调 + _bindDrag(阈值防误触,
+  轻点仍走 click 选牌;_dragConsumed 区分拖拽与点击)
+- 关键坑:拖拽期间手牌区禁止重建 DOM(圣水整数变化会触发 _render,
+  销毁被 pointer-capture 的卡牌导致拖拽中断)——update() 在 dragIdx>=0
+  时跳过 _render,拖拽结束后 invalidate 补上;圣水条增量更新不受影响
+- setPointerCapture 加 try-catch(合成事件/特殊场景失败不中断)
+
+**部署预览时机**
+- 之前:选牌即显示预览(指针可能根本不在战场,突兀)
+- 现在:pointerOnCanvas 标志——预览仅在指针位于战场 canvas 内且
+  (已选牌或拖拽携带中)时渲染;选牌瞬间/拖拽开始时(指针在手牌区)不显示,
+  移入战场才跟随;pointerleave 移出即隐藏
+- deployAtMouse() 统一拖拽松手与点击战场的部署路径(含吸附)
+
+**长按默认行为(移动端震动/呼出菜单)**
+- CSS:body 级 -webkit-touch-callout:none + user-select:none
+  (输入框单独恢复);手牌/canvas touch-action:none
+- JS:contextmenu 全局阻止(输入框除外);dblclick 缩放兜底
+
+**验证**
+- 合成 PointerEvent 链路:拖拽到手牌区松手不部署 ✓ / 拖入战场松手部署 ✓ /
+  圣水不足卡不可拖 ✓ / 点击选牌→点击战场部署 ✓
+- 全程零 JS 错误;AI 评测回归正常
+
+---
+
 ## 2026-09-21 UI 细节:overlay 全屏 / 加载遮罩 / 弱化情境文案
 
 - **#overlay 全屏**:从 canvasWrap 内移到 body 直接子级,`position:fixed`
