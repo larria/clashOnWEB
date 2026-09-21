@@ -224,18 +224,27 @@ export class Game {
       if (crowns0 !== crowns1) {
         this.decideByDamage();
       } else {
-        // 平皇冠 → 加时
+        // 平皇冠 → 加时;快照公主塔存活状态——加时只对"加时开始后
+        // 新被摧毁"的塔判 sudden death(1:1 平皇冠进场时已有塔是死的)
         this.overtime = true;
+        this._otDead = {
+          0: { left: this.towers[0].left.dead, right: this.towers[0].right.dead },
+          1: { left: this.towers[1].left.dead, right: this.towers[1].right.dead },
+        };
         this.bus.emit('log', { who: 'sys', msg: '⏱ 常规时间结束,皇冠持平 — 进入加时(先摧毁任意塔者胜)!' });
         this.bus.emit('match:phase', { phase: 'overtime' });
       }
     }
     // 加时中任意塔被摧毁 → 塔方立即判负(onTowerDeath → checkWin 已处理国王塔;
-    // 公主塔需在此判定)
+    // 公主塔需在此判定;排除加时开始前就已摧毁的塔)
     if (this.overtime && !this.gameOver) {
-      const anyDead = (s) => this.towers[s].left.dead || this.towers[s].right.dead;
-      if (anyDead(1)) { this.winner = 0; this.gameOver = true; this.bus.emit('match:end', { winner: 0, reason: 'overtime' }); }
-      else if (anyDead(0)) { this.winner = 1; this.gameOver = true; this.bus.emit('match:end', { winner: 1, reason: 'overtime' }); }
+      const newDead = (s) => {
+        const t = this.towers[s];
+        const o = this._otDead[s];
+        return (t.left.dead && !o.left) || (t.right.dead && !o.right);
+      };
+      if (newDead(1)) { this.winner = 0; this.gameOver = true; this.bus.emit('match:end', { winner: 0, reason: 'overtime' }); }
+      else if (newDead(0)) { this.winner = 1; this.gameOver = true; this.bus.emit('match:end', { winner: 1, reason: 'overtime' }); }
       // 加时耗尽 → 最低塔血者负(简化 tiebreaker)
       else if (this.time >= MATCH_TIME + OVERTIME) {
         this.decideByDamage();

@@ -15,42 +15,80 @@ export class HandUI {
     this.el = el;
     this.onPlay = onPlay;
     this.lastSig = '';
-    this.state = { hand: [], next: null, elixir: 0, selectedIdx: -1 };
+    this.lastBarSig = '';
+    this.lastElixirShown = -1; // 圣水数字徽章上次显示值(检测变化触发弹跳)
+    this.state = { hand: [], next: null, elixir: 0, elixirFloat: 0, selectedIdx: -1 };
   }
 
-  /** 每帧调用:状态变化时重建 DOM */
+  /** 每帧调用:手牌变化重建;圣水条只做增量样式更新(不重建 DOM,防点击丢失) */
   update(state) {
     Object.assign(this.state, state);
     const s = this.state;
     const sig = s.hand.join(',') + '|' + s.selectedIdx + '|' + s.elixir;
-    if (sig === this.lastSig) return;
-    this.lastSig = sig;
-    this._render();
+    if (sig !== this.lastSig) {
+      this.lastSig = sig;
+      this._render();
+    }
+    this._updateElixirBar();
   }
 
   invalidate() { this.lastSig = ''; }
+
+  /** 圣水条增量更新:连续充盈进度(原版按小数部分平滑上涨) */
+  _updateElixirBar() {
+    const s = this.state;
+    const bar = this._barRefs;
+    if (!bar) return;
+    const ef = Math.max(0, Math.min(10, s.elixirFloat != null ? s.elixirFloat : s.elixir));
+    const whole = Math.floor(ef);
+    const frac = ef - whole;
+    const full = ef >= 9.999;
+
+    // 10 个液槽:已满格 100%,当前格按小数充盈,其余 0
+    for (let i = 0; i < 10; i++) {
+      const p = i < whole ? 1 : (i === whole ? frac : 0);
+      const f = bar.fills[i];
+      if (f) f.style.height = (p * 100).toFixed(1) + '%';
+    }
+    // 满水辉光
+    bar.root.classList.toggle('full', full);
+    bar.root.classList.toggle('gushing', full && ef >= 10);
+    // 数字徽章
+    const shown = Math.floor(ef);
+    if (shown !== this.lastElixirShown) {
+      this.lastElixirShown = shown;
+      bar.num.textContent = shown;
+      bar.num.classList.remove('pop');
+      void bar.num.offsetWidth;
+      bar.num.classList.add('pop');
+    }
+  }
 
   _render() {
     const s = this.state;
     const el = this.el;
     el.innerHTML = '';
 
-    // 圣水条(立体珠+满水光晕)
-    const isMobile = window.innerWidth <= 860;
-    const orbSz = isMobile ? 11 : 14;
-    const full = s.elixir >= 10;
+    // 圣水条(全宽液态分段条,对齐原版:连续充盈+满水辉光)
     const bar = document.createElement('div');
-    bar.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;margin-bottom:5px;padding:4px 8px;border-radius:10px;background:rgba(12,15,30,0.6);border:1px solid rgba(255,255,255,0.08);' + (full ? 'box-shadow:0 0 12px rgba(210,76,255,0.5);' : '');
-    let barHtml = '<div style="display:flex;gap:2px;flex-wrap:nowrap;">';
+    bar.className = 'elixirBar';
+    let slotsHtml = '';
     for (let i = 0; i < 10; i++) {
-      const filled = i < s.elixir;
-      barHtml += `<div style="width:${orbSz}px;height:${orbSz}px;border-radius:50%;flex-shrink:0;${filled
-        ? `background:radial-gradient(circle at 35% 30%, #f2a7ff, #d24cff 55%, #8a1ec9);box-shadow:0 1px 3px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(0,0,0,0.3);border:1px solid #5c1090;`
-        : `background:radial-gradient(circle at 35% 30%, #3a4266, #262b4a);border:1px solid #1a1e38;`}"></div>`;
+      slotsHtml += `<div class="eSlot"><div class="eFill"></div></div>`;
     }
-    barHtml += `</div><div style="margin-left:6px;color:#e07bff;font-weight:800;font-size:${orbSz+4}px;text-shadow:0 0 8px rgba(210,76,255,0.6);">${s.elixir}</div>`;
-    bar.innerHTML = barHtml;
+    bar.innerHTML = `
+      <div class="eNum" data-num>0</div>
+      <div class="eTrack">${slotsHtml}</div>
+    `;
     el.appendChild(bar);
+    // 缓存引用,供每帧增量更新
+    this._barRefs = {
+      root: bar,
+      num: bar.querySelector('.eNum'),
+      fills: [...bar.querySelectorAll('.eFill')],
+    };
+    this.lastElixirShown = -1; // 强制下一帧刷新数字
+    this._updateElixirBar();
 
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;gap:6px;max-width:100%;';
@@ -108,6 +146,9 @@ export class HandUI {
       // 4卡 + next(0.75卡) + 4gap 需 ≤ canvasW
       cardW = Math.max(52, Math.floor((canvasW - 4*6) / 4.75));
     }
+    // 手牌区(含圣水条)与战场 canvas 同宽,保证圣水条占满"当前栏"
+    const ha = document.getElementById('handArea');
+    if (ha) ha.style.maxWidth = Math.max(0, canvasW) + 'px';
     document.documentElement.style.setProperty('--card-w', cardW + 'px');
     document.documentElement.style.setProperty('--card-h', Math.floor(cardW * 1.25) + 'px');
     document.documentElement.style.setProperty('--card-font', Math.max(9, Math.floor(cardW * 0.14)) + 'px');

@@ -22,7 +22,7 @@ body {
 /* ===== 布局 ===== */
 #wrap { display:flex; gap:14px; align-items:flex-start; justify-content:center; }
 #gameCol { display:flex; flex-direction:column; align-items:center; min-width:0; }
-#handArea { width:100%; display:flex; flex-direction:column; align-items:center; gap:5px; margin-top:8px; }
+#handArea { width:100%; display:flex; flex-direction:column; align-items:stretch; gap:5px; margin-top:8px; }
 
 #side {
   width:230px; max-width:230px; display:flex; flex-direction:column; gap:10px; font-size:13px; flex-shrink:0;
@@ -161,6 +161,99 @@ canvas { display:block; }
 
 /* ===== 手牌卡(卡图主导) ===== */
 :root { --card-w:80px; --card-h:104px; --card-font:11px; --orb-size:30px; }
+
+/* ===== 圣水条(全宽液态分段,对齐原版) ===== */
+.elixirBar {
+  position:relative;
+  width:100%; height:26px;
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:6px;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,0.45));
+}
+/* 圣水数字徽章(左侧圣水球) */
+.elixirBar .eNum {
+  width:34px; height:34px; flex-shrink:0;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:17px; font-weight:900; color:#fff;
+  background:radial-gradient(circle at 35% 28%, #f2a7ff 0%, #d24cff 45%, #8a1ec9 78%, #5c1090 100%);
+  border:2px solid #e9b3ff;
+  box-shadow:0 2px 8px rgba(0,0,0,0.55), inset 0 -4px 6px rgba(70,0,110,0.55), inset 0 3px 5px rgba(255,255,255,0.35);
+  text-shadow:0 1px 3px rgba(60,0,95,0.9);
+  z-index:1;
+  transition:transform .12s;
+}
+/* 数字变化弹跳 */
+.elixirBar .eNum.pop { animation:eNumPop .32s ease; }
+@keyframes eNumPop {
+  0% { transform:scale(1); }
+  35% { transform:scale(1.28); filter:brightness(1.35); }
+  70% { transform:scale(0.94); }
+  100% { transform:scale(1); }
+}
+/* 液槽轨道 */
+.elixirBar .eTrack {
+  flex:1; height:100%;
+  display:flex; gap:2px;
+  padding:3px 4px;
+  border-radius:13px;
+  background:linear-gradient(180deg, #1c2040 0%, #14172e 100%);
+  border:2px solid #454f85;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,0.65), inset 0 -1px 0 rgba(255,255,255,0.07);
+  overflow:hidden;
+}
+/* 单格液槽(杯状凹槽) */
+.elixirBar .eSlot {
+  flex:1; position:relative;
+  border-radius:4px;
+  background:linear-gradient(180deg, #0d0f22 0%, #191d38 100%);
+  box-shadow:inset 0 2px 3px rgba(0,0,0,0.7), inset 0 -1px 1px rgba(255,255,255,0.05);
+  overflow:hidden;
+}
+/* 液体(从底部充盈,随 elixirFloat 小数连续上涨) */
+.elixirBar .eFill {
+  position:absolute; left:0; right:0; bottom:0;
+  height:0%;
+  background:linear-gradient(180deg,
+    #f2a7ff 0%, #e36bff 22%, #d24cff 55%, #a425e8 82%, #7d1cc4 100%);
+  box-shadow:inset 0 -3px 4px rgba(70,0,115,0.6);
+  transition:height .09s linear;
+}
+/* 液面高光 + 波动 */
+.elixirBar .eFill::before {
+  content:''; position:absolute; left:0; right:0; top:0; height:3px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0));
+  border-radius:2px;
+}
+.elixirBar .eFill::after {
+  content:''; position:absolute; left:0; right:0; top:-1px; height:4px;
+  background:radial-gradient(60% 100% at 30% 100%, rgba(255,255,255,0.55), transparent 70%),
+             radial-gradient(60% 100% at 75% 100%, rgba(255,255,255,0.35), transparent 70%);
+  animation:eWave 1.6s ease-in-out infinite;
+  opacity:0.8;
+}
+@keyframes eWave {
+  0%, 100% { transform:translateX(-8%); }
+  50% { transform:translateX(8%); }
+}
+/* 满水:整体紫辉光 + 液槽点亮 */
+.elixirBar.full .eTrack {
+  border-color:#c95cff;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,0.65), 0 0 14px rgba(210,76,255,0.55);
+}
+.elixirBar.full .eSlot {
+  box-shadow:inset 0 2px 3px rgba(0,0,0,0.7), inset 0 0 5px rgba(210,76,255,0.5);
+}
+.elixirBar.full { animation:eFullGlow 1.4s ease-in-out infinite; }
+@keyframes eFullGlow {
+  0%, 100% { filter:drop-shadow(0 3px 6px rgba(0,0,0,0.45)) drop-shadow(0 0 2px rgba(210,76,255,0.4)); }
+  50% { filter:drop-shadow(0 3px 6px rgba(0,0,0,0.45)) drop-shadow(0 0 9px rgba(210,76,255,0.85)); }
+}
+/* 满水溢出:数字球持续微光 */
+.elixirBar.gushing .eNum {
+  box-shadow:0 2px 8px rgba(0,0,0,0.55), inset 0 -4px 6px rgba(70,0,110,0.55),
+    inset 0 3px 5px rgba(255,255,255,0.35), 0 0 16px rgba(210,76,255,0.8);
+}
 .handCard {
   width:var(--card-w); height:var(--card-h);
   border-radius:9px; padding:3px; position:relative; text-align:center;

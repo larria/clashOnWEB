@@ -318,7 +318,7 @@ function loop(now) {
     if (game) {
       handUI.update({
         hand: playerHand, next: playerNext,
-        elixir: game.elixir[0], selectedIdx: selectedCardIdx,
+        elixir: game.elixir[0], elixirFloat: game.elixirFloat[0], selectedIdx: selectedCardIdx,
       });
       hud.renderInfo(game); // 信息面板每帧刷新(ready 态也显示)
       renderer.draw(phase === 'playing' ? getPreview() : null, phase === 'playing' ? dt : 0);
