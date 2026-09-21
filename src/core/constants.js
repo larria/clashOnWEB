@@ -70,14 +70,26 @@ export const SIDE_AI = 1;
 //   'anywhere'          → 全场(法术;未来矿工/哥布林飞桶等)
 //   'riverbanks'        → 仅河岸两侧(未来掘地矿工等特殊卡)
 // enemyTowers: 敌方塔 {left,right} 状态(推塔解锁区判定)
-export function canDeploy(side, x, y, enemyTowers, opts = {}) {
+// myTowers:    己方塔(占面积判定,可选;不传则跳过己方塔碰撞)
+export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers) {
   // 卡牌级部署规则优先(打破常规部署区域的卡:法术/矿工/飞桶…)
   if (opts.zone === 'anywhere') return true;
+
+  // 塔占面积:不可部署在任何存活塔的格子上(公主 3×3,国王 4×4)
+  // (已毁的塔为瓦砾,不阻挡部署)
+  if (!blockByTower(enemyTowers, x, y) && !blockByTower(myTowers, x, y)) {
+    // fallthrough 继续区域判定
+  } else {
+    return false;
+  }
 
   const inOwnHalf = side === 'player'
     ? y >= RIVER_Y2
     : y < RIVER_Y1;
-  if (inOwnHalf) return true;
+  if (inOwnHalf) {
+    // 己方半场:塔占面积已判,其余全部合法
+    return true;
+  }
   // 敌方半场:仅在对应侧公主塔被摧毁后解锁
   if (!enemyTowers) return false;
   const leftUnlocked = enemyTowers.left && enemyTowers.left.dead;
@@ -92,26 +104,42 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}) {
       ? BRIDGE_LEFT.includes(Math.floor(x))
       : BRIDGE_RIGHT.includes(Math.floor(x));
   }
-  // 该侧公主塔身前到河边的区域(连续坐标:含岸边整排)
-  // 真实 CR "pocket":河到公主塔前沿(公主塔中心 6.5,3×3 前沿 5;玩家侧镜像 27)
+  // 解锁 pocket(对齐真实 CR 的阶梯形):
+  //   靠被毁塔一侧(塔心 ±3 格) → 全深:河到公主塔前沿(公主塔中心 6.5,3×3 前沿 y=5)
+  //   靠中线一侧 → 浅区:仅河岸附近(到 y=12)
+  // 镜像:玩家解锁敌方左/右塔;AI 侧 y 轴镜像(27=32-5,20=32-12)
+  const towerX = isLeftLane ? 3.5 : 14.5;
+  const nearTower = Math.abs(x - towerX) <= 3.0;
   if (side === 'player') {
-    return y >= 5 && y < RIVER_Y1;
+    return nearTower ? (y >= 5 && y < RIVER_Y1) : (y >= 12 && y < RIVER_Y1);
   } else {
-    return y >= RIVER_Y2 && y < 27;
+    return nearTower ? (y >= RIVER_Y2 && y < 27) : (y >= RIVER_Y2 && y <= 20);
   }
+}
+
+// 塔占面积判定:点是否落在某存活塔的格子上(公主 3×3 → 半宽 1.5;国王 4×4 → 半宽 2)
+function blockByTower(towers, x, y) {
+  if (!towers) return false;
+  for (const k of ['left', 'right', 'king']) {
+    const tw = towers[k];
+    if (!tw || tw.dead) continue;
+    const hw = tw.type === 'king' ? 2.0 : 1.5;
+    if (Math.abs(x - tw.x) <= hw && Math.abs(y - tw.y) <= hw) return true;
+  }
+  return false;
 }
 
 // ===== 部署点吸附 =====
 // 点击在可部署区域外附近时,吸附到最近的合法边缘(宽容操作,减少部署失败挫败感)
 // 返回吸附后的 {x, y};若点击点本身合法,原样返回;离区域太远(maxSnap 格)返回 null
 // 与 canDeploy 同源判定:己方半场 + 解锁区(含解锁侧桥面)
-export function snapToDeployZone(side, x, y, enemyTowers, opts = {}, maxSnap = 2.5) {
-  if (canDeploy(side, x, y, enemyTowers, opts)) return { x, y };
+export function snapToDeployZone(side, x, y, enemyTowers, opts = {}, myTowers, maxSnap = 2.5) {
+  if (canDeploy(side, x, y, enemyTowers, opts, myTowers)) return { x, y };
 
   // 候选锚点:沿可部署区域边缘采样,取最近的合法点
   let best = null, bestD2 = Infinity;
   const consider = (cx, cy) => {
-    if (!canDeploy(side, cx, cy, enemyTowers, opts)) return;
+    if (!canDeploy(side, cx, cy, enemyTowers, opts, myTowers)) return;
     const d2 = (cx-x)*(cx-x) + (cy-y)*(cy-y);
     if (d2 < bestD2) { bestD2 = d2; best = { x: cx, y: cy }; }
   };

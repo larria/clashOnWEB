@@ -283,6 +283,12 @@ export class AI {
     for (const cluster of clusters) {
       const liveValue = cluster.units.reduce((s, u) => s + u.card.cost * (u.hp / u.card.hp > 0.4 ? 1 : 0.3), 0);
       if (liveValue < 2.5) continue; // 簇总价值太低不值得法术
+      // 深入敌方领土的簇(对手沉底部署/后场产出)不算法术目标:
+      // 它们离威胁我方还很远,法术砸过去既亏费又可能蹭醒对方国王塔
+      const inEnemyTerritory = this.side === 1
+        ? cluster.cy < RIVER_Y1 - 4    // AI 视角:簇在敌方(玩家)后场
+        : cluster.cy > RIVER_Y2 + 4;
+      if (inEnemyTerritory) continue;
       for (let i = 0; i < this.hand.length; i++) {
         const c = CARDS[this.hand[i]];
         if (c.kind !== KIND.SPELL || !c.dmg) continue;
@@ -297,9 +303,18 @@ export class AI {
           .reduce((s, u) => s + u.card.cost * 0.3, 0);
         const value = killValue + chipValue;
         if (value >= c.cost * 1.2 && willKill >= 1) {
-          // 打塔也能蹭到的法术加一点分
           let score = 15 + value * 6 - c.cost * 3;
-          // 簇离我方塔近(在打我方塔)时优先
+          // 误唤醒敌方沉睡国王塔的惩罚:法术范围够到未激活国王塔时
+          // 大幅降分(沉底单位/女巫骷髅不值得帮对手激活国王塔;
+          // 只有簇价值极高(≥8)时才接受代价)
+          const enemyKing = game.towers[1 - this.side].king;
+          if (!enemyKing.dead && !enemyKing.activated) {
+            const kd = Math.hypot(cluster.cx - enemyKing.x, cluster.cy - enemyKing.y);
+            if (kd <= (c.radius || 2.5) + enemyKing.radius) {
+              if (value < 8) continue;   // 价值不够 → 不放这个法术
+              score -= 20;               // 价值够 → 接受代价但降优先级
+            }
+          }
           out.push({ cardId: this.hand[i], x: cluster.cx, y: cluster.cy, handIndex: i, role: 'spell_clear', score });
         }
       }
@@ -507,7 +522,7 @@ export class AI {
 
   canPlace(x, y, cardId) {
     const card = cardId ? CARDS[cardId] : null;
-    return canDeploy(this.sideName, x, y, this.game.towers[1 - this.side], { zone: card && card.deployZone });
+    return canDeploy(this.sideName, x, y, this.game.towers[1 - this.side], { zone: card && card.deployZone }, this.game.towers[this.side]);
   }
 
   nearestMyTower(unit) {

@@ -143,9 +143,9 @@ function applySpellEffect(card, side, x, y, game) {
   }
 
   // 伤害塔(皇冠塔减伤:各法术倍率不同,对齐 wiki——
-  // 万箭 20% / 火箭 23% / 雷电 15% / 火球·电击·冰冻·狂暴 25%;多段命中同样适用)
+  // 万箭 20% / 火箭 23% / 雷电 15% / 火球·电击 25% / 冰冻 30%(wiki:35/115≈0.3)
   if (dmg > 0) {
-    const TOWER_MULT = { arrows: 0.20, rocket: 0.23, lightning: 0.15, fireball: 0.25, zap: 0.25, freeze: 0.25, rage: 0.25 };
+    const TOWER_MULT = { arrows: 0.20, rocket: 0.23, lightning: 0.15, fireball: 0.25, zap: 0.25, freeze: 0.30, rage: 0.25 };
     const mult = TOWER_MULT[card.id] != null ? TOWER_MULT[card.id] : 0.3;
     const towers = game.getEnemyTowers(side);
     const towerDmg = dmg * mult * ((sp && sp.hits) || 1);
@@ -173,10 +173,11 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
     castSpell(cardId, side, x, y, game);
     return true;
   }
-  // 部署区域检查(镜像召唤可豁免;传入敌方塔状态以支持推塔解锁区;
-  // 卡牌级部署规则 deployZone 由 canDeploy 解释)
+  // 部署区域检查(镜像召唤可豁免;传入双方塔状态:敌方塔判解锁区,
+  // 己方塔判占面积;卡牌级部署规则 deployZone 由 canDeploy 解释)
   const enemyTowers = game && game.towers ? game.towers[1 - side] : null;
-  if (!opts.bypass && !canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers, { zone: card.deployZone })) return false;
+  const myTowers = game && game.towers ? game.towers[side] : null;
+  if (!opts.bypass && !canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers, { zone: card.deployZone }, myTowers)) return false;
 
   const count = card.count || 1;
   // 多体单位排布

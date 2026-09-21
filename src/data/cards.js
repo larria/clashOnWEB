@@ -156,8 +156,8 @@ export const CARDS = {
     radius:5.0, dmg:0, knockback:0, color:'#ff1744', deployZone:'anywhere',
     special:{ buff:1.35, duration:6.0 } },
   freeze: { id:'freeze', name:'冰冻法术', cost:3, rarity:'史诗', kind:KIND.SPELL,
-    radius:3.5, dmg:60, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
-    special:{ freeze:4.0 }, castTime: 4.0 },  // 施法时间4s(wiki)
+    radius:3.0, dmg:58, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
+    special:{ freeze:4.0 } },  // 即时生效;伤害 115/2=58(11级×0.5),对塔约 17.5(倍率表 0.3 换算)
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },

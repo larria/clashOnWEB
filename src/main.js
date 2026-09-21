@@ -385,8 +385,8 @@ const input = new InputController(canvas, {
     // 部署区域检查(法术可全场;卡牌级部署规则由 canDeploy 解释)
     // 越界附近点击:自动吸附到最近的合法边缘(snapToDeployZone)
     if (card.kind !== KIND.SPELL) {
-      if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone })) {
-        const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone });
+      if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0])) {
+        const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0]);
         if (!snapped) {
           flashMsg('只能在己方半场(或已解锁区域)部署');
           return;

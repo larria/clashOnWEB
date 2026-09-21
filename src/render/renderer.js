@@ -111,50 +111,38 @@ export class Renderer {
     const ctx = this.ctx;
     const t = this.animTime;
     const enemyTowers = this.game.towers[1];
+    const myTowers = this.game.towers[0];
     ctx.save();
     // 呼吸透明度
     const breathe = 0.16 + 0.07 * Math.sin(t * 3);
-    // 己方半场逐格绿色高亮(解锁区另行金色处理)
-    for (let gy = RIVER_Y2; gy < GRID_H; gy += 0.5) {
-      for (let gx = 0; gx < GRID_W; gx += 0.5) {
-        ctx.fillStyle = `rgba(100,220,140,${breathe})`;
-        ctx.fillRect(gx*CELL, gy*CELL, CELL*0.5, CELL*0.5);
+    // 逐格采样 canDeploy(与实际判定同源):己方半场绿色,解锁区金色
+    // 自动体现塔占面积(塔上格子不高亮)与 pocket 阶梯形状
+    const step = 0.5;
+    for (let gy = 0; gy < GRID_H; gy += step) {
+      // 玩家视角只画玩家可部署区:己方半场(绿)+ 敌方解锁区(金)
+      const inOwn = gy >= RIVER_Y2;
+      const inEnemy = gy < RIVER_Y1;
+      if (!inOwn && !inEnemy) continue;
+      for (let gx = 0; gx < GRID_W; gx += step) {
+        const cx = gx + step/2, cy = gy + step/2;
+        const okOwn = inOwn && canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
+        const okUnlock = inEnemy && canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
+        if (okOwn) {
+          ctx.fillStyle = `rgba(100,220,140,${breathe})`;
+          ctx.fillRect(gx*CELL, gy*CELL, CELL*step, CELL*step);
+        } else if (okUnlock) {
+          ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
+          ctx.fillRect(gx*CELL, gy*CELL, CELL*step, CELL*step);
+        }
       }
     }
-    // 区域描边:己方半场底线区域
-    ctx.strokeStyle = `rgba(100,220,140,${0.35 + 0.15*Math.sin(t*3)})`;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, RIVER_Y2*CELL, CANVAS_W-2, (GRID_H-RIVER_Y2)*CELL);
-    // 解锁区描边(如有):y 从塔前(5)到河岸排末尾(RIVER_Y1,含岸边整行)
-    const unlock = [];
-    if (enemyTowers.left.dead) unlock.push({x:0, w:9});
-    if (enemyTowers.right.dead) unlock.push({x:9, w:9});
-    const unlockTop = 5, unlockH = (RIVER_Y1 - unlockTop); // 含岸排(y=14)整行
-    for (const u of unlock) {
-      // 解锁区金色微光填充
-      ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
-      ctx.fillRect(u.x*CELL+1, unlockTop*CELL, u.w*CELL-2, unlockH*CELL);
-      ctx.strokeStyle = `rgba(255,213,79,${0.5 + 0.2*Math.sin(t*3)})`;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([8, 5]);
-      ctx.strokeRect(u.x*CELL+1, unlockTop*CELL, u.w*CELL-2, unlockH*CELL);
-      ctx.setLineDash([]);
-      // 解锁侧桥面高亮(该侧公主塔被推后桥面也可部署,与 canDeploy 一致)
-      const bridgeXs = u.x === 0 ? BRIDGE_LEFT : BRIDGE_RIGHT;
-      for (const bx of bridgeXs) {
-        ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
-        ctx.fillRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
-        ctx.strokeStyle = `rgba(255,213,79,${0.5 + 0.2*Math.sin(t*3)})`;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.strokeRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
-        ctx.setLineDash([]);
-      }
-      // 解锁区标记文字
+    // 解锁区标记文字(有解锁时)
+    if (enemyTowers.left.dead || enemyTowers.right.dead) {
       ctx.fillStyle = 'rgba(255,213,79,0.9)';
       ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🔓 已解锁', (u.x + u.w/2)*CELL, (unlockTop + unlockH/2)*CELL);
+      if (enemyTowers.left.dead) ctx.fillText('🔓 已解锁', 4.5*CELL, 9*CELL);
+      if (enemyTowers.right.dead) ctx.fillText('🔓 已解锁', 13.5*CELL, 9*CELL);
     }
     ctx.restore();
   }
@@ -1415,7 +1403,7 @@ export class Renderer {
       const r = (card.radius || 0.4) * CELL;
       ctx.save();
       // 合法/非法标识(含推塔解锁区;卡牌级部署规则由 canDeploy 解释)
-      const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone });
+      const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone }, this.game.towers[0]);
       // 预览卡图(半透明,按单位视觉尺寸;多体单位显示小圆头像示意)
       const isSwarm = (card.count || 1) > 1;
       const isBuildingCard = card.kind === KIND.BUILDING;
