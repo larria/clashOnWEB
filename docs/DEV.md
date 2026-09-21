@@ -102,12 +102,25 @@ audio.js ←──────┴──────────────┘ (
 游戏内数值 = 官方 wiki 11 级 × 0.5(四舍五入)。数据来源与换算规则见
 `docs/CARD-STATS.md`,原始快照 `docs/card-stats.json`(离线可查,无需重新抓取)。
 
+### 8. 卡图素材(命名与校验)
+
+- **权威映射**:`docs/card-art-map.json`(cardId → wiki 文件名,已逐一核验)。
+  wiki 卡图命名是**驼峰无空格**(`HogRiderCard.png`)。2026-09 事故根因:
+  脚本猜测下划线命名(`Hog_RiderCard.png`)在 wiki 不存在,兜底静默抓了
+  横版渲染图,17 张卡图规格错误
+- **重取/校验**:`python3 tools/fetch-card-art.py`(校验)/ `--fetch`(重下)。
+  脚本只认映射文件,下载后强制规格校验(比例 ≈0.84、≤300px),不符即
+  报错拒绝——禁止静默兜底换素材
+- 例外:miniPekka/pekka 在 wiki 无标准 Card.png(见映射 _meta.special),
+  本地为竖版裁剪图;golemite 复用 golem 图
+
 ## 常见扩展指南
 
 ### 添加新卡牌
 
 1. `data/cards.js` 加卡(数值照 docs/card-stats.json 换算)
-2. 卡图:下载官方 wiki 卡图存为 `assets/cards/<cardId>.png`(最大边 ≤300px),
+2. 卡图:在 `docs/card-art-map.json` 登记真实 wiki 文件名(用 pageimages
+   API 核验),再 `python3 tools/fetch-card-art.py --fetch <cardId>` 下载;
    cardart.js 自动加载;无图时自动回退 orb 样式
 3. 特殊效果:special 填已有能力键;全新机制在 `game/abilities.js` 注册
 4. 图形(回退样式):`render/graphics.js` drawUnitIcon 加一个 case
