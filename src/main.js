@@ -180,6 +180,8 @@ function initGame() {
     else gameLog.push(`部署 ${card.name} ${posStr}`, 'me');
   });
   game.bus.on('tower:destroyed', ({ tower, myCrowns, aiCrowns }) => {
+    // 屏幕震动(塔被摧毁的分量感;国王塔更猛)
+    renderer.shake = { t: tower.lane === 'king' ? 0.7 : 0.45, dur: tower.lane === 'king' ? 0.7 : 0.45, amp: tower.lane === 'king' ? 10 : 6 };
     const sideName = tower.side === 0 ? '你的' : 'AI的';
     const laneName = tower.lane === 'king' ? '国王塔' : (tower.lane === 'left' ? '左公主塔' : '右公主塔');
     gameLog.push(`${sideName}${laneName}被摧毁! 皇冠 ${myCrowns} : ${aiCrowns}`, tower.side === 0 ? 'ai' : 'me');

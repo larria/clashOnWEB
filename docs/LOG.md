@@ -5,6 +5,25 @@
 
 ---
 
+## 2026-09-21 高光时刻特效五件套:死亡碎裂/塔爆震屏/国王塔激活/眩晕/冲锋命中
+
+- **单位死亡碎裂(deathBreak)**:卡色碎片 10 片放射飞散(旋转+重力)+
+  阵营色光环收缩+中心白闪;≥5 费大单位加落点尘土;dealDamage 死亡时发
+- **塔摧毁爆炸(towerExplode)+屏幕震动**:双冲击环+火球+12~16 块碎石
+  抛物线飞溅+火花放射+烟尘升腾;国王塔规模加大;main.js 在
+  tower:destroyed 设 renderer.shake(公主塔 0.45s/±6px,国王塔 0.7s/±10px,
+  平方衰减),draw() 整体 translate(暗角不震)
+- **国王塔激活(kingActivate)**:金色双光环扩散+光柱冲天(1.1s)+
+  12 颗金色粒子迸发+中心闪光;公主塔被推激活国王塔时触发
+- **眩晕(每帧状态)**:头顶 2 条抖动黄色电弧+3 颗五角星绕椭圆打转
+- **王子冲锋命中(chargeHit)**:重击白闪+8 条放射冲击线+冲击环;
+  attackTarget 检测 attacker.charged 触发
+- 验证:headless 五通道全部触发(deathBreak/towerExplode/kingActivate/
+  chargeHit/眩晕为每帧渲染);浏览器混战+推塔+眩晕场景渲染零报错;
+  评测回归 48:52(无行为变化)
+
+---
+
 ## 2026-09-21 战斗特效系统:攻击/受击/跳河/法术图标 + 狂暴视觉改金色
 
 **攻击特效(combat.js attackTarget → effects)**

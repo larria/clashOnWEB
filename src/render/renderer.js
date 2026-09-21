@@ -29,7 +29,21 @@ export class Renderer {
   draw(deployPreview, dt) {
     const ctx = this.ctx;
     this.animTime = (this.animTime || 0) + (dt || 0.016);
+    // 屏幕震动(塔被摧毁):震动强度随剩余时间衰减
+    let shakeX = 0, shakeY = 0;
+    if (this.shake) {
+      this.shake.t -= (dt || 0.016);
+      if (this.shake.t <= 0) this.shake = null;
+      else {
+        const k = this.shake.t / this.shake.dur;         // 1→0 衰减
+        const amp = this.shake.amp * k * k;
+        shakeX = (Math.sin(this.animTime * 93) + Math.sin(this.animTime * 47)) * amp * 0.5;
+        shakeY = (Math.cos(this.animTime * 71) + Math.sin(this.animTime * 59)) * amp * 0.5;
+      }
+    }
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.save();
+    if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
     this.drawArena();
     // 选中部队/建筑卡时:高亮全部可部署区域(法术全场有效,不高亮)
     const previewCard = deployPreview ? CARDS[deployPreview.cardId] : null;
@@ -41,6 +55,7 @@ export class Renderer {
     this.drawUnits();
     this.drawEffects();
     if (deployPreview) this.drawPreview(deployPreview);
+    ctx.restore();
     this.drawVignette();
   }
 
@@ -614,6 +629,51 @@ export class Renderer {
       ctx.beginPath(); ctx.arc(x, cy, fxR + 4, 0, Math.PI*2); ctx.stroke();
       ctx.setLineDash([]);
     }
+    // 眩晕(电击等):头顶黄色电弧环绕 + 星星打转
+    if (u.stunned > 0) {
+      const tt = this.animTime;
+      const topY = cy - fxR - 6;
+      ctx.save();
+      // 电弧环绕头顶(2 条随机抖动折线)
+      ctx.strokeStyle = '#ffee58';
+      ctx.lineWidth = 1.8;
+      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(tt * 22);
+      for (let b = 0; b < 2; b++) {
+        const w = fxR * 1.1;
+        ctx.beginPath();
+        ctx.moveTo(x - w/2 + b * w * 0.2, topY + b * 4);
+        const segs = 4;
+        for (let s = 1; s <= segs; s++) {
+          const sx = x - w/2 + b * w * 0.2 + (w * 0.8) * s / segs;
+          const sy = topY + b * 4 + Math.sin(s * 7 + tt * 30 + b * 3) * 3.5;
+          ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+      }
+      // 星星打转(3 颗,绕椭圆轨道)
+      ctx.fillStyle = '#ffe082';
+      for (let i = 0; i < 3; i++) {
+        const a = tt * 5 + (i / 3) * Math.PI * 2;
+        const sx = x + Math.cos(a) * fxR * 0.75;
+        const sy = topY - 9 + Math.sin(a) * 3.5;
+        const ss = 3.2 + 0.7 * Math.sin(tt * 6 + i * 2);
+        // 五角星
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(a * 0.6);
+        ctx.beginPath();
+        for (let k = 0; k < 5; k++) {
+          const ka = (k / 5) * Math.PI * 2 - Math.PI/2;
+          const ka2 = ka + Math.PI / 5;
+          ctx.lineTo(Math.cos(ka) * ss, Math.sin(ka) * ss);
+          ctx.lineTo(Math.cos(ka2) * ss * 0.45, Math.sin(ka2) * ss * 0.45);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
     // 冰冻
     if (u.frozen > 0) {
       ctx.fillStyle = 'rgba(100,200,255,0.42)';
@@ -739,6 +799,14 @@ export class Renderer {
         this.drawSpellIcon(e, t);
       } else if (e.type === 'jumpDust' || e.type === 'jumpLand') {
         this.drawJumpFx(e, t);
+      } else if (e.type === 'deathBreak') {
+        this.drawDeathBreak(e, t);
+      } else if (e.type === 'towerExplode') {
+        this.drawTowerExplode(e, t);
+      } else if (e.type === 'kingActivate') {
+        this.drawKingActivate(e, t);
+      } else if (e.type === 'chargeHit') {
+        this.drawChargeHit(e, t);
       } else if (e.type === 'elixirPop') {
         // 圣水收集器产费:紫色圣水滴升腾 + 光晕闪现
         const x = e.x*CELL, y = e.y*CELL;
@@ -1113,6 +1181,206 @@ export class Renderer {
         }
       }
     }
+    ctx.restore();
+  }
+
+  // 单位死亡碎裂:卡色碎片放射飞散 + 阵营色光环收缩淡出;大单位加尘土
+  drawDeathBreak(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const R = Math.max(10, e.r * CELL * (e.isBuilding ? 1.07 : 2.2));
+    const p = 1 - t;
+    ctx.save();
+    // 阵营色光环收缩(从单位大小收到中心)
+    ctx.globalAlpha = t * 0.6;
+    const sc = e.side === 0 ? '#6fa8e0' : '#e08278';
+    ctx.strokeStyle = sc;
+    ctx.lineWidth = 3 * t + 0.5;
+    ctx.beginPath(); ctx.arc(x, y, R * (0.4 + 0.6 * t), 0, Math.PI*2); ctx.stroke();
+    // 卡色碎片(10 片,放射飞散+旋转+重力)
+    const col = e.color || '#eceff1';
+    ctx.globalAlpha = Math.min(1, t * 1.6);
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 + (i * 0.83);
+      const v = 0.5 + ((i * 37) % 10) / 12;
+      const dx = Math.cos(a) * v * R * 0.9 * p;
+      const dy = Math.sin(a) * v * R * 0.9 * p + 30 * p * p; // 重力下坠
+      const sz = (3 + (i % 3) * 1.6) * (1 - p * 0.45);
+      ctx.save();
+      ctx.translate(x + dx, y + dy);
+      ctx.rotate(a + p * 5 * (i % 2 ? 1 : -1));
+      ctx.fillStyle = i % 3 === 0 ? '#fff' : col;
+      roundRect(ctx, -sz/2, -sz/2, sz, sz * 0.7, 1);
+      ctx.fill();
+      ctx.restore();
+    }
+    // 大单位(≥5 费):落点尘土
+    if (e.big) {
+      ctx.globalAlpha = t * 0.7;
+      ctx.fillStyle = 'rgba(178,145,108,0.75)';
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + 0.6;
+        const dx = Math.cos(a) * (R*0.3 + p * R * 0.8);
+        const dy = Math.sin(a) * (R*0.3 + p * R*0.8) * 0.4;
+        ctx.beginPath(); ctx.arc(x + dx, y + dy, 4 * (1 - p * 0.5), 0, Math.PI*2); ctx.fill();
+      }
+    }
+    // 中心白闪
+    ctx.globalAlpha = t * t * 0.8;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, R*0.6);
+    g.addColorStop(0, '#fff'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, R*0.6, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // 塔摧毁爆炸:多圈冲击环 + 碎石飞溅 + 烟尘(国王塔规模更大)
+  drawTowerExplode(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const R = e.r * CELL * (e.isKing ? 1.7 : 1.25);
+    const p = 1 - t;
+    ctx.save();
+    // 冲击环(两圈,先快后慢)
+    ctx.globalAlpha = Math.min(1, t * 2);
+    const ring1 = R * (0.3 + 1.1 * (1 - (1-p) * (1-p)));  // ease-out
+    ctx.strokeStyle = '#ffab40'; ctx.lineWidth = 6 * t + 1;
+    ctx.beginPath(); ctx.arc(x, y, ring1, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = t * 0.8;
+    ctx.strokeStyle = '#ff6f00'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x, y, R * (0.15 + 1.35 * p), 0, Math.PI*2); ctx.stroke();
+    // 中心爆炸火球
+    ctx.globalAlpha = t;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, R * 0.7);
+    g.addColorStop(0, '#fff8e1'); g.addColorStop(0.35, '#ff9800'); g.addColorStop(0.75, '#e64a19'); g.addColorStop(1, 'rgba(189,14,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, R * 0.7 * (1 + 0.4 * p), 0, Math.PI*2); ctx.fill();
+    // 碎石飞溅(12 块,重力抛物线)
+    const nRock = e.isKing ? 16 : 12;
+    ctx.globalAlpha = Math.min(1, t * 1.5);
+    for (let i = 0; i < nRock; i++) {
+      const a = (i / nRock) * Math.PI * 2 + ((i * 53) % 7) * 0.13;
+      const v = 0.55 + ((i * 71) % 10) / 16;
+      const dx = Math.cos(a) * v * R * 1.5 * p;
+      const dy = Math.sin(a) * v * R * 1.1 * p + 55 * p * p;
+      const sz = (4 + (i % 4) * 2.2) * (1 - p * 0.35);
+      ctx.save();
+      ctx.translate(x + dx, y + dy);
+      ctx.rotate(a * 2 + p * 7 * (i % 2 ? 1 : -1));
+      ctx.fillStyle = ['#78909c', '#546e7a', '#90a4ae', '#455a64'][i % 4];
+      roundRect(ctx, -sz/2, -sz/2, sz, sz * 0.85, 1.5);
+      ctx.fill();
+      ctx.restore();
+    }
+    // 火花(8 条放射,快速消失)
+    if (t > 0.55) {
+      ctx.globalAlpha = (t - 0.55) / 0.45;
+      ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + 0.4;
+        const r0 = R * 0.5 + p * R * 0.8;
+        const r1 = r0 + R * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+        ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
+        ctx.stroke();
+      }
+    }
+    // 烟尘(后期升起)
+    if (t < 0.6) {
+      ctx.globalAlpha = (1 - t / 0.6) * 0.5;
+      ctx.fillStyle = 'rgba(80,75,70,0.6)';
+      for (let i = 0; i < 4; i++) {
+        const ph = p * 1.2 - i * 0.12;
+        if (ph <= 0) continue;
+        ctx.beginPath();
+        ctx.arc(x + Math.sin(i * 2.3) * R*0.4, y - ph * R * 0.9, R*0.32 * (0.7 + ph * 0.5), 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // 国王塔激活:金光迸发 + 光柱冲天 + 光环扩散
+  drawKingActivate(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const R = e.r * CELL;
+    const p = 1 - t;
+    ctx.save();
+    // 扩散光环(两圈)
+    ctx.globalAlpha = t * 0.8;
+    ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = 3.5 * t + 0.5;
+    ctx.beginPath(); ctx.arc(x, y, R * (0.6 + p * 2.2), 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = t * 0.45;
+    ctx.strokeStyle = '#ffca28'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, R * (0.4 + p * 1.4), 0, Math.PI*2); ctx.stroke();
+    // 光柱冲天(从塔心向上升起的金色光束,头 0.4s)
+    if (t > 0.55) {
+      const bp = (1 - t) / 0.45;                  // 0→1 上升
+      const bh = bp * R * 4.5;                    // 柱高
+      const bw = R * 0.55 * (1 - bp * 0.5);
+      ctx.globalAlpha = Math.sin(bp * Math.PI) * 0.85;
+      const g = ctx.createLinearGradient(x, y, x, y - bh);
+      g.addColorStop(0, 'rgba(255,213,79,0.9)'); g.addColorStop(0.7, 'rgba(255,193,7,0.5)'); g.addColorStop(1, 'rgba(255,193,7,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(x - bw, y);
+      ctx.lineTo(x - bw * 0.35, y - bh);
+      ctx.lineTo(x + bw * 0.35, y - bh);
+      ctx.lineTo(x + bw, y);
+      ctx.closePath(); ctx.fill();
+    }
+    // 金色迸发粒子(12 颗放射)
+    ctx.globalAlpha = t;
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 + 0.26;
+      const v = 0.6 + ((i * 43) % 10) / 14;
+      const dx = Math.cos(a) * v * R * 1.6 * p;
+      const dy = Math.sin(a) * v * R * 1.6 * p - 25 * p * p;
+      ctx.fillStyle = i % 2 ? '#ffd54f' : '#fff59d';
+      ctx.beginPath(); ctx.arc(x + dx, y + dy, 3 * t + 1, 0, Math.PI*2); ctx.fill();
+    }
+    // 中心闪光
+    ctx.globalAlpha = t * t * 0.9;
+    const cg = ctx.createRadialGradient(x, y, 0, x, y, R * 0.9);
+    cg.addColorStop(0, '#fffde7'); cg.addColorStop(0.5, 'rgba(255,213,79,0.7)'); cg.addColorStop(1, 'rgba(255,193,7,0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath(); ctx.arc(x, y, R * 0.9, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // 王子冲锋命中:重击白闪 + 放射冲击线
+  drawChargeHit(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const p = 1 - t;
+    ctx.save();
+    // 重击白闪(中心,快速衰减)
+    ctx.globalAlpha = t * t * 0.95;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 26);
+    g.addColorStop(0, '#fff'); g.addColorStop(0.5, 'rgba(255,238,88,0.75)'); g.addColorStop(1, 'rgba(255,238,88,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI*2); ctx.fill();
+    // 放射冲击线(8 条,粗短,快速淡出)
+    ctx.globalAlpha = t;
+    ctx.strokeStyle = '#ffee58';
+    ctx.lineWidth = 3 * t + 0.5;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + 0.39;
+      const r0 = 8 + p * 14;
+      const r1 = r0 + 9 + p * 7;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+      ctx.lineTo(x + Math.cos(a) * r1, y + Math.sin(a) * r1);
+      ctx.stroke();
+    }
+    // 冲击环(小,快速)
+    ctx.globalAlpha = t * 0.7;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, 10 + p * 22, 0, Math.PI*2); ctx.stroke();
     ctx.restore();
   }
 

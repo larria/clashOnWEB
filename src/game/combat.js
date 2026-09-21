@@ -283,6 +283,10 @@ export function attackTarget(attacker, target, game) {
     splash: (card.splash || 0) > 0,
     life: isRanged ? 0.22 : 0.28, maxLife: isRanged ? 0.22 : 0.28,
   });
+  // 冲锋命中(王子):重击白闪+放射冲击线(双倍伤害的分量感)
+  if (attacker.charged) {
+    game.addEffect({ type: 'chargeHit', x: tx, y: ty, life: 0.4, maxLife: 0.4 });
+  }
 
   // 远程攻击有投射物(简化:直接命中,加动画)
   attacker.atkAnim = 0.3;

@@ -108,6 +108,14 @@ export class Game {
     if (unit.hp <= 0) {
       unit.hp = 0;
       unit.dead = true;
+      // 死亡碎裂特效(渲染层画碎裂粒子;属性快照供粒子取色)
+      this.addEffect({
+        type: 'deathBreak', cardId: unit.cardId, side: unit.side,
+        x: unit.x, y: unit.y, r: unit.radius,
+        color: unit.card.color, big: unit.card.cost >= 5 && !unit.isBuilding,
+        isBuilding: unit.isBuilding,
+        life: 0.5, maxLife: 0.5,
+      });
       this.bus.emit('unit:killed', { unit, attacker, sourceCard });
       applyDeathAbilities(unit, this);
     }
@@ -161,11 +169,20 @@ export class Game {
   }
 
   onTowerDeath(tower) {
+    // 塔摧毁爆炸特效(冲击环+碎石飞溅;渲染层另做屏幕震动)
+    this.addEffect({
+      type: 'towerExplode', side: tower.side,
+      x: tower.x, y: tower.y, r: tower.radius,
+      isKing: tower.type === 'king',
+      life: 0.9, maxLife: 0.9,
+    });
     // 公主塔被摧毁 → 激活同方国王塔
     if (tower.type === 'princess') {
       const king = this.towers[tower.side].king;
       if (king && !king.dead && !king.activated) {
         king.activated = true;
+        // 激活特效:金光迸发 + 光柱冲天
+        this.addEffect({ type: 'kingActivate', x: king.x, y: king.y, r: king.radius, life: 1.1, maxLife: 1.1 });
         this.bus.emit('king:activated', { tower: king });
         this.bus.emit('log', { who: 'sys', msg: (tower.side === 0 ? '你的' : 'AI的') + '国王塔被激活!' });
       }
