@@ -6,6 +6,7 @@
 //   main 只做编排:创建实例、转发输入、驱动循环
 // ===============================================
 import { MATCH_TIME, CANVAS_W, CANVAS_H, canDeploy, snapToDeployZone } from './core/constants.js';
+import { loadProgress } from './render/cardart.js';
 import { CARDS, KIND } from './data/cards.js';
 import { settings } from './core/settings.js';
 import { appBus } from './core/events.js';
@@ -217,7 +218,7 @@ function setPhase(p) {
   phase = p;
   if (p === 'ready') {
     screens.showOverlay({
-      title: '准备战斗',
+      title: 'READY',
       desc: '选择卡组与 AI 强度,摧毁对方国王塔获胜',
       btn: '开始战斗',
       hint: '空格键 暂停/继续',
@@ -230,8 +231,8 @@ function setPhase(p) {
   } else if (p === 'paused') {
     // 暂停浮层复用封面(paused 类隐藏配置区)
     screens.showOverlay({
-      title: '已暂停',
-      desc: '圣水已冻结,战术思考一下?',
+      title: 'PAUSED',
+      desc: '圣水已冻结',
       btn: '继续战斗',
       hint: '空格键 暂停/继续',
       paused: true,
@@ -527,6 +528,25 @@ appBus.on('decks:changed', () => {
 });
 
 // ===== 启动:进入待开始状态,不自动开战 =====
+// 加载遮罩:等卡图预载完成(或 4s 超时)再显示界面,期间盖住全屏防止
+// canvas 随图片陆续到达而反复重排抖动
+const loadingEl = document.getElementById('loading');
+const ldFill = document.getElementById('ldFill');
+const loadingStart = performance.now();
+const hideLoading = () => {
+  if (!loadingEl || loadingEl.classList.contains('hide')) return;
+  fitCanvas();           // 资源就位后最终定版布局
+  loadingEl.classList.add('hide');
+};
+const loadingTick = setInterval(() => {
+  const p = loadProgress();
+  if (ldFill) ldFill.style.width = (p * 100).toFixed(0) + '%';
+  if (p >= 1 || performance.now() - loadingStart > 4000) {
+    clearInterval(loadingTick);
+    hideLoading();
+  }
+}, 100);
+
 refreshDecks();
 fitCanvas();
 setPhase('ready');

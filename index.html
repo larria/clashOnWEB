@@ -22,58 +22,6 @@
       <div id="bigAnnounce"></div>
       <!-- 战中悬浮暂停按钮(右上角,游戏中显示) -->
       <button id="pauseBtn" title="暂停">⏸</button>
-      <!-- 游戏封面 / 暂停浮层(同一套设计,ready 与 paused 共用) -->
-      <div id="overlay">
-        <!-- 封面顶部:盾徽 + 大标题 -->
-        <div class="cvHero">
-          <div class="cvCrest">
-            <span class="cvCrestIcon">⚔️</span>
-            <div class="cvCrestGlow"></div>
-          </div>
-          <div class="cvTitle">皇室战争</div>
-          <div class="cvSub">SINGLE PLAYER EDITION</div>
-        </div>
-        <!-- 中央:情境标题 + 主按钮 -->
-        <div class="ovInner">
-          <div class="ovTitle" id="ovTitle">准备战斗</div>
-          <div class="ovDesc" id="ovDesc">选择卡组与 AI 强度,摧毁对方国王塔</div>
-          <button class="btn btn-main" id="ovBtn">开始战斗</button>
-          <div class="ovHint" id="ovHint">空格键 暂停/继续</div>
-        </div>
-        <!-- 封面配置区:卡组 + AI 强度(ready 态显示) -->
-        <div class="cvConfig" id="cvConfig">
-          <div class="cvCfgRow">
-            <span class="cvCfgLabel">卡组</span>
-            <select id="deckSelect"></select>
-          </div>
-          <div class="cvCfgRow">
-            <span class="cvCfgLabel">AI</span>
-            <select id="aiLevel">
-              <option value="1">普通</option>
-              <option value="1.3" selected>困难</option>
-              <option value="1.6">挑战</option>
-            </select>
-          </div>
-        </div>
-        <!-- 封面底部:功能入口(二级页) -->
-        <div class="cvMenu">
-          <button class="cvMenuItem" id="openDeckEditor">
-            <span class="cvMenuIcon">🃏</span><span>卡组</span>
-          </button>
-          <button class="cvMenuItem" id="openBattleLog">
-            <span class="cvMenuIcon">📜</span><span>日志</span>
-          </button>
-          <button class="cvMenuItem" id="openSettings">
-            <span class="cvMenuIcon">⚙️</span><span>设置</span>
-          </button>
-          <button class="cvMenuItem" id="openHelp">
-            <span class="cvMenuIcon">❓</span><span>玩法</span>
-          </button>
-          <button class="cvMenuItem danger" id="cvRestart">
-            <span class="cvMenuIcon">🔄</span><span>重开</span>
-          </button>
-        </div>
-      </div>
     </div>
     <div id="handArea"></div>
   </div>
@@ -88,6 +36,68 @@
     </div>
   </div>
 </div>
+<!-- 游戏封面 / 暂停浮层(全屏,同一套设计,ready 与 paused 共用) -->
+<div id="overlay">
+  <!-- 封面顶部:盾徽 + 大标题 -->
+  <div class="cvHero">
+    <div class="cvCrest">
+      <span class="cvCrestIcon">⚔️</span>
+      <div class="cvCrestGlow"></div>
+    </div>
+    <div class="cvTitle">皇室战争</div>
+    <div class="cvSub">SINGLE PLAYER EDITION</div>
+  </div>
+  <!-- 中央:情境小标签 + 主按钮 -->
+  <div class="ovInner">
+    <div class="ovTag" id="ovTitle">准备战斗</div>
+    <div class="ovDesc" id="ovDesc">选择卡组与 AI 强度,摧毁对方国王塔</div>
+    <button class="btn btn-main" id="ovBtn">开始战斗</button>
+    <div class="ovHint" id="ovHint">空格键 暂停/继续</div>
+  </div>
+  <!-- 封面配置区:卡组 + AI 强度(ready 态显示) -->
+  <div class="cvConfig" id="cvConfig">
+    <div class="cvCfgRow">
+      <span class="cvCfgLabel">卡组</span>
+      <select id="deckSelect"></select>
+    </div>
+    <div class="cvCfgRow">
+      <span class="cvCfgLabel">AI</span>
+      <select id="aiLevel">
+        <option value="1">普通</option>
+        <option value="1.3" selected>困难</option>
+        <option value="1.6">挑战</option>
+      </select>
+    </div>
+  </div>
+  <!-- 封面底部:功能入口(二级页) -->
+  <div class="cvMenu">
+    <button class="cvMenuItem" id="openDeckEditor">
+      <span class="cvMenuIcon">🃏</span><span>卡组</span>
+    </button>
+    <button class="cvMenuItem" id="openBattleLog">
+      <span class="cvMenuIcon">📜</span><span>日志</span>
+    </button>
+    <button class="cvMenuItem" id="openSettings">
+      <span class="cvMenuIcon">⚙️</span><span>设置</span>
+    </button>
+    <button class="cvMenuItem" id="openHelp">
+      <span class="cvMenuIcon">❓</span><span>玩法</span>
+    </button>
+    <button class="cvMenuItem danger" id="cvRestart">
+      <span class="cvMenuIcon">🔄</span><span>重开</span>
+    </button>
+  </div>
+</div>
+
+<!-- 加载遮罩:卡图资源预载完成前盖住全屏,防止布局抖动 -->
+<div id="loading">
+  <div class="ldDrop">
+    <span class="ldDropIcon">💧</span>
+  </div>
+  <div class="ldText">正在进入竞技场…</div>
+  <div class="ldBar"><div class="ldFill" id="ldFill"></div></div>
+</div>
+
 <div id="result">
   <h2 id="resultText"></h2>
   <div id="resultSub" style="font-size:12px;letter-spacing:4px;margin:-10px 0 18px;opacity:0.8;"></div>

@@ -1,11 +1,11 @@
 // ===============================================
-// 界面管理 - 遮罩(开始/暂停)与结算弹窗
-// 遮罩即未来的游戏封面:logo 固定顶部、标题自适应字号
+// 界面管理 - 封面(开始/暂停,全屏)与结算弹窗
+// 情境文案以小胶囊标签呈现(弱化),主视觉是盾徽与主按钮
 // ===============================================
 export class Screens {
   constructor({ overlay, ovTitle, ovDesc, ovBtn, ovHint, result, resultText, resultSub }) {
     this.overlayEl = overlay;
-    this.titleEl = ovTitle;
+    this.tagEl = ovTitle;      // 现为 .ovTag 小标签
     this.descEl = ovDesc;
     this.btnEl = ovBtn;
     this.hintEl = ovHint;
@@ -18,28 +18,16 @@ export class Screens {
     this.overlayEl.classList.remove('hidden');
     // 暂停态:封面隐藏配置区(卡组/AI 强度),复用其余设计
     this.overlayEl.classList.toggle('paused', !!paused);
-    this.titleEl.textContent = title;
+    this.tagEl.textContent = title || '';
+    this.tagEl.style.display = title ? '' : 'none';
     this.descEl.textContent = desc || '';
     this.btnEl.textContent = btn;
     this.btnEl.style.display = '';
     this.hintEl.style.display = '';
-    this._fitTitle();
   }
 
   hideOverlay() {
     this.overlayEl.classList.add('hidden');
-  }
-
-  // 标题自适应缩字号(nowrap 防折行,过长则缩小)
-  _fitTitle() {
-    requestAnimationFrame(() => {
-      const canvasW = this.overlayEl.parentElement.getBoundingClientRect().width;
-      const chars = (this.titleEl.textContent || '').replace(/\s/g, '').length;
-      if (chars > 0) {
-        const fit = Math.max(16, Math.min(30, (canvasW * 0.88) / (chars * 1.15)));
-        this.titleEl.style.fontSize = fit.toFixed(0) + 'px';
-      }
-    });
   }
 
   showResult(winner) {

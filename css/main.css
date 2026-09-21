@@ -133,9 +133,9 @@ canvas { display:block; }
 #pauseBtn:active { transform:scale(0.92); }
 #pauseBtn:disabled { opacity:0.35; cursor:default; }
 
-/* ===== 游戏封面 / 暂停浮层(同一套设计) ===== */
+/* ===== 游戏封面 / 暂停浮层(全屏,同一套设计) ===== */
 #overlay {
-  position:absolute; inset:0; z-index:20;
+  position:fixed; inset:0; z-index:20;
   background:
     radial-gradient(140% 90% at 50% 0%, rgba(63,78,140,0.55) 0%, rgba(10,13,26,0.82) 62%),
     rgba(10,13,26,0.78);
@@ -180,14 +180,16 @@ canvas { display:block; }
 }
 .cvSub { font-size:clamp(9px, 1.5vh, 12px); color:#8a93b8; letter-spacing:clamp(3px, 0.8vw, 6px); margin-top:3px; }
 
-/* 中央:情境标题 + 主按钮 */
+/* 中央:情境小标签 + 主按钮(标题弱化为胶囊标签,主视觉让给按钮) */
 .ovInner { text-align:center; margin:auto 0; animation:ovFloat .45s ease; }
 @keyframes ovFloat { from { transform:translateY(14px); opacity:0; } to { transform:none; opacity:1; } }
-.ovTitle {
-  font-size:clamp(22px, 4.5vh, 34px); font-weight:900; letter-spacing:clamp(3px, 1vw, 7px); margin-bottom:6px;
-  background:linear-gradient(180deg,#ffe082 20%, #ffb300 60%, #ff8f00 100%);
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-  white-space:nowrap;
+.ovTag {
+  display:inline-block;
+  font-size:clamp(10px, 1.6vh, 12px); font-weight:600; letter-spacing:3px;
+  color:#b9c1e0;
+  padding:4px 16px; margin-bottom:clamp(8px, 1.8vh, 14px);
+  border:1px solid rgba(255,255,255,0.16); border-radius:999px;
+  background:rgba(255,255,255,0.05);
 }
 .ovDesc { font-size:clamp(11px, 1.8vh, 13px); color:#9aa3c7; margin-bottom:clamp(12px, 2.6vh, 22px); letter-spacing:1px;
   max-width:82%; margin-left:auto; margin-right:auto; line-height:1.6;
@@ -238,6 +240,56 @@ canvas { display:block; }
 .cvMenuItem.danger { border-color:rgba(255,120,110,0.35); }
 .cvMenuItem.danger:hover { border-color:rgba(255,120,110,0.7); }
 #overlay:not(.paused) .cvMenuItem.danger { display:none; }
+
+/* ===== 加载遮罩(卡图预载完成前盖住全屏,防布局抖动) ===== */
+#loading {
+  position:fixed; inset:0; z-index:60;
+  background:
+    radial-gradient(120% 80% at 50% 20%, rgba(63,78,140,0.5) 0%, rgba(10,13,26,0.94) 60%),
+    #0d1020;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+  transition:opacity .45s ease;
+}
+#loading.hide { opacity:0; pointer-events:none; }
+/* 圣水滴(浮动 + 光晕) */
+.ldDrop {
+  position:relative;
+  width:74px; height:74px;
+  display:flex; align-items:center; justify-content:center;
+  animation:ldBounce 1.5s ease-in-out infinite;
+}
+.ldDropIcon {
+  font-size:44px;
+  filter:drop-shadow(0 0 18px rgba(210,76,255,0.75)) drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+.ldDrop::after {
+  content:''; position:absolute; inset:-16px; border-radius:50%;
+  background:radial-gradient(circle, rgba(210,76,255,0.3) 0%, transparent 68%);
+  animation:ldPulse 1.5s ease-in-out infinite;
+}
+@keyframes ldBounce {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-14px); }
+}
+@keyframes ldPulse {
+  0%,100% { transform:scale(0.9); opacity:0.5; }
+  50% { transform:scale(1.15); opacity:1; }
+}
+.ldText { font-size:13px; color:#9aa3c7; letter-spacing:2px; }
+/* 进度条(紫色圣水色) */
+.ldBar {
+  width:min(240px, 60vw); height:8px; border-radius:99px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  overflow:hidden;
+}
+.ldFill {
+  height:100%; width:0%;
+  border-radius:99px;
+  background:linear-gradient(90deg, #8a1ec9, #d24cff, #f2a7ff);
+  box-shadow:0 0 10px rgba(210,76,255,0.65);
+  transition:width .3s ease;
+}
 
 /* ===== 手牌卡(卡图主导) ===== */
 :root { --card-w:80px; --card-h:104px; --card-font:11px; --orb-size:30px; }
