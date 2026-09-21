@@ -8,7 +8,7 @@
 import { MATCH_TIME, CANVAS_W, CANVAS_H, CELL, canDeploy, snapToDeployZone } from './core/constants.js';
 import { loadProgress } from './render/cardart.js';
 import { CARDS, KIND } from './data/cards.js';
-import { settings } from './core/settings.js';
+import { settings, aiLevelInfo, AI_LEVELS } from './core/settings.js';
 import { appBus } from './core/events.js';
 import { Game } from './game/game.js';
 import { AI } from './game/ai.js';
@@ -133,7 +133,7 @@ function playerCycle(playedCardId, idx) {
 // ===== URL 参数 =====
 // ?deck=slot1        玩家用指定卡组(slot0-9;也接受卡组名如"野猪快攻")
 // &aideck=slot2      AI 用指定卡组(同上;不传则随机)
-// &ai=1.6            AI 难度(1/1.3/1.6 = 普通/困难/挑战)
+// &ai=3              AI 难度档位(1-4 = 普通/困难/挑战/噩梦;兼容旧值 1.3→2,1.6→3)
 // URL 参数优先级最高,但用户改过下拉后本局不再覆盖
 const urlParams = new URLSearchParams(location.search);
 let urlPlayerDeckKey = urlParams.get('deck');
@@ -141,7 +141,8 @@ let urlAiDeckKey = urlParams.get('aideck');
 let urlAiDeckFixed = false;   // URL 指定 AI 卡组后,本会话重开也保持
 const urlAiLevel = urlParams.get('ai');
 if (urlAiLevel && !isNaN(parseFloat(urlAiLevel))) {
-  settings.set('aiLevel', parseFloat(urlAiLevel));
+  // 统一转档位整数(旧数值 1.3/1.6 经 aiLevelInfo 归一)
+  settings.set('aiLevel', aiLevelInfo(parseFloat(urlAiLevel)).level);
 }
 // 卡组名 → slotKey 解析
 function resolveDeckKey(v) {
@@ -169,7 +170,8 @@ function initGame() {
   const deckKey = pickPlayableDeckKey();
   if (els.deckSelect.value !== deckKey) els.deckSelect.value = deckKey;
   playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
-  aiLevel = settings.get('aiLevel');
+  const aiInfo = aiLevelInfo(settings.get('aiLevel'));
+  aiLevel = aiInfo.thinkMult;          // 决策频率倍率(主循环用)
   // AI 卡组:URL 指定优先(本局会话固定),否则每局随机
   if (!urlAiDeckFixed && urlAiDeckKey) {
     const resolved = resolveDeckKey(urlAiDeckKey);
@@ -183,6 +185,7 @@ function initGame() {
   }
 
   game = new Game();
+  game.aiElixirMult = aiInfo.elixirMult;   // 噩梦难度:AI 圣水 ×1.5
   renderer = new Renderer(canvas, game);
   ai = new AI(game, aiDeck.slice());
   window.CR = window.CR || {};
@@ -613,15 +616,18 @@ function syncLogScreen() {
   if (src && dst) dst.innerHTML = src.innerHTML;
 }
 
-// 封面 AI 强度下拉 ↔ settings 双向同步(设置页改动时联动)
+// 封面 AI 难度下拉(四档)↔ settings 双向同步(设置页改动时联动)
 const aiLevelSelect = document.getElementById('aiLevel');
-aiLevelSelect.value = String(settings.get('aiLevel'));
+function syncAiSelect() {
+  aiLevelSelect.value = String(aiLevelInfo(settings.get('aiLevel')).level);
+}
+syncAiSelect();
 aiLevelSelect.addEventListener('change', () => {
-  const v = parseFloat(aiLevelSelect.value);
-  if (!isNaN(v)) settings.set('aiLevel', v);
+  const v = parseInt(aiLevelSelect.value, 10);
+  if (!isNaN(v)) settings.set('aiLevel', Math.max(1, Math.min(4, v)));
 });
 appBus.on('settings:changed', ({ key, value }) => {
-  if (key === 'aiLevel') aiLevelSelect.value = String(value);
+  if (key === 'aiLevel') syncAiSelect();
 });
 
 // 卡组编辑器数据变化 → 刷新下拉与预览

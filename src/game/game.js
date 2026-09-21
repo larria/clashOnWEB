@@ -31,6 +31,7 @@ export class Game {
     this.doubleElixir = false;
     this.tripleElixir = false;          // 加时最后 1 分钟三倍圣水
     this.overtime = false;              // 加时(sudden death:先推塔者胜)
+    this.aiElixirMult = 1;              // AI 圣水产生倍率(噩梦难度 1.5;由应用层按难度注入)
     this.lastPlayedCard = null;
     this.winner = null; // 0/1/-1/null
     this.gameOver = false;
@@ -229,10 +230,10 @@ export class Game {
       this.bus.emit('match:phase', { phase: 'last_minute' });
     }
 
-    // 圣水回复
+    // 圣水回复(AI 侧乘难度倍率:噩梦 ×1.5)
     const rate = ELIXIR_RATE * (this.tripleElixir ? 3 : (this.doubleElixir ? 2 : 1));
     this.elixirFloat[0] = Math.min(MAX_ELIXIR, this.elixirFloat[0] + rate * dt);
-    this.elixirFloat[1] = Math.min(MAX_ELIXIR, this.elixirFloat[1] + rate * dt);
+    this.elixirFloat[1] = Math.min(MAX_ELIXIR, this.elixirFloat[1] + rate * this.aiElixirMult * dt);
     this.elixir[0] = Math.floor(this.elixirFloat[0]);
     this.elixir[1] = Math.floor(this.elixirFloat[1]);
 

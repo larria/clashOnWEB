@@ -2,7 +2,7 @@
 // 设置页 - 独立界面(入口:开始遮罩上的 ⚙ 按钮)
 // 控件由 settings.definitions() 驱动;新增设置项自动出现
 // ===============================================
-import { settings } from '../core/settings.js';
+import { settings, aiLevelInfo, AI_LEVELS } from '../core/settings.js';
 
 export class SettingsScreen {
   constructor() {
@@ -39,6 +39,17 @@ export class SettingsScreen {
           </label>`;
         row.querySelector('input').addEventListener('change', (e) => {
           settings.set(key, e.target.checked);
+        });
+      } else if (key === 'aiLevel') {
+        // AI 难度:四档下拉(对外只显示档位名)
+        const cur = aiLevelInfo(val).level;
+        row.innerHTML = `
+          <span class="setLabel">${def.label}</span>
+          <select class="setNum" style="width:110px;">
+            ${AI_LEVELS.map(l => `<option value="${l.level}" ${l.level === cur ? 'selected' : ''}>${l.name}</option>`).join('')}
+          </select>`;
+        row.querySelector('select').addEventListener('change', (e) => {
+          settings.set(key, parseInt(e.target.value, 10));
         });
       } else {
         row.innerHTML = `

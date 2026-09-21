@@ -16,12 +16,48 @@ const DEFINITIONS = {
   sfx:          { def: true,  label: '音效' },
   showDeployZone: { def: true, label: '显示部署区域' },
   showAimLine:  { def: true,  label: '显示塔瞄准线' },
-  aiLevel:      { def: 1.6,  label: 'AI 强度' },   // 默认挑战(最高)
+  aiLevel:      { def: 3,  label: 'AI 强度' },   // 档位 1-4,默认挑战
 };
+
+// ===== AI 难度四档(对外只暴露档位与名称,不暴露内部数值) =====
+// thinkMult: 决策频率倍率(数值越大思考越快)
+// elixirMult: AI 圣水产生倍率(仅噩梦 >1)
+export const AI_LEVELS = [
+  { level: 1, name: '普通', thinkMult: 1.0, elixirMult: 1.0 },
+  { level: 2, name: '困难', thinkMult: 1.3, elixirMult: 1.0 },
+  { level: 3, name: '挑战', thinkMult: 1.6, elixirMult: 1.0 },
+  { level: 4, name: '噩梦', thinkMult: 1.6, elixirMult: 1.5 },  // 决策同挑战,AI 圣水×1.5
+];
+
+/** 档位信息(越界夹逼到 1-4;兼容旧版数值 1.3→2 困难 / 1.6→3 挑战) */
+export function aiLevelInfo(v) {
+  let n = Number(v);
+  if (isNaN(n)) n = 3;
+  if (!Number.isInteger(n)) {
+    // 旧版数值语义(决策频率倍率)→ 档位
+    if (n <= 1) n = 1;
+    else if (n < 1.45) n = 2;      // 1.3 = 困难
+    else n = 3;                    // 1.6 = 挑战
+  }
+  n = Math.max(1, Math.min(4, Math.round(n)));
+  return AI_LEVELS[n - 1];
+}
 
 function loadRaw() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; }
 }
+
+// 旧版存储的数值型 aiLevel(1.3/1.6)一次性迁移为档位整数
+(function migrateAiLevel() {
+  const raw = loadRaw();
+  if (raw && 'aiLevel' in raw && !Number.isInteger(raw.aiLevel)) {
+    const info = aiLevelInfo(raw.aiLevel);
+    try {
+      raw.aiLevel = info.level;
+      localStorage.setItem(LS_KEY, JSON.stringify(raw));
+    } catch (e) { /* 忽略存储失败 */ }
+  }
+})();
 
 export const settings = {
   /** 读取(未存储时返回默认值) */
