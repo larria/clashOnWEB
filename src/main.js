@@ -5,7 +5,7 @@
 //   Game(逻辑) ← bus 事件 → UI/HUD/日志/音频(表现)
 //   main 只做编排:创建实例、转发输入、驱动循环
 // ===============================================
-import { MATCH_TIME, CANVAS_W, CANVAS_H, CELL, canDeploy, snapToDeployZone } from './core/constants.js';
+import { MATCH_TIME, CANVAS_W, CANVAS_H, canDeploy, snapToDeployZone } from './core/constants.js';
 import { loadProgress } from './render/cardart.js';
 import { CARDS, KIND } from './data/cards.js';
 import { settings, aiLevelInfo, AI_LEVELS } from './core/settings.js';
@@ -13,7 +13,7 @@ import { appBus } from './core/events.js';
 import { Game } from './game/game.js';
 import { AI } from './game/ai.js';
 import { Renderer } from './render/renderer.js';
-import { InputController } from './input/input.js';
+import { InputController, clientToGrid } from './input/input.js';
 import { audio } from './audio/audio.js';
 import { loadDecks, deckEditor, getLastDeck, saveLastDeck } from './ui/deckeditor.js';
 import { settingsScreen } from './ui/settingsui.js';
@@ -99,8 +99,11 @@ function buildDeckSelect() {
   if (prev && DECKS[prev]) sel.value = prev;
 }
 // 修正:确保所有卡都存在且不重复;不足 8 张自动补足
-function sanitizeDeck(cards) {
-  const out = [...new Set(cards)].filter(id => CARDS[id] && !CARDS[id].hidden && id !== 'golemite').slice(0, 8);
+// (AI 不持有 mirror:它不在任何 ROLE/COUNTERS,AI 抽到永远打不出,是死牌)
+function sanitizeDeck(cards, forAI = false) {
+  let out = [...new Set(cards)].filter(id => CARDS[id] && !CARDS[id].hidden && id !== 'golemite');
+  if (forAI) out = out.filter(id => id !== 'mirror');
+  out = out.slice(0, 8);
   if (out.length < 8) {
     const fallback = ['skeletons','goblins','archers','musketeer','fireball','arrows','knight','minions'];
     for (const f of fallback) {
@@ -175,13 +178,13 @@ function initGame() {
   // AI 卡组:URL 指定优先(本局会话固定),否则每局随机
   if (!urlAiDeckFixed && urlAiDeckKey) {
     const resolved = resolveDeckKey(urlAiDeckKey);
-    if (resolved) { aiDeck = sanitizeDeck(DECKS[resolved].cards); urlAiDeckFixed = true; }
+    if (resolved) { aiDeck = sanitizeDeck(DECKS[resolved].cards, true); urlAiDeckFixed = true; }
     urlAiDeckKey = null;
   }
   if (!urlAiDeckFixed) {
     const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length > 0);
     const pickKey = presetKeys[Math.floor(Math.random() * presetKeys.length)];
-    aiDeck = sanitizeDeck(DECKS[pickKey].cards);
+    aiDeck = sanitizeDeck(DECKS[pickKey].cards, true);
   }
 
   game = new Game();
@@ -244,7 +247,11 @@ function initGame() {
   });
 
   drawPlayerHand();
+  // 重置交互状态(防止拖拽/选中跨局残留:重开时仍按住拖拽会在新局误部署)
   selectedCardIdx = -1;
+  draggingCardIdx = -1;
+  pointerOnCanvas = false;
+  handUI.resetDrag();
   els.result.classList.remove('show');
   fitCanvas();
   window.scrollTo(0, 0);
@@ -328,13 +335,8 @@ function loop(now) {
     lastTime = now;
     if (phase === 'playing' && game) {
       game.update(dt);
-      // AI 更新(按强度调整决策间隔)
-      ai.thinkTimer += dt;
-      const interval = 0.7 / aiLevel;
-      if (ai.thinkTimer >= interval && !game.gameOver) {
-        ai.thinkTimer = 0;
-        ai.decide();
-      }
+      // AI 更新(决策节律封装在 AI 内,编排层不感知 thinkTimer)
+      ai.update(dt, aiLevel);
       hud.update(game);
       // 阶段提示
       const remain = MATCH_TIME - game.time;
@@ -370,7 +372,15 @@ function loop(now) {
         // 国王塔陨落型结束(非超时)
         hud.announce(game.winner === 0 ? '👑 国王塔陨落!' : '💥 防线崩溃!', game.winner === 0 ? 'VICTORY' : 'DEFEAT', game.winner === 0 ? '#7fd4ff' : '#ff8a80');
       }
-      setTimeout(() => { if (phase !== 'over') { setPhase('over'); screens.showResult(game.winner); } }, 1200);
+      // 捕获本局 game:若 1.2s 内玩家点了重开(initGame 换了新 game),
+      // 此回调不得劫持新对局(否则弹空结算并冻结新局)
+      const finishedGame = game;
+      setTimeout(() => {
+        if (phase !== 'over' && game === finishedGame) {
+          setPhase('over');
+          screens.showResult(finishedGame.winner);
+        }
+      }, 1200);
       phase = 'over-wait';
     }
   } catch (e) {
@@ -404,7 +414,8 @@ function getPreview() {
   const cost = card.cost;
   if (game.elixir[0] < cost) return { cardId, x: mouseGrid.x, y: mouseGrid.y, invalid: true };
   if (card.kind !== KIND.SPELL) {
-    const snapped = snapToDeployZone('player', mouseGrid.x, mouseGrid.y, game.towers[1], { zone: card.deployZone });
+    // 与 deployAtMouse 完全同参(含己方塔:塔上不合法,预览须与实际一致)
+    const snapped = snapToDeployZone('player', mouseGrid.x, mouseGrid.y, game.towers[1], { zone: card.deployZone }, game.towers[0]);
     if (snapped) {
       const moved = Math.abs(snapped.x - mouseGrid.x) > 0.01 || Math.abs(snapped.y - mouseGrid.y) > 0.01;
       return { cardId, x: snapped.x, y: snapped.y, invalid: false, snapped: moved, pointer: mouseGrid };
@@ -451,10 +462,7 @@ function updatePointerFromClient(cx, cy) {
   const inside = cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom;
   if (!inside) { pointerOnCanvas = false; return; }
   pointerOnCanvas = true;
-  mouseGrid = {
-    x: ((cx - rect.left) / rect.width) * CANVAS_W / CELL,
-    y: ((cy - rect.top) / rect.height) * CANVAS_H / CELL,
-  };
+  mouseGrid = clientToGrid(canvas, cx, cy);
 }
 
 // 在当前指针位置部署指定手牌(拖拽松手/点击战场共用)
@@ -522,7 +530,8 @@ function flashMsg(msg) {
   el.textContent = msg;
   el.style.display = 'block';
   if (flashTimer) clearTimeout(flashTimer);
-  flashTimer = setTimeout(() => { el.textContent = ''; }, 1500);
+  // 到期隐藏整个胶囊(只清文字会残留一个空壳)
+  flashTimer = setTimeout(() => { el.textContent = ''; el.style.display = 'none'; }, 1500);
 }
 
 // ===== 布局适配(全屏自适应,禁止滚动) =====
@@ -558,14 +567,14 @@ window.addEventListener('orientationchange', fitCanvas);
 
 // ===== UI 事件 =====
 function restartGame() {
+  audio.stopMusic();   // 中途重开:上一局未结束不会发 match:end,音乐需显式停
   setPhase('ready');
   initGame();
   handUI.invalidate();
   renderer.draw(null, 0);
 }
 document.getElementById('cvRestart').addEventListener('click', () => {
-  if (phase === 'ready') return restartGame();
-  if (confirm('重新开始本局?')) restartGame();
+  restartGame();   // 重开成本低,统一不弹原生 confirm(与游戏内 UI 风格一致)
 });
 els.ovBtn.addEventListener('click', () => {
   audio.unlock(); // 首次交互解锁音频

@@ -33,7 +33,7 @@ const COUNTERS = {
   miniPekka:     ['barbarians', 'skeletonArmy', 'goblins', 'skeletons', 'tombstone'],
   pekka:         ['barbarians', 'skeletonArmy', 'infernoTower', 'tombstone'],
   prince:        ['barbarians', 'skeletonArmy', 'tombstone', 'skeletons', 'goblins'],
-  valkyrie:      ['minions', 'minionHorde', 'musketeer', 'archers', 'skarmy_x'],
+  valkyrie:      ['minions', 'minionHorde', 'musketeer', 'archers', 'skeletonArmy'],
   musketeer:     ['barbarians', 'goblins', 'miniPekka', 'fireball'],
   wizard:        ['miniPekka', 'musketeer', 'goblins', 'fireball'],
   witch:         ['miniPekka', 'valkyrie', 'fireball', 'musketeer'],
@@ -61,8 +61,8 @@ export function getRole(cardId) {
   return 'TROOP';
 }
 
-// 法术对塔减伤倍率(与 spells.js 保持一致)
-const TOWER_MULT = { arrows: 0.20, rocket: 0.23, lightning: 0.15, fireball: 0.25, zap: 0.25, freeze: 0.25, rage: 0.25 };
+// 法术对塔减伤倍率(权威来源 spells.js;此前双份硬编码已发生 freeze 漂移)
+import { TOWER_MULT } from './spells.js';
 
 // ===== 局面感知 =====
 
@@ -148,6 +148,17 @@ export class AI {
   }
 
   hasCard(cardId) { return this.hand.indexOf(cardId); }
+
+  /** 每帧驱动:按 thinkMult(难度决策频率倍率)节流调用 decide。
+   *  编排层只调这个,不直接碰 thinkTimer(决策节律是 AI 的内部知识)。 */
+  update(dt, thinkMult = 1) {
+    this.thinkTimer += dt;
+    const interval = 0.7 / thinkMult;
+    if (this.thinkTimer >= interval && !this.game.gameOver) {
+      this.thinkTimer = 0;
+      this.decide();
+    }
+  }
 
   // ===== 主决策:评分制 =====
   decide() {
@@ -476,10 +487,10 @@ export class AI {
       const c = CARDS[this.hand[i]];
       if (c.kind === KIND.SPELL) continue;
       if (c.cost <= 3 && c.cost > 0 && elixir >= c.cost) {
-        // 过牌位置:后方居中(不送)
-        const px = 9;
-        const py = this.side === 1 ? 4 : GRID_H - 4;
-        if (this.canPlace(px, py)) {
+        // 过牌位置:国王塔侧后方的空地(原 (9,4) 落在国王塔占面积内恒非法)
+        const px = 13;
+        const py = this.side === 1 ? 7 : GRID_H - 7;
+        if (this.canPlace(px, py, this.hand[i])) {
           out.push({ cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'cycle', score: 6 });
           break;
         }
@@ -517,6 +528,9 @@ export class AI {
       if (py > GRID_H - 2) py = GRID_H - 2;
     }
     px = Math.max(1, Math.min(GRID_W-1, px));
+    // 可部署性校验:px 可能落在己方塔占面积上,不校验会导致最高分
+    // 防守动作静默失败、该决策周期完全空转
+    if (!this.canPlace(px, py, cardId)) return null;
     return { x: px, y: py };
   }
 

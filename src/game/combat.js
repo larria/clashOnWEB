@@ -2,7 +2,7 @@
 // 战斗系统 - 寻路/索敌/攻击/伤害结算
 // 纯游戏逻辑:不直接操作 DOM,日志/特效通过 game.bus 事件发出
 // ===============================================
-import { T, dist, dist2 } from '../core/constants.js';
+import { T, RIVER_Y1, RIVER_Y2, dist, dist2 } from '../core/constants.js';
 import { afterAttack, applyDeathAbilities } from './abilities.js';
 
 // 判断单位能否攻击某目标类型
@@ -24,23 +24,31 @@ function unitLane(unit) {
 // 寻找最佳目标(最近的有效敌方单位/塔)
 export function findTarget(unit, game) {
   const card = unit.card;
+  const sp = card.special || {};
   const sightR = card.sightRange || 0;
   let best = null;
   let bestD = Infinity;
 
   // 只攻击建筑的单位(giant/hogRider/balloon/golem):只考虑建筑和塔
   const onlyBuilding = (card.targets === T.BUILDING);
+  // X连弩/迫击炮类(targetsTower):只索敌方塔,不打部队
+  const towerOnly = !!sp.targetsTower;
+  // 迫击炮类(blindSpot):近身盲区,过近的目标打不着
+  const blindSpot = sp.blindSpot || 0;
 
   // 敌方单位(含建筑单位——攻城单位可被敌方建筑牵引)
-  const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
-  for (const e of enemies) {
-    let valid = canTarget(unit, e.card, e.flying, e.isBuilding);
-    if (!valid) continue;
-    if (onlyBuilding && !e.isBuilding) continue;
-    const d = dist(unit, e);
-    if (d <= sightR && d < bestD) {
-      bestD = d;
-      best = { type: 'unit', ref: e, x: e.x, y: e.y, flying: e.flying, isBuilding: e.isBuilding };
+  if (!towerOnly) {
+    const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
+    for (const e of enemies) {
+      let valid = canTarget(unit, e.card, e.flying, e.isBuilding);
+      if (!valid) continue;
+      if (onlyBuilding && !e.isBuilding) continue;
+      const d = dist(unit, e);
+      if (blindSpot > 0 && d < blindSpot) continue;   // 近身盲区
+      if (d <= sightR && d < bestD) {
+        bestD = d;
+        best = { type: 'unit', ref: e, x: e.x, y: e.y, flying: e.flying, isBuilding: e.isBuilding };
+      }
     }
   }
 
@@ -71,12 +79,14 @@ export function findTarget(unit, game) {
     return best; // 攻城单位不做通用塔比较,直接返回
   }
 
-  // 普通单位:所有塔按最近优先
+  // 普通单位:所有塔按最近优先(targetsTower 单位同样走此分支,
+  // 且不与敌方单位比较——bestD 仅在塔之间竞争)
   for (const tw of towers) {
     if (tw.dead) continue;
     let valid = canTarget(unit, null, false, true);
     if (!valid) continue;
     const d = dist(unit, tw);
+    if (blindSpot > 0 && d < blindSpot) continue;     // 近身盲区(塔同样适用)
     if (d <= sightR && d < bestD) {
       bestD = d;
       best = { type: 'tower', ref: tw, x: tw.x, y: tw.y, flying: false, isBuilding: true, lane: tw.lane };
@@ -145,11 +155,10 @@ export function nextWaypoint(unit, game, finalTarget) {
   }
   const ux = unit.x, uy = unit.y;
   const tx = finalTarget.x, ty = finalTarget.y;
-  const RY1 = 15, RY2 = 17; // RIVER_Y1/Y2
   // 选择桥(桥心与公主塔 x 对齐:3.5 / 14.5)
   const bridges = [
-    { x: 3.5, y: (RY1+RY2)/2 },
-    { x: 14.5, y: (RY1+RY2)/2 },
+    { x: 3.5, y: (RIVER_Y1+RIVER_Y2)/2 },
+    { x: 14.5, y: (RIVER_Y1+RIVER_Y2)/2 },
   ];
   // 选离单位最近的桥
   let bridge = bridges[0], bd = Infinity;
@@ -159,29 +168,29 @@ export function nextWaypoint(unit, game, finalTarget) {
   }
 
   // 阶段判断
-  // 上半场(uy <= RY1):AI 侧
-  if (uy <= RY1) {
+  // 上半场(uy <= RIVER_Y1):AI 侧
+  if (uy <= RIVER_Y1) {
     // 目标也在上半场?直接走
-    if (ty <= RY1) return { x: tx, y: ty };
+    if (ty <= RIVER_Y1) return { x: tx, y: ty };
     // 否则先对齐到桥的 x,再走向桥心(过河)
     if (Math.abs(ux - bridge.x) > 0.4) {
       // 先横向对齐到桥口(在己方岸边)
-      return { x: bridge.x, y: Math.min(uy + 0.5, RY1 - 0.2) };
+      return { x: bridge.x, y: Math.min(uy + 0.5, RIVER_Y1 - 0.2) };
     }
     // 已对齐,走向桥心再过河
-    return { x: bridge.x, y: RY2 + 0.5 };
+    return { x: bridge.x, y: RIVER_Y2 + 0.5 };
   }
-  // 下半场(uy >= RY2):玩家侧
-  if (uy >= RY2) {
-    if (ty >= RY2) return { x: tx, y: ty };
+  // 下半场(uy >= RIVER_Y2):玩家侧
+  if (uy >= RIVER_Y2) {
+    if (ty >= RIVER_Y2) return { x: tx, y: ty };
     if (Math.abs(ux - bridge.x) > 0.4) {
-      return { x: bridge.x, y: Math.max(uy - 0.5, RY2 + 0.2) };
+      return { x: bridge.x, y: Math.max(uy - 0.5, RIVER_Y2 + 0.2) };
     }
-    return { x: bridge.x, y: RY1 - 0.5 };
+    return { x: bridge.x, y: RIVER_Y1 - 0.5 };
   }
-  // 在河道里(RY1 < uy < RY2):必须沿桥走,先走到对岸
-  if (ty > RY2) return { x: bridge.x, y: RY2 + 0.5 };
-  return { x: bridge.x, y: RY1 - 0.5 };
+  // 在河道里(RIVER_Y1 < uy < RIVER_Y2):必须沿桥走,先走到对岸
+  if (ty > RIVER_Y2) return { x: bridge.x, y: RIVER_Y2 + 0.5 };
+  return { x: bridge.x, y: RIVER_Y1 - 0.5 };
 }
 
 // 移动单位
@@ -200,7 +209,7 @@ export function moveUnit(unit, game, dt) {
 
   // 但如果已在攻击范围内,不移动(由攻击逻辑处理)
   // 移动
-  const wasInRiver = unit.y > 15 && unit.y < 17 && !unit.flying;
+  const wasInRiver = unit.y > RIVER_Y1 && unit.y < RIVER_Y2 && !unit.flying;
   const spd = unit.speed * dt;
   if (spd >= d) {
     unit.x = wp.x;
@@ -210,7 +219,7 @@ export function moveUnit(unit, game, dt) {
     unit.y += (dy / d) * spd;
   }
   // 跳河单位(野猪骑士)入河瞬间:起跳特效 + 跳跃动画计时
-  const nowInRiver = unit.y > 15 && unit.y < 17;
+  const nowInRiver = unit.y > RIVER_Y1 && unit.y < RIVER_Y2;
   if (nowInRiver && !wasInRiver && unit.card.special && unit.card.special.canJumpRiver) {
     unit.jumpTimer = 0.55;               // 跳跃动画时长(渲染抛物线用)
     unit.jumpFrom = { x: unit.x, y: unit.y };
@@ -221,7 +230,7 @@ export function moveUnit(unit, game, dt) {
     unit.jumpTimer -= dt;
     // 落地(出河):落点尘土 + 水花(按是否仍在河面)
     if (unit.jumpTimer <= 0) {
-      const riverLanding = unit.y > 15 && unit.y < 17;
+      const riverLanding = unit.y > RIVER_Y1 && unit.y < RIVER_Y2;
       game.addEffect({ type: 'jumpLand', x: unit.x, y: unit.y, river: riverLanding, life: 0.45, maxLife: 0.45 });
     }
   }
@@ -248,11 +257,17 @@ export function moveUnit(unit, game, dt) {
 // 单位攻击目标
 export function attackTarget(attacker, target, game) {
   const card = attacker.card;
+  // 递增伤害(地狱塔)换目标重置:原版机制——烧新目标从 1 倍重新升
+  if (attacker._lastRampTarget && attacker._lastRampTarget !== target.ref) {
+    attacker.rampTimer = 0;
+    attacker.rampMult = 1;
+  }
+  attacker._lastRampTarget = target.ref;
   let dmg = attacker.currentDmg;
 
   // 目标位置(特效用)
-  const tx = target.type === 'unit' ? target.ref.x : target.ref.x;
-  const ty = target.type === 'unit' ? target.ref.y : target.ref.y;
+  const tx = target.ref.x;
+  const ty = target.ref.y;
 
   if (target.type === 'unit') {
     const e = target.ref;

@@ -61,6 +61,7 @@ class AudioSystem {
     this.ctx = null;
     this._buffers = new Map();   // name -> AudioBuffer
     this._loading = new Set();   // 加载中
+    this._failed = new Set();    // 加载失败(404 等)负缓存,避免重复请求
     this._pending = new Map();   // name -> {opts} 加载完成前排队的播放请求
     this._lastPlay = new Map();  // name -> timestamp(节流)
     this._musicSource = null;
@@ -92,7 +93,7 @@ class AudioSystem {
   }
 
   _load(name) {
-    if (this._buffers.has(name) || this._loading.has(name)) return;
+    if (this._buffers.has(name) || this._loading.has(name) || this._failed.has(name)) return;
     this._loading.add(name);
     fetch(`assets/sfx/${name}.ogg`)
       .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
@@ -106,7 +107,11 @@ class AudioSystem {
           this._start(name, pend.opts);
         }
       })
-      .catch(() => { /* 缺资源静默 */ })
+      .catch(() => {
+        // 负缓存:缺失资源记入 _failed,后续 play 不再重复 fetch(404 风暴)
+        this._failed.add(name);
+        this._pending.delete(name);
+      })
       .finally(() => this._loading.delete(name));
   }
 
@@ -170,8 +175,12 @@ class AudioSystem {
     this._load('music_battle');
     const buf = this._buffers.get('music_battle');
     if (!buf) {
-      // 未加载完:等一下再试(加载完成回调里没有钩子,轮询一次)
-      setTimeout(() => this.playMusic(), 500);
+      // 未加载完:稍后重试;句柄存住,stopMusic 时取消(防止暂停后重试响起)
+      clearTimeout(this._musicRetry);
+      this._musicRetry = setTimeout(() => {
+        this._musicRetry = null;
+        if (this._musicOn) this.playMusic();   // 暂停/关闭后不再补播
+      }, 500);
       return;
     }
     try {
@@ -188,6 +197,9 @@ class AudioSystem {
   }
 
   stopMusic() {
+    // 取消挂起的加载重试(否则暂停后 500ms 音乐自动响起)
+    clearTimeout(this._musicRetry);
+    this._musicRetry = null;
     if (this._musicSource) {
       try { this._musicSource.stop(); } catch (e) { /* 静默 */ }
       this._musicSource = null;

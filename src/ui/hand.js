@@ -43,6 +43,15 @@ export class HandUI {
 
   invalidate() { this.lastSig = ''; }
 
+  /** 强制复位拖拽状态(重开局时调用:旧 DOM 若仍按住,解除门控并重建) */
+  resetDrag() {
+    if (this.dragIdx < 0) return;
+    this.dragIdx = -1;
+    const d = this.el.querySelector('.handCard.dragging');
+    if (d) d.classList.remove('dragging');
+    this.invalidate();
+  }
+
   /** 圣水条增量更新:连续充盈进度(原版按小数部分平滑上涨) */
   _updateElixirBar() {
     const s = this.state;

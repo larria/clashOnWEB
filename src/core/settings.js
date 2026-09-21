@@ -47,6 +47,10 @@ function loadRaw() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; }
 }
 
+// 内存缓存:渲染热路径(renderer 每帧)高频 get,避免每次 localStorage+JSON.parse
+let _cache = loadRaw();
+function invalidateCache() { _cache = loadRaw(); }
+
 // 旧版存储的数值型 aiLevel(1.3/1.6)一次性迁移为档位整数
 (function migrateAiLevel() {
   const raw = loadRaw();
@@ -60,10 +64,9 @@ function loadRaw() {
 })();
 
 export const settings = {
-  /** 读取(未存储时返回默认值) */
+  /** 读取(未存储时返回默认值;走内存缓存,渲染热路径安全) */
   get(key) {
-    const raw = loadRaw();
-    if (key in raw) return raw[key];
+    if (key in _cache) return _cache[key];
     return DEFINITIONS[key] ? DEFINITIONS[key].def : undefined;
   },
 
@@ -73,6 +76,7 @@ export const settings = {
     const old = key in raw ? raw[key] : (DEFINITIONS[key] ? DEFINITIONS[key].def : undefined);
     raw[key] = value;
     try { localStorage.setItem(LS_KEY, JSON.stringify(raw)); } catch (e) { /* 忽略存储失败 */ }
+    invalidateCache();
     appBus.emit('settings:changed', { key, value, old });
   },
 
@@ -81,6 +85,7 @@ export const settings = {
 
   reset() {
     try { localStorage.removeItem(LS_KEY); } catch (e) { /* 忽略 */ }
+    invalidateCache();
     appBus.emit('settings:reset', {});
   },
 };

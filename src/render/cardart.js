@@ -14,13 +14,17 @@ import { SELECTABLE_CARDS } from '../data/cards.js';
 
 const _images = new Map();   // cardId -> HTMLImageElement(loaded)
 const _urls = new Map();     // cardId -> url(即时可用)
+let _settled = 0;            // 已完结计数(成功或失败;loadProgress 依据)
+let _total = 0;
 
 // 构建 URL 并启动预加载
 for (const id of [...SELECTABLE_CARDS, 'golemite']) {
+  _total++;
   const url = `assets/cards/${id}.png`;
   _urls.set(id, url);
   const img = new Image();
-  img.onload = () => { _images.set(id, img); };
+  img.onload = () => { _images.set(id, img); _settled++; };
+  img.onerror = () => { _settled++; };   // 缺图也计入完结(否则 loading 永远等超时)
   img.src = url;
 }
 
@@ -54,7 +58,7 @@ export function drawCardImage(ctx, img, cx, cy, size, opts = {}) {
   return true;
 }
 
-/** 预加载完成度(0~1,调试用) */
+/** 预加载完成度(0~1;失败也计完结,不会卡住 loading) */
 export function loadProgress() {
-  return _images.size / _urls.size;
+  return _total === 0 ? 1 : _settled / _total;
 }

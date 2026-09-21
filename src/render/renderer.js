@@ -128,15 +128,13 @@ export class Renderer {
       if (!inOwn && !inEnemy && !inKingBack) continue;
       for (let gx = 0; gx < GRID_W; gx += step) {
         const cx = gx + step/2, cy = gy + step/2;
-        const okOwn = inOwn && canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
-        const okUnlock = inEnemy && canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
-        if (okOwn) {
-          ctx.fillStyle = `rgba(100,220,140,${breathe})`;
-          ctx.fillRect(gx*CELL, gy*CELL, CELL*step, CELL*step);
-        } else if (okUnlock) {
-          ctx.fillStyle = `rgba(255,213,79,${breathe * 0.9})`;
-          ctx.fillRect(gx*CELL, gy*CELL, CELL*step, CELL*step);
-        }
+        const ok = canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
+        if (!ok) continue;
+        // 己方半场(含凸排)绿色;敌方半场(推塔解锁区)金色
+        ctx.fillStyle = inEnemy
+          ? `rgba(255,213,79,${breathe * 0.9})`
+          : `rgba(100,220,140,${breathe})`;
+        ctx.fillRect(gx*CELL, gy*CELL, CELL*step, CELL*step);
       }
     }
     // 解锁区标记文字(有解锁时;解锁区为贴河 4 格深,文字放其中)

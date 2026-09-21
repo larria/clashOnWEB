@@ -381,6 +381,13 @@ export class Game {
         if (u.lifetime <= 0 || u.hp <= 0) {
           u.hp = Math.max(0, u.hp);
           u.dead = true;
+          // 死亡特效/事件与被击杀路径统一(否则建筑无声消失)
+          this.addEffect({
+            type: 'deathBreak', cardId: u.cardId, side: u.side,
+            x: u.x, y: u.y, r: u.radius, color: u.card.color,
+            big: false, isBuilding: true, life: 0.5, maxLife: 0.5,
+          });
+          this.bus.emit('unit:killed', { unit: u, attacker: null });
           // 到期自然消亡同样触发死亡召唤
           applyExpireAbilities(u, this);
           continue;
@@ -521,7 +528,10 @@ export class Game {
 
     // 法术可全场释放;部队/建筑按卡牌部署规则(canDeploy 解释 deployZone)
     if (card.kind === KIND.SPELL) {
-      castSpell(cardId, side, x, y, this);
+      // 法术本体全场可放;但镜像复制的部队/建筑可能因部署位非法失败——
+      // 失败不扣费(否则圣水蒸发无反馈)
+      const spellOk = castSpell(cardId, side, x, y, this);
+      if (!spellOk) return false;
     } else {
       const ok = deployCard(cardId, side, x, y, this);
       if (!ok) return false;

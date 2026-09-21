@@ -5,6 +5,63 @@
 
 ---
 
+## 2026-09-21 全面 review:16 项硬伤核实与修复
+
+双代理并行深读全部 20+ 源文件(游戏逻辑层 + 表现/编排层)+ 人工交叉验证。
+
+**正确性修复(按严重度)**
+- **镜像法术扣费不原子**(严重):镜像复制部队在非法位部署失败仍扣费,
+  圣水蒸发。castSpell 改返回布尔,playCard 失败不扣费;镜像分支传播
+  deployCard 失败
+- **终局结算 setTimeout 竞态**(严重):结束后 1.2s 内重开,回调劫持新局
+  (弹空结算+冻结)。回调捕获本局 game 引用,game 变更即放弃
+- **解锁区金色高亮死代码**(高):drawDeployZoneHighlight 的 okOwn/okUnlock
+  表达式完全相同,金色分支永不可达。改为 inEnemy 区分,canDeploy 调用减半
+- **AI 过牌位置恒非法**(高):(9,4)/(9,28) 落在国王塔占面积内,
+  过牌逻辑整段死代码。移至 (13,7)/(13,25) 并传 cardId 校验
+- **AI 防守部署不校验 canPlace**(高):最高分防守动作可能落塔上静默失败。
+  defensePosition 返回 null,调用方跳过
+- **地狱塔递增伤害永不重置**:换目标后从 8 倍继续烧。attackTarget 检测
+  目标切换,重置 rampTimer/rampMult(对齐原版)
+- **法术击退无边界**:单位可被推出地图。加 GRID_W/H clamp
+- **tap 误触发**:canvas 按住拖动后抬起在错误位置部署。加 10px 位移阈值
+- **建筑自然衰减无声消失**:绕过统一死亡路径。衰减致死补发 deathBreak
+  特效 + unit:killed 事件
+- **X连弩/迫击炮机制缺失**:cards.js 的 targetsTower/blindSpot 数据键
+  无解释器(静默不存在)。findTarget 实现两能力:xbow/mortar 只索塔,
+  mortar 近身 4 格盲区
+- **重开后战斗音乐持续播放**:restartGame 补 stopMusic
+- **暂停后音乐自动响起**:playMusic 的 500ms 重试不可取消;句柄存入
+  _musicRetry,stopMusic 清除,回调校验 _musicOn
+- **音效 404 风暴**:加载失败无负缓存,每次 play 重复 fetch。_failed Set
+  记录失败,后续跳过;_pending 失败条目清理
+- **loading 永等 4s**:卡图 onerror 不计入进度。改 _settled 计数(成败都算)
+- **flashMsg 空胶囊残留**:超时只清文字不隐藏;补 display:none
+- **flash 秒数不一致**:hud 信息面板 ceil vs 倒计时 floor,统一
+
+**可维护性修复**
+- TOWER_MULT 双份硬编码且已漂移(freeze 0.30/0.25):spells.js 导出为
+  唯一权威,ai.js import
+- 坐标变换重复(input.js toGrid vs main.js updatePointerFromClient):
+  抽取 clientToGrid 共享
+- 河道常量硬编码(combat.js 内 15/17 字面量绕过 RIVER_Y1/Y2):全部替换
+- skarmy_x 死引用(cards.js 无此 id):改 skeletonArmy
+- 死代码清理:previewGridFor/interceptOk/dist2s/无意义三元;
+  main.js 决策节律公式封装 ai.update(dt)(编排层不再直改 thinkTimer)
+- 重开按钮原生 confirm 移除;AI 卡组 sanitizeDeck 剔除 mirror(AI 死牌)
+- initGame 重置拖拽/指针状态 + handUI.resetDrag(跨局状态泄漏)
+- settings.get 加内存缓存(渲染热路径每秒数百次 localStorage+JSON.parse)
+- 预览 snap 补传 myTowers(预览合法性与实际部署一致)
+
+**验证**
+- 镜像原子性:非法位拒绝不扣费 ✓ 合法位正常 ✓
+- 地狱塔换目标:3.24 → 2.12(重置后单次累加)✓
+- X连弩近身敌兵不打 ✓ 迫击炮盲区 ✓
+- 噩梦整局零报错、零越界单位 ✓;评测回归(A 33% B 48% 平 19%,
+  vs 基线 80%)无行为退化
+
+---
+
 ## 2026-09-21 难度四档制 + 噩梦难度(AI 圣水 ×1.5)
 
 - **难度模型重构**:settings.js 新增 AI_LEVELS 四档表

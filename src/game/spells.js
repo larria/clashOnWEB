@@ -2,29 +2,35 @@
 // 法术系统 + 卡牌部署入口
 // ===============================================
 import { CARDS, KIND } from '../data/cards.js';
-import { canDeploy, dist2 } from '../core/constants.js';
+import { canDeploy, dist2, GRID_W, GRID_H } from '../core/constants.js';
 import { isHeavy } from './abilities.js';
 import { getDeployPositions } from './formation.js';
 import { Unit } from './unit.js';
 
-// 施放法术
+// 法术对塔减伤倍率(单一权威来源;ai.js 补刀判定从这里 import)
+export const TOWER_MULT = {
+  arrows: 0.20, rocket: 0.23, lightning: 0.15,
+  fireball: 0.25, zap: 0.25, freeze: 0.30, rage: 0.25,
+};
+
+// 施放法术(返回 false = 施放失败,如镜像复制的部署位非法;
+// 调用方 playCard 依赖此返回值决定是否扣费)
 export function castSpell(cardId, side, x, y, game, mirrorSource) {
   let card = CARDS[cardId];
-  if (!card || card.kind !== KIND.SPELL) return;
+  if (!card || card.kind !== KIND.SPELL) return false;
 
   // 镜像法术:复制上一张打出的牌
   if (card.special && card.special.mirror) {
     const last = game.lastPlayedCard;
-    if (!last || last === 'mirror') return; // 无可复制目标
+    if (!last || last === 'mirror') return false; // 无可复制目标
     const lastCard = CARDS[last];
     if (lastCard.kind === KIND.SPELL) {
       // 复制法术(费用+1)
-      castSpell(last, side, x, y, game);
+      return castSpell(last, side, x, y, game);
     } else {
-      // 复制部队/建筑
-      deployCard(last, side, x, y, game);
+      // 复制部队/建筑(部署失败需传播,否则圣水蒸发)
+      return deployCard(last, side, x, y, game);
     }
-    return;
   }
 
   // 范围伤害法术
@@ -57,6 +63,7 @@ export function castSpell(cardId, side, x, y, game, mirrorSource) {
   }
 
   game.lastPlayedCard = cardId;
+  return true;
 }
 
 // 法术延迟:投射法术按距离/速度;固定施法时间法术用 castTime;其余即时
@@ -91,12 +98,14 @@ function applySpellEffect(card, side, x, y, game) {
         game.dealDamage(e, totalDmg, null, card);
         if (e.hp <= 0 || e.dead) spellKills.push(e.card.name); // 记录击杀(日志用)
       }
-      // 击退(重型单位免疫:巨人等大块头岿然不动)
+      // 击退(重型单位免疫:巨人等大块头岿然不动;clamp 地图边界防止推出界外)
       if (card.knockback && card.knockback > 0 && !e.isBuilding && !isHeavy(e)) {
         const dx = e.x - x, dy = e.y - y;
         const dd = Math.sqrt(dx*dx+dy*dy) || 1;
         e.x += (dx/dd) * card.knockback;
         e.y += (dy/dd) * card.knockback;
+        e.x = Math.max(e.radius, Math.min(GRID_W - e.radius, e.x));
+        e.y = Math.max(e.radius, Math.min(GRID_H - e.radius, e.y));
       }
       // 眩晕
       if (sp && sp.stun) {
@@ -145,7 +154,6 @@ function applySpellEffect(card, side, x, y, game) {
   // 伤害塔(皇冠塔减伤:各法术倍率不同,对齐 wiki——
   // 万箭 20% / 火箭 23% / 雷电 15% / 火球·电击 25% / 冰冻 30%(wiki:35/115≈0.3)
   if (dmg > 0) {
-    const TOWER_MULT = { arrows: 0.20, rocket: 0.23, lightning: 0.15, fireball: 0.25, zap: 0.25, freeze: 0.30, rage: 0.25 };
     const mult = TOWER_MULT[card.id] != null ? TOWER_MULT[card.id] : 0.3;
     const towers = game.getEnemyTowers(side);
     const towerDmg = dmg * mult * ((sp && sp.hits) || 1);
