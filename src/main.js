@@ -130,6 +130,27 @@ function playerCycle(playedCardId, idx) {
   playerNext = playerDrawPile.shift();
 }
 
+// ===== URL 参数 =====
+// ?deck=slot1        玩家用指定卡组(slot0-9;也接受卡组名如"野猪快攻")
+// &aideck=slot2      AI 用指定卡组(同上;不传则随机)
+// &ai=1.6            AI 难度(1/1.3/1.6 = 普通/困难/挑战)
+// URL 参数优先级最高,但用户改过下拉后本局不再覆盖
+const urlParams = new URLSearchParams(location.search);
+let urlPlayerDeckKey = urlParams.get('deck');
+let urlAiDeckKey = urlParams.get('aideck');
+let urlAiDeckFixed = false;   // URL 指定 AI 卡组后,本会话重开也保持
+const urlAiLevel = urlParams.get('ai');
+if (urlAiLevel && !isNaN(parseFloat(urlAiLevel))) {
+  settings.set('aiLevel', parseFloat(urlAiLevel));
+}
+// 卡组名 → slotKey 解析
+function resolveDeckKey(v) {
+  if (!v) return null;
+  if (DECKS[v] && DECKS[v].cards.length > 0) return v;
+  const byName = Object.keys(DECKS).find(k => DECKS[k].name === v && DECKS[k].cards.length > 0);
+  return byName || null;
+}
+
 // ===== 建局 =====
 // 选择用于开局的卡组:空卡组(未编辑完)回退到第一个非空
 function pickPlayableDeckKey() {
@@ -139,14 +160,27 @@ function pickPlayableDeckKey() {
 }
 
 function initGame() {
+  // URL 参数指定玩家卡组:首次生效;用户手动切换后(urlPlayerDeckKey 置空)不再覆盖
+  if (urlPlayerDeckKey) {
+    const resolved = resolveDeckKey(urlPlayerDeckKey);
+    if (resolved) { els.deckSelect.value = resolved; }
+    urlPlayerDeckKey = null;   // 只在第一次建局生效(ready 态切卡组会走 change 事件)
+  }
   const deckKey = pickPlayableDeckKey();
   if (els.deckSelect.value !== deckKey) els.deckSelect.value = deckKey;
   playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
   aiLevel = settings.get('aiLevel');
-  // AI 每局从非空卡组中随机选择一套(不再与玩家同卡组)
-  const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length > 0);
-  const pickKey = presetKeys[Math.floor(Math.random() * presetKeys.length)];
-  aiDeck = sanitizeDeck(DECKS[pickKey].cards);
+  // AI 卡组:URL 指定优先(本局会话固定),否则每局随机
+  if (!urlAiDeckFixed && urlAiDeckKey) {
+    const resolved = resolveDeckKey(urlAiDeckKey);
+    if (resolved) { aiDeck = sanitizeDeck(DECKS[resolved].cards); urlAiDeckFixed = true; }
+    urlAiDeckKey = null;
+  }
+  if (!urlAiDeckFixed) {
+    const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length > 0);
+    const pickKey = presetKeys[Math.floor(Math.random() * presetKeys.length)];
+    aiDeck = sanitizeDeck(DECKS[pickKey].cards);
+  }
 
   game = new Game();
   renderer = new Renderer(canvas, game);

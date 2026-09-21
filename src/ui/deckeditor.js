@@ -14,9 +14,10 @@ export const DECK_COUNT = 10;
 const DECK_SIZE = 8;
 
 // 预填 5 套经典卡组(槽 0~4 的"恢复默认"基准);槽 5~9 无默认(空)
+// 槽 0 = 玩家默认卡组(野猪快攻)
 const DEFAULT_DECKS = [
-  { name: '巨人体系', cards: ['giant', 'miniPekka', 'musketeer', 'wizard', 'skeletons', 'arrows', 'fireball', 'minions'] },
   { name: '野猪快攻', cards: ['hogRider', 'musketeer', 'archers', 'skeletons', 'zap', 'fireball', 'cannon', 'goblins'] },
+  { name: '巨人体系', cards: ['giant', 'miniPekka', 'musketeer', 'wizard', 'skeletons', 'arrows', 'fireball', 'minions'] },
   { name: '戈仑重击', cards: ['golem', 'babyDragon', 'miniPekka', 'wizard', 'minions', 'arrows', 'zap', 'barbarianHut'] },
   { name: '空军流',   cards: ['balloon', 'minionHorde', 'minions', 'babyDragon', 'musketeer', 'arrows', 'fireball', 'skeletons'] },
   { name: '速转流',   cards: ['hogRider', 'skeletons', 'goblins', 'spearGoblins', 'zap', 'archers', 'fireball', 'musketeer'] },

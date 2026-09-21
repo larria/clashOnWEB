@@ -16,7 +16,7 @@ const DEFINITIONS = {
   sfx:          { def: true,  label: '音效' },
   showDeployZone: { def: true, label: '显示部署区域' },
   showAimLine:  { def: true,  label: '显示塔瞄准线' },
-  aiLevel:      { def: 1.3,  label: 'AI 强度' },
+  aiLevel:      { def: 1.6,  label: 'AI 强度' },   // 默认挑战(最高)
 };
 
 function loadRaw() {
