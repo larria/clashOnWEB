@@ -422,15 +422,32 @@ export class Renderer {
         ctx.stroke();
       }
     }
-    // 狂暴(受 rage 法术):红光脉冲闪烁
+    // 狂暴(受 rage 法术):金色光晕 + 上升 chevron(与单位版一致)
     if (tw.rageTimer > 0) {
       const pulse = 0.5 + 0.5 * Math.sin(this.animTime * 9);
-      ctx.globalAlpha = 0.25 + 0.2 * pulse;
-      ctx.fillStyle = '#ff1744';
-      ctx.beginPath(); ctx.arc(x, y, r+2, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.6 + 0.35 * pulse;
-      ctx.strokeStyle = '#ff1744'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, y, r+4, 0, Math.PI*2); ctx.stroke();
+      ctx.save();
+      const rg = ctx.createRadialGradient(x, y, r*0.5, x, y, r + 6);
+      rg.addColorStop(0, 'rgba(255,215,64,0)');
+      rg.addColorStop(0.85, `rgba(255,193,7,${0.3 + 0.25 * pulse})`);
+      rg.addColorStop(1, 'rgba(255,193,7,0)');
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = rg;
+      ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = '#ffc107';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const ph = (this.animTime * 2 + i * 0.25) % 1;
+        const yy = y + r - ph * r * 2.2;
+        const cw = r * 0.5 * (0.6 + 0.4 * Math.sin(ph * Math.PI));
+        ctx.globalAlpha = Math.sin(ph * Math.PI) * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(x - cw, yy + 5);
+        ctx.lineTo(x, yy);
+        ctx.lineTo(x + cw, yy + 5);
+        ctx.stroke();
+      }
       ctx.globalAlpha = 1;
     }
 
@@ -478,7 +495,13 @@ export class Renderer {
     const x = u.x * CELL, y = u.y * CELL;
     const r = u.radius * CELL;
     const bob = u.flying ? Math.sin(this.animTime*4 + u.uid) * r*0.12 : 0; // 飞行浮动
-    const cy = y - (u.flying ? r*0.55 : 0) + bob;
+    // 跳河抛物线(野猪骑士):jumpTimer 0.55→0,sin 给出对称弧线
+    let jumpLift = 0;
+    if (u.jumpTimer > 0) {
+      const jp = u.jumpTimer / 0.55;               // 1→0
+      jumpLift = Math.sin((1 - jp) * Math.PI) * r * 3.2; // 最高点 ≈ 3.2r
+    }
+    const cy = y - (u.flying ? r*0.55 : 0) + bob - jumpLift;
     const sc = sideColors(u.side);
     const isBuilding = u.isBuilding;
     const art = getCardImage(u.cardId);
@@ -488,10 +511,11 @@ export class Renderer {
     ctx.save();
     ctx.globalAlpha = u.deployTimer > 0 ? 0.55 : 1;
 
-    // 地面阴影
+    // 地面阴影(跳跃时缩小+变淡,强化腾空感)
     ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    const shScale = 1 - Math.min(0.6, jumpLift / (r*4));
     ctx.beginPath();
-    ctx.ellipse(x, y + (isBuilding ? r*0.75 : r*0.55), r*0.85, r*0.32, 0, 0, Math.PI*2);
+    ctx.ellipse(x, y + (isBuilding ? r*0.75 : r*0.55), r*0.85*shScale, r*0.32*shScale, 0, 0, Math.PI*2);
     ctx.fill();
 
     // 部署波纹
@@ -603,29 +627,32 @@ export class Renderer {
         ctx.stroke();
       }
     }
-    // 狂暴状态:单位泛红脉冲闪烁(原版视觉)+ 上升粒子
+    // 狂暴状态:金色速度线(向上流动的 chevron)——红色已让位给受击特效
     if (u.rageTimer > 0) {
-      // 红色泛光圈(呼吸脉冲闪烁)+ 内部淡红罩
-      const pulse = 0.5 + 0.5 * Math.sin(this.animTime * 9 + u.uid);
+      const tt = this.animTime;
+      // 底部金色光晕(微弱,标示 buff 区域)
       ctx.save();
-      // 外圈(亮红,闪烁)
-      ctx.globalAlpha = 0.5 + 0.4 * pulse;
-      ctx.strokeStyle = '#ff1744';
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, cy, fxR + 3, 0, Math.PI*2); ctx.stroke();
-      // 内部淡红罩(半透明,不遮死卡图)
-      ctx.globalAlpha = 0.22 + 0.18 * pulse;
-      ctx.fillStyle = '#ff1744';
-      ctx.beginPath(); ctx.arc(x, cy, fxR + 1, 0, Math.PI*2); ctx.fill();
+      const pulse = 0.5 + 0.5 * Math.sin(tt * 9 + u.uid);
+      ctx.globalAlpha = 0.25 + 0.2 * pulse;
+      const rg = ctx.createRadialGradient(x, cy, fxR*0.4, x, cy, fxR + 4);
+      rg.addColorStop(0, 'rgba(255,215,64,0)'); rg.addColorStop(0.85, `rgba(255,193,7,${0.35+0.25*pulse})`); rg.addColorStop(1, 'rgba(255,193,7,0)');
+      ctx.fillStyle = rg;
+      ctx.beginPath(); ctx.arc(x, cy, fxR + 4, 0, Math.PI*2); ctx.fill();
       ctx.restore();
-      // 粒子
-      ctx.fillStyle = 'rgba(255,80,80,0.85)';
+      // 上升的金色 chevron(≫ 形速度线 ×3,错相位流动)
+      ctx.strokeStyle = '#ffc107';
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
       for (let i = 0; i < 3; i++) {
-        const ph = (this.animTime*2.5 + i*0.33 + (u.uid%10)*0.1) % 1;
-        ctx.globalAlpha = (u.deployTimer > 0 ? 0.55 : 1) * (1-ph) * 0.9;
+        const ph = (tt * 2.2 + i * 0.33 + (u.uid % 7) * 0.11) % 1;
+        const yy = cy + fxR - ph * fxR * 2.4;
+        const cw = fxR * 0.55 * (0.6 + 0.4 * Math.sin(ph * Math.PI));
+        ctx.globalAlpha = (u.deployTimer > 0 ? 0.55 : 1) * Math.sin(ph * Math.PI) * 0.95;
         ctx.beginPath();
-        ctx.arc(x + Math.sin(ph*9+i)*fxR*0.5, cy - fxR - ph*fxR*1.3, 2.2, 0, Math.PI*2);
-        ctx.fill();
+        ctx.moveTo(x - cw, yy + 5);
+        ctx.lineTo(x, yy);
+        ctx.lineTo(x + cw, yy + 5);
+        ctx.stroke();
       }
       ctx.globalAlpha = u.deployTimer > 0 ? 0.55 : 1;
     }
@@ -702,6 +729,16 @@ export class Renderer {
         ctx.restore();
       } else if (e.type === 'deathBomb') {
         this.drawDeathBomb(e, t);
+      } else if (e.type === 'meleeSlash') {
+        this.drawMeleeSlash(e, t);
+      } else if (e.type === 'shotTrail') {
+        this.drawShotTrail(e, t);
+      } else if (e.type === 'hitBurst') {
+        this.drawHitBurst(e, t);
+      } else if (e.type === 'spellIcon') {
+        this.drawSpellIcon(e, t);
+      } else if (e.type === 'jumpDust' || e.type === 'jumpLand') {
+        this.drawJumpFx(e, t);
       } else if (e.type === 'elixirPop') {
         // 圣水收集器产费:紫色圣水滴升腾 + 光晕闪现
         const x = e.x*CELL, y = e.y*CELL;
@@ -867,6 +904,215 @@ export class Renderer {
     ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.arc(x, y, e.radius*CELL, 0, Math.PI*2); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // ===== 战斗特效(攻击/受击/跳河/法术图标) =====
+
+  // 近战斩击:攻击者→目标方向的弧形刀光,快速掠过
+  drawMeleeSlash(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL, tx = e.tx*CELL, ty = e.ty*CELL;
+    const ang = Math.atan2(ty - y, tx - x);
+    const p = 1 - t;            // 0→1
+    const card = CARDS[e.cardId] || {};
+    const col = card.color || '#fff';
+    ctx.save();
+    // 斩击发生在攻击者前方到目标之间
+    const sx = x + Math.cos(ang) * 14, sy = y + Math.sin(ang) * 14;
+    ctx.translate(sx, sy);
+    ctx.rotate(ang);
+    // 弧光(月牙形):随时间扫过并放大淡出
+    const sweep = 0.3 + p * 0.9;                 // 弧展开
+    const R = 16 + p * 14;
+    ctx.globalAlpha = Math.sin(p * Math.PI) * 0.95;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3.5 - p * 1.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(0, 0, R, -sweep, sweep);
+    ctx.stroke();
+    // 内侧彩色衬光
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = Math.sin(p * Math.PI) * 0.7;
+    ctx.beginPath();
+    ctx.arc(-3, 0, R - 4, -sweep * 0.8, sweep * 0.8);
+    ctx.stroke();
+    // 速度线(3 条短划,强化"斩"的方向感)
+    ctx.globalAlpha = Math.sin(p * Math.PI) * 0.5;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    for (let i = -1; i <= 1; i++) {
+      const off = i * 6;
+      ctx.beginPath();
+      ctx.moveTo(-R - 8, off);
+      ctx.lineTo(-R - 2 + p * 6, off);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 远程弹道:高速投射物划过 + 渐隐轨迹(0.22s 内飞完全程)
+  drawShotTrail(e, t) {
+    const ctx = this.ctx;
+    const p = 1 - t;            // 0→1 飞行进度
+    const x = e.x*CELL, y = e.y*CELL, tx = e.tx*CELL, ty = e.ty*CELL;
+    const ang = Math.atan2(ty - y, tx - x);
+    const px = x + (tx - x) * p, py = y + (ty - y) * p;
+    const card = CARDS[e.cardId] || {};
+    const col = card.color || '#ffe082';
+    ctx.save();
+    // 渐隐轨迹(发光带)
+    ctx.globalAlpha = t * 0.45;
+    const trailLen = 26;
+    const g = ctx.createLinearGradient(px, py, px - Math.cos(ang)*trailLen, py - Math.sin(ang)*trailLen);
+    g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - Math.cos(ang)*trailLen, py - Math.sin(ang)*trailLen);
+    ctx.stroke();
+    // 弹头(按卡型微调:溅射单位画大弹体)
+    ctx.globalAlpha = 1;
+    ctx.translate(px, py);
+    ctx.rotate(ang);
+    const headR = e.splash ? 6 : 4;
+    const hg = ctx.createRadialGradient(0, 0, 0, 0, 0, headR + 3);
+    hg.addColorStop(0, '#fff'); hg.addColorStop(0.45, col); hg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(0, 0, headR + 3, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    // 命中瞬间(t→0):落点小冲击圈(独立 save/restore,不经过上方平移)
+    if (t < 0.35) {
+      ctx.save();
+      ctx.globalAlpha = t / 0.35 * 0.8;
+      ctx.strokeStyle = e.splash ? col : '#fff';
+      ctx.lineWidth = 2.5;
+      const rr = (1 - t/0.35) * (e.splash ? 18 : 10) + 4;
+      ctx.beginPath(); ctx.arc(tx, ty, rr, 0, Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // 受击迸发:放射状火花 + 白闪
+  drawHitBurst(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const R = Math.max(8, (e.r || 0.4) * CELL);
+    const p = 1 - t;
+    ctx.save();
+    // 白色闪光(中心,快速淡出)
+    ctx.globalAlpha = t * 0.7;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+    g.addColorStop(0, '#fff'); g.addColorStop(0.6, 'rgba(255,235,59,0.6)'); g.addColorStop(1, 'rgba(255,235,59,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+    // 放射火花(6 条,长短随机固定相位)
+    ctx.globalAlpha = t;
+    ctx.strokeStyle = '#ffe082';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + (i * 0.7);
+      const len = R * (0.5 + ((i * 37) % 10) / 18) * p;
+      const r0 = R * 0.4 + p * R * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a) * r0, y + Math.sin(a) * r0);
+      ctx.lineTo(x + Math.cos(a) * (r0 + len), y + Math.sin(a) * (r0 + len));
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 法术图标闪现:释放位置卡图放大→淡出(快速显隐)
+  drawSpellIcon(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const art = getCardImage(e.cardId);
+    const p = 1 - t;            // 0→1
+    // 出现(0~0.25):从大缩小落定 + 淡入;消失(0.25~1):淡出上飘
+    const appear = p < 0.25;
+    const alpha = appear ? p / 0.25 : t;
+    const size = appear ? 64 * (1.4 - p / 0.25 * 0.4) : 64;
+    const dy = appear ? 0 : -(1 - t) * 14;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, alpha) * 0.95;
+    if (art) {
+      // 卡图(裁圆形,带发光描边)
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,255,255,0.8)';
+      ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(x, y + dy, size/2, 0, Math.PI*2); ctx.clip();
+      drawCardImage(ctx, art, x, y + dy, size, { cropSquare: true });
+      ctx.restore();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2.5;
+      ctx.globalAlpha = Math.min(1, alpha) * 0.9;
+      ctx.beginPath(); ctx.arc(x, y + dy, size/2, 0, Math.PI*2); ctx.stroke();
+    } else {
+      // 无图回退:发光圆 + 卡色
+      const card = CARDS[e.cardId] || {};
+      ctx.fillStyle = card.color || '#fff';
+      ctx.beginPath(); ctx.arc(x, y + dy, size/2.6, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 跳河特效:起跳尘土 / 落点尘土+水花
+  drawJumpFx(e, t) {
+    const ctx = this.ctx;
+    const x = e.x*CELL, y = e.y*CELL;
+    const p = 1 - t;
+    ctx.save();
+    if (e.type === 'jumpDust') {
+      // 起跳:两侧后扬尘土(褐色小粒)
+      ctx.globalAlpha = t * 0.8;
+      for (let i = 0; i < 5; i++) {
+        const dir = i % 2 ? 1 : -1;
+        const ph = (i / 5);
+        const dx = dir * (4 + p * 16 * (0.6 + ph * 0.6));
+        const dy = -p * 10 * (1 - ph * 0.4) + p * p * 8;
+        const rr = 3.2 * (1 - p * 0.5);
+        ctx.fillStyle = i % 2 ? 'rgba(178,145,108,0.85)' : 'rgba(139,114,85,0.8)';
+        ctx.beginPath(); ctx.arc(x + dx, y + dy, rr, 0, Math.PI*2); ctx.fill();
+      }
+    } else {
+      // 落地:河面 → 水花(蓝白液滴 + 涟漪);地面 → 尘土圈
+      if (e.river) {
+        // 涟漪(两圈扩散)
+        for (let k = 0; k < 2; k++) {
+          const rp = Math.min(1, p * 1.4 - k * 0.25);
+          if (rp <= 0 || rp >= 1) continue;
+          ctx.globalAlpha = (1 - rp) * 0.7;
+          ctx.strokeStyle = '#b3e5fc';
+          ctx.lineWidth = 2 - k * 0.5;
+          ctx.beginPath(); ctx.ellipse(x, y, rp * 22, rp * 9, 0, 0, Math.PI*2); ctx.stroke();
+        }
+        // 溅起水滴(6 滴抛物线)
+        ctx.globalAlpha = t;
+        for (let i = 0; i < 6; i++) {
+          const a = -Math.PI/2 + (i - 2.5) * 0.42;
+          const v = 26 + (i % 3) * 7;
+          const dx = Math.cos(a) * v * p;
+          const dy = Math.sin(a) * v * p + 46 * p * p; // 重力
+          ctx.fillStyle = i % 2 ? '#e1f5fe' : '#81d4fa';
+          ctx.beginPath(); ctx.arc(x + dx, y + dy, 2.8 - p, 0, Math.PI*2); ctx.fill();
+        }
+      } else {
+        // 地面落点尘土圈
+        ctx.globalAlpha = t * 0.85;
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + 0.4;
+          const dx = Math.cos(a) * (6 + p * 15);
+          const dy = Math.sin(a) * (6 + p * 15) * 0.45;
+          ctx.fillStyle = 'rgba(178,145,108,0.8)';
+          ctx.beginPath(); ctx.arc(x + dx, y + dy, 3 * (1 - p * 0.6), 0, Math.PI*2); ctx.fill();
+        }
+      }
+    }
     ctx.restore();
   }
 

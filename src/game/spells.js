@@ -29,6 +29,8 @@ export function castSpell(cardId, side, x, y, game, mirrorSource) {
 
   // 范围伤害法术
   if (card.dmg > 0 || card.special) {
+    // 法术图标在释放位置快速显隐(无论是否延时,立即给玩家落点反馈)
+    game.addEffect({ type: 'spellIcon', cardId: card.id, x, y, life: 0.6, maxLife: 0.6 });
     // 投射/施法延时(原版:火球/万箭/火箭从释放方国王塔飞出,飞行时间与
     // 距离正相关;电击/冰冻有固定施法时间;雷电/狂暴即时)
     const delay = getSpellDelay(card, side, x, y);

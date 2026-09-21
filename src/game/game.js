@@ -100,6 +100,11 @@ export class Game {
     if (unit.dead) return;
     unit.hp -= dmg;
     this.bus.emit('unit:damaged', { unit, dmg, attacker }); // 受击音效
+    // 受击迸发特效(同一单位 0.15s 内不重复,防止群攻刷屏)
+    if (!unit._hitFxAt || this.time - unit._hitFxAt > 0.15) {
+      unit._hitFxAt = this.time;
+      this.addEffect({ type: 'hitBurst', x: unit.x, y: unit.y, r: unit.radius, life: 0.25, maxLife: 0.25 });
+    }
     if (unit.hp <= 0) {
       unit.hp = 0;
       unit.dead = true;
@@ -113,6 +118,11 @@ export class Game {
     tower.hp -= dmg;
     tower.onDamaged(); // 国王塔受到任何伤害(含法术)即激活
     this.bus.emit('tower:damaged', { tower, dmg });
+    // 塔受击迸发(节流同单位)
+    if (!tower._hitFxAt || this.time - tower._hitFxAt > 0.15) {
+      tower._hitFxAt = this.time;
+      this.addEffect({ type: 'hitBurst', x: tower.x, y: tower.y, r: tower.radius, life: 0.25, maxLife: 0.25 });
+    }
     if (tower.hp <= 0) {
       tower.hp = 0;
       tower.dead = true;

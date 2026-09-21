@@ -200,6 +200,7 @@ export function moveUnit(unit, game, dt) {
 
   // 但如果已在攻击范围内,不移动(由攻击逻辑处理)
   // 移动
+  const wasInRiver = unit.y > 15 && unit.y < 17 && !unit.flying;
   const spd = unit.speed * dt;
   if (spd >= d) {
     unit.x = wp.x;
@@ -207,6 +208,22 @@ export function moveUnit(unit, game, dt) {
   } else {
     unit.x += (dx / d) * spd;
     unit.y += (dy / d) * spd;
+  }
+  // 跳河单位(野猪骑士)入河瞬间:起跳特效 + 跳跃动画计时
+  const nowInRiver = unit.y > 15 && unit.y < 17;
+  if (nowInRiver && !wasInRiver && unit.card.special && unit.card.special.canJumpRiver) {
+    unit.jumpTimer = 0.55;               // 跳跃动画时长(渲染抛物线用)
+    unit.jumpFrom = { x: unit.x, y: unit.y };
+    game.addEffect({ type: 'jumpDust', x: unit.x, y: unit.y, side: unit.side, life: 0.4, maxLife: 0.4 });
+    game.bus.emit('unit:jump', { unit }); // 跳河音效
+  }
+  if (unit.jumpTimer > 0) {
+    unit.jumpTimer -= dt;
+    // 落地(出河):落点尘土 + 水花(按是否仍在河面)
+    if (unit.jumpTimer <= 0) {
+      const riverLanding = unit.y > 15 && unit.y < 17;
+      game.addEffect({ type: 'jumpLand', x: unit.x, y: unit.y, river: riverLanding, life: 0.45, maxLife: 0.45 });
+    }
   }
 
   // 充能判定(王子):持续向同一方向移动累计
@@ -233,6 +250,10 @@ export function attackTarget(attacker, target, game) {
   const card = attacker.card;
   let dmg = attacker.currentDmg;
 
+  // 目标位置(特效用)
+  const tx = target.type === 'unit' ? target.ref.x : target.ref.x;
+  const ty = target.type === 'unit' ? target.ref.y : target.ref.y;
+
   if (target.type === 'unit') {
     const e = target.ref;
     if (card.splash && card.splash > 0) {
@@ -252,6 +273,16 @@ export function attackTarget(attacker, target, game) {
 
   // 攻击后能力(地狱塔递增等)
   afterAttack(attacker);
+
+  // 攻击特效:按攻击类型分近战斩击/远程弹道(渲染层按 card.color 着色)
+  const isRanged = card.range >= 3.5;
+  game.addEffect({
+    type: isRanged ? 'shotTrail' : 'meleeSlash',
+    cardId: attacker.cardId, side: attacker.side,
+    x: attacker.x, y: attacker.y, tx, ty,
+    splash: (card.splash || 0) > 0,
+    life: isRanged ? 0.22 : 0.28, maxLife: isRanged ? 0.22 : 0.28,
+  });
 
   // 远程攻击有投射物(简化:直接命中,加动画)
   attacker.atkAnim = 0.3;

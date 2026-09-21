@@ -122,6 +122,7 @@ class AudioSystem {
     try {
       const src = this.ctx.createBufferSource();
       src.buffer = buf;
+      if (opts.playbackRate) src.playbackRate.value = opts.playbackRate;
       const gain = this.ctx.createGain();
       gain.gain.value = (opts.volume != null ? opts.volume : 1) * SFX_VOLUME;
       src.connect(gain).connect(this.ctx.destination);
@@ -249,6 +250,11 @@ class AudioSystem {
     // 王子冲锋
     bus.on('unit:charge', ({ unit }) => {
       if (unit && unit.cardId === 'prince') this.play('charge_prince', { volume: 0.9 });
+    });
+
+    // 野猪骑士跳河(起跳)
+    bus.on('unit:jump', ({ unit }) => {
+      if (unit && unit.cardId === 'hogRider') this.play('charge_prince', { volume: 0.55, throttle: 300, playbackRate: 1.3 });
     });
 
     // 小屋产兵 / 女巫召唤
