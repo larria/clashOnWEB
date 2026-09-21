@@ -142,19 +142,19 @@ export const CARDS = {
   fireball: { id:'fireball', name:'火球', cost:4, rarity:'稀有', kind:KIND.SPELL,
     radius:2.5, dmg:344, knockback:0.6, color:'#ff6f00', deployZone:'anywhere', projectile: 15 },  // 投射速度600(wiki),从国王塔飞出
   arrows: { id:'arrows', name:'万箭齐发', cost:3, rarity:'普通', kind:KIND.SPELL,
-    radius:4.0, dmg:61, knockback:0, color:'#bdbdbd', deployZone:'anywhere',
-    special:{ hits:3 }, projectile: 27.5 },  // 投射速度1100(wiki);每单位命中3次
+    radius:3.5, dmg:61, knockback:0, color:'#bdbdbd', deployZone:'anywhere',
+    special:{ hits:3 }, projectile: 27.5 },  // 投射速度1100(wiki);每单位命中3次;半径3.5(wiki)
   rocket: { id:'rocket', name:'火箭', cost:6, rarity:'稀有', kind:KIND.SPELL,
     radius:2.0, dmg:742, knockback:0.3, color:'#d50000', deployZone:'anywhere', projectile: 8.75 },  // 投射速度350(wiki),全场约3.2s
   lightning: { id:'lightning', name:'雷电法术', cost:6, rarity:'史诗', kind:KIND.SPELL,
-    radius:3.0, dmg:528, knockback:0.8, color:'#ffd600', deployZone:'anywhere',
-    special:{ chain:3, stun:1.0 } },
+    radius:3.5, dmg:528, knockback:0.8, color:'#ffd600', deployZone:'anywhere',
+    special:{ chain:3, stun:1.0 } },  // 半径3.5(wiki:2018-04-25 从3恢复3.5)
   zap: { id:'zap', name:'电击法术', cost:2, rarity:'普通', kind:KIND.SPELL,
     radius:2.5, dmg:96, knockback:0.4, color:'#29b6f6', deployZone:'anywhere',
-    special:{ stun:0.5 }, castTime: 0.5 },  // 施法时间0.5s(wiki)
+    special:{ stun:0.5 }, castTime: 0.5 },  // 施法时间0.5s(wiki);半径2.5(wiki)
   rage: { id:'rage', name:'狂暴法术', cost:2, rarity:'史诗', kind:KIND.SPELL,
-    radius:5.0, dmg:0, knockback:0, color:'#ff1744', deployZone:'anywhere',
-    special:{ buff:1.35, duration:6.0 } },
+    radius:3.0, dmg:0, knockback:0, color:'#ff1744', deployZone:'anywhere',
+    special:{ buff:1.35, duration:6.0 } },  // 半径3(wiki);狂暴是增益法术,半径是buff范围
   freeze: { id:'freeze', name:'冰冻法术', cost:3, rarity:'史诗', kind:KIND.SPELL,
     radius:3.0, dmg:58, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
     special:{ freeze:4.0 } },  // 即时生效;伤害 115/2=58(11级×0.5),对塔约 17.5(倍率表 0.3 换算)
