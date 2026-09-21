@@ -5,7 +5,7 @@
 // ===============================================
 import {
   CELL, CANVAS_W, CANVAS_H, GRID_W, GRID_H, RIVER_Y1, RIVER_Y2,
-  BRIDGE_LEFT, BRIDGE_RIGHT, TOWERS, canDeploy,
+  BRIDGE_LEFT, BRIDGE_RIGHT, TOWERS, canDeploy, UNLOCK_DEPTH, KING_BACK,
 } from '../core/constants.js';
 import { CARDS, KIND } from '../data/cards.js';
 import { settings } from '../core/settings.js';
@@ -72,11 +72,12 @@ export class Renderer {
     const x0 = uf.lane === 'left' ? 0 : 9;
     const w = 9;
     const isGold = uf.color.indexOf('255,213') === 0;
+    // 解锁区 = 贴河岸边向敌方纵深 UNLOCK_DEPTH 格(9×4)
     let y0, h;
     if (isGold) {
-      y0 = 5; h = RIVER_Y1 - 5;          // AI 半场该路(玩家新解锁区)
+      y0 = RIVER_Y1 - UNLOCK_DEPTH; h = UNLOCK_DEPTH;   // AI 半场该路(玩家新解锁区)
     } else {
-      y0 = RIVER_Y2; h = 27 - RIVER_Y2; // 玩家半场该路(AI 新解锁区)
+      y0 = RIVER_Y2; h = UNLOCK_DEPTH;                  // 玩家半场该路(AI 新解锁区)
     }
     ctx.save();
     ctx.fillStyle = `rgba(${uf.color},${alpha})`;
@@ -120,9 +121,11 @@ export class Renderer {
     const step = 0.5;
     for (let gy = 0; gy < GRID_H; gy += step) {
       // 玩家视角只画玩家可部署区:己方半场(绿)+ 敌方解锁区(金)
+      // 国王塔后凸排(y=31 那行 6 格)也算己方,单独纳入
       const inOwn = gy >= RIVER_Y2;
       const inEnemy = gy < RIVER_Y1;
-      if (!inOwn && !inEnemy) continue;
+      const inKingBack = Math.floor(gy) === GRID_H - 1;
+      if (!inOwn && !inEnemy && !inKingBack) continue;
       for (let gx = 0; gx < GRID_W; gx += step) {
         const cx = gx + step/2, cy = gy + step/2;
         const okOwn = inOwn && canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
@@ -136,13 +139,14 @@ export class Renderer {
         }
       }
     }
-    // 解锁区标记文字(有解锁时)
+    // 解锁区标记文字(有解锁时;解锁区为贴河 4 格深,文字放其中)
     if (enemyTowers.left.dead || enemyTowers.right.dead) {
+      const labelY = (RIVER_Y1 - 2) * CELL; // 解锁区中部(y≈13)
       ctx.fillStyle = 'rgba(255,213,79,0.9)';
-      ctx.font = 'bold 14px sans-serif';
+      ctx.font = 'bold 13px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      if (enemyTowers.left.dead) ctx.fillText('🔓 已解锁', 4.5*CELL, 9*CELL);
-      if (enemyTowers.right.dead) ctx.fillText('🔓 已解锁', 13.5*CELL, 9*CELL);
+      if (enemyTowers.left.dead) ctx.fillText('🔓 已解锁', 4.5*CELL, labelY);
+      if (enemyTowers.right.dead) ctx.fillText('🔓 已解锁', 13.5*CELL, labelY);
     }
     ctx.restore();
   }

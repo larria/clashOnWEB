@@ -21,6 +21,19 @@ export const RIVER_Y2 = 17; // 河道下沿(不含)
 export const BRIDGE_LEFT = [3, 4];     // 中心 3.5,对齐左公主塔
 export const BRIDGE_RIGHT = [14, 15];  // 中心 14.5,对齐右公主塔
 
+// 国王塔后凸出排(对齐官方场地:国王塔后方多出的一排可部署格)
+//   宽度 6 格(国王塔 4 格宽,两侧各多 1 格),位于国王塔后方(贴底线)
+//   ai 侧   → y = 0        (国王塔中心 y=3,占 y∈[1,5])
+//   player 侧 → y = 31     (国王塔中心 y=29,占 y∈[27,31])
+export const KING_BACK = {
+  row: { ai: 0, player: GRID_H - 1 },
+  x0: 6, x1: 12,   // [6,12) 共 6 格,以国王塔 x=9 居中
+};
+
+// 推塔解锁区深度(格):官方"破塔后多出一块 9×4 的区域"——
+// 宽 9(该路整宽)、深 4(贴河岸边向敌方纵深 4 格)
+export const UNLOCK_DEPTH = 4;
+
 // 塔位置(格坐标,塔心)—— 对齐真实 CR 场地测量:
 //   公主塔 3×3,中心距侧墙 3.5、距中线 y 6.5(射程 7.5 覆盖到距河 1 格,
 //   即 wiki 所述 "ranges extend up to a point just before the river")
@@ -87,7 +100,13 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers) {
     ? y >= RIVER_Y2
     : y < RIVER_Y1;
   if (inOwnHalf) {
-    // 己方半场:塔占面积已判,其余全部合法
+    // 己方半场主体可部署;但**最贴近底线的那一行**,仅国王塔正后方 6 格
+    // 可部署(对齐官方:国王塔后凸出一排,底线两角在部署区之外)
+    // 塔占面积已在上方统一判定,国王塔身所在格不会命中
+    const kbRow = KING_BACK.row[side === 'player' ? 'player' : 'ai'];
+    if (Math.floor(y) === kbRow) {
+      return x >= KING_BACK.x0 && x < KING_BACK.x1;
+    }
     return true;
   }
   // 敌方半场:仅在对应侧公主塔被摧毁后解锁
@@ -104,16 +123,17 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers) {
       ? BRIDGE_LEFT.includes(Math.floor(x))
       : BRIDGE_RIGHT.includes(Math.floor(x));
   }
-  // 解锁 pocket(对齐真实 CR 的阶梯形):
-  //   靠被毁塔一侧(塔心 ±3 格) → 全深:河到公主塔前沿(公主塔中心 6.5,3×3 前沿 y=5)
-  //   靠中线一侧 → 浅区:仅河岸附近(到 y=12)
-  // 镜像:玩家解锁敌方左/右塔;AI 侧 y 轴镜像(27=32-5,20=32-12)
-  const towerX = isLeftLane ? 3.5 : 14.5;
-  const nearTower = Math.abs(x - towerX) <= 3.0;
+  // 解锁区(对齐真实 CR:破塔后"多出一块 9×4 的区域")
+  //   - 横向:该路 9 格宽(左 x∈[0,9),右 x∈[9,18))
+  //   - 纵向:自河岸边起向敌方纵深 4 格
+  //       player(下方攻上):y ∈ [RIVER_Y1-4, RIVER_Y1) = [11,15)
+  //       ai   (上方攻下):y ∈ [RIVER_Y2, RIVER_Y2+4) = [17,21)
+  //   桥面:解锁侧桥面可部署(见上)
+  // 说明:两侧公主塔都破时,两路各自 4 格深,合起来即"敌方半场除桥外只解锁 4 格"
   if (side === 'player') {
-    return nearTower ? (y >= 5 && y < RIVER_Y1) : (y >= 12 && y < RIVER_Y1);
+    return y >= RIVER_Y1 - UNLOCK_DEPTH && y < RIVER_Y1;
   } else {
-    return nearTower ? (y >= RIVER_Y2 && y < 27) : (y >= RIVER_Y2 && y <= 20);
+    return y >= RIVER_Y2 && y < RIVER_Y2 + UNLOCK_DEPTH;
   }
 }
 
@@ -165,22 +185,33 @@ export function snapToDeployZone(side, x, y, enemyTowers, opts = {}, myTowers, m
   for (let sx = 0.3; sx <= GRID_W - 0.3; sx += 0.5) {
     consider(sx, mySide === 'bottom' ? GRID_H - 0.3 : 0.3);
   }
-  // 4. 解锁区(敌方侧):塔前线 + 该侧桥面
+  // 4. 解锁区(敌方侧):贴河 4 格深、该路 9 格宽的区域 + 该侧桥面
   if (leftUnlocked || rightUnlocked) {
     const lanes = leftUnlocked && rightUnlocked ? ['l', 'r'] : (leftUnlocked ? ['l'] : ['r']);
     for (const lane of lanes) {
       const x0 = lane === 'l' ? 0.3 : 9.3, x1 = lane === 'l' ? 8.7 : GRID_W - 0.3;
-      // 塔前横线(敌方侧)
-      const frontY = side === 'player' ? 5.05 : 26.7;
+      // 解锁区两条横边:贴河沿 + 敌方纵深侧(距河边 DEPTH 格)
       const bankY = side === 'player' ? RIVER_Y1 - 0.05 : RIVER_Y2 + 0.3;
+      const farY  = side === 'player' ? RIVER_Y1 - UNLOCK_DEPTH + 0.05 : RIVER_Y2 + UNLOCK_DEPTH - 0.05;
       for (let sx = x0; sx <= x1; sx += 0.5) {
-        consider(sx, frontY);
         consider(sx, bankY);
+        consider(sx, farY);
+      }
+      // 解锁区左右两条竖边
+      for (let sy = Math.min(bankY, farY); sy <= Math.max(bankY, farY); sy += 0.5) {
+        consider(x0, sy); consider(x1, sy);
       }
       // 桥面(解锁侧)
       const bx = lane === 'l' ? BRIDGE_LEFT : BRIDGE_RIGHT;
       const midY = (RIVER_Y1 + RIVER_Y2) / 2;
       for (const bxx of bx) consider(bxx + 0.5, midY);
+    }
+  }
+  // 5. 国王塔后凸排(己方底线那行 6 格)
+  {
+    const kbRow = KING_BACK.row[side === 'player' ? 'player' : 'ai'];
+    for (let sx = KING_BACK.x0 + 0.3; sx <= KING_BACK.x1 - 0.3; sx += 0.5) {
+      consider(sx, kbRow + 0.5);
     }
   }
 
