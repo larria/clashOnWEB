@@ -37,7 +37,7 @@ const els = {
   hudPhase: document.getElementById('hudPhase'),
   bigAnnounce: document.getElementById('bigAnnounce'),
   pauseBtn: document.getElementById('pauseBtn'),
-  restart: document.getElementById('restart'),
+  restart: document.getElementById('cvRestart'),
   result: document.getElementById('result'),
   resultText: document.getElementById('resultText'),
   resultSub: document.getElementById('resultSub'),
@@ -218,27 +218,28 @@ function setPhase(p) {
   if (p === 'ready') {
     screens.showOverlay({
       title: '准备战斗',
-      desc: '选择卡组与 AI 强度后开始 · 摧毁对方国王塔获胜',
+      desc: '选择卡组与 AI 强度,摧毁对方国王塔获胜',
       btn: '开始战斗',
       hint: '空格键 暂停/继续',
     });
-    els.pauseBtn.textContent = '⏸ 暂停';
-    els.pauseBtn.disabled = true;
+    els.pauseBtn.classList.remove('show');
   } else if (p === 'playing') {
     screens.hideOverlay();
-    els.pauseBtn.disabled = false;
-    els.pauseBtn.textContent = '⏸ 暂停';
+    els.pauseBtn.classList.add('show');
+    els.pauseBtn.textContent = '⏸';
   } else if (p === 'paused') {
+    // 暂停浮层复用封面(paused 类隐藏配置区)
     screens.showOverlay({
       title: '已暂停',
       desc: '圣水已冻结,战术思考一下?',
       btn: '继续战斗',
       hint: '空格键 暂停/继续',
+      paused: true,
     });
-    els.pauseBtn.textContent = '▶ 继续';
+    els.pauseBtn.textContent = '▶';
   } else if (p === 'over') {
     screens.hideOverlay();
-    els.pauseBtn.disabled = true;
+    els.pauseBtn.classList.remove('show');
   }
 }
 
@@ -417,31 +418,47 @@ function flashMsg(msg) {
   flashTimer = setTimeout(() => { el.textContent = ''; }, 1500);
 }
 
-// ===== 布局适配 =====
-// 缩放 canvas 适配窗口(桌面:侧栏并排;移动端≤860px:纵向堆叠)
+// ===== 布局适配(全屏自适应,禁止滚动) =====
+// 战场 canvas 按视口可用空间等比缩放:宽屏扣除右侧信息栏,窄屏占满;
+// 高度扣除手牌区,保证整体始终在视口内不滚动。
+// 手牌区高度与 canvas 宽联动(4.75 卡宽 ≈ canvas 宽),迭代一次收敛。
 function fitCanvas() {
-  const isMobile = window.innerWidth <= 860;
-  // 可用宽度:桌面减去侧栏,移动端占满视口
-  const maxW = isMobile ? window.innerWidth - 12 : window.innerWidth - 264;
-  // 可用高度:留出标题+手牌区;移动端手牌更紧凑
-  const chromeH = isMobile ? 150 : 200;
-  const maxH = Math.max(300, window.innerHeight - chromeH);
-  const scale = Math.min(1, maxW / CANVAS_W, maxH / CANVAS_H);
-  canvas.style.width = Math.floor(CANVAS_W * scale) + 'px';
-  canvas.style.height = Math.floor(CANVAS_H * scale) + 'px';
-  // 同步手牌卡尺寸
-  HandUI.fitCards(canvas, scale);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const bodyPad = 22;                        // body padding + 上下余量
+  const sideVisible = vw >= 1024 && vh >= 560;
+  const sideW = sideVisible ? 230 + 10 : 0;  // 侧栏宽 + gap
+  const availW = vw - sideW - bodyPad - 6;
+
+  // 迭代:先假定一个 canvas 宽 → 得手牌高 → 得可用高 → 得 canvas 缩放
+  let cw = Math.min(availW, CANVAS_W);
+  for (let i = 0; i < 2; i++) {
+    const cardW = Math.max(52, Math.min(96, (cw - 4 * 6) / 4.75));
+    const handH = 30 + cardW * 1.25 + 12;
+    const availH = vh - handH - bodyPad;
+    const scale = Math.min(1, availW / CANVAS_W, availH / CANVAS_H);
+    cw = Math.floor(CANVAS_W * scale);
+    if (cw <= 0) { cw = 100; break; }
+  }
+  const finalScale = cw / CANVAS_W;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = Math.floor(CANVAS_H * finalScale) + 'px';
+  // 同步手牌卡尺寸(卡宽与 canvas 宽联动)
+  HandUI.fitCards(canvas, finalScale);
   handUI.invalidate();
 }
 window.addEventListener('resize', fitCanvas);
 window.addEventListener('orientationchange', fitCanvas);
 
 // ===== UI 事件 =====
-els.restart.addEventListener('click', () => {
+function restartGame() {
   setPhase('ready');
   initGame();
   handUI.invalidate();
   renderer.draw(null, 0);
+}
+document.getElementById('cvRestart').addEventListener('click', () => {
+  if (phase === 'ready') return restartGame();
+  if (confirm('重新开始本局?')) restartGame();
 });
 els.ovBtn.addEventListener('click', () => {
   audio.unlock(); // 首次交互解锁音频
@@ -470,7 +487,29 @@ els.openDeckEditor.addEventListener('click', () => {
 document.getElementById('openSettings').addEventListener('click', () => settingsScreen.open());
 document.getElementById('againBtn').addEventListener('click', () => location.reload());
 
-// 侧栏 AI 强度下拉 ↔ settings 双向同步(设置页改动时联动)
+// 封面二级页:战斗日志(与侧栏 #log 实时镜像)
+const logScreenEl = document.getElementById('logScreen');
+document.getElementById('openBattleLog').addEventListener('click', () => {
+  syncLogScreen();
+  logScreenEl.classList.add('show');
+});
+document.getElementById('logScreenClose').addEventListener('click', () => logScreenEl.classList.remove('show'));
+logScreenEl.addEventListener('click', (e) => { if (e.target === logScreenEl) logScreenEl.classList.remove('show'); });
+
+// 封面二级页:玩法说明
+const helpScreenEl = document.getElementById('helpScreen');
+document.getElementById('openHelp').addEventListener('click', () => helpScreenEl.classList.add('show'));
+document.getElementById('helpScreenClose').addEventListener('click', () => helpScreenEl.classList.remove('show'));
+helpScreenEl.addEventListener('click', (e) => { if (e.target === helpScreenEl) helpScreenEl.classList.remove('show'); });
+
+// 日志镜像:打开二级页时把侧栏日志内容复制过去(节流:打开瞬间快照)
+function syncLogScreen() {
+  const src = els.log;
+  const dst = document.getElementById('logScreenList');
+  if (src && dst) dst.innerHTML = src.innerHTML;
+}
+
+// 封面 AI 强度下拉 ↔ settings 双向同步(设置页改动时联动)
 const aiLevelSelect = document.getElementById('aiLevel');
 aiLevelSelect.value = String(settings.get('aiLevel'));
 aiLevelSelect.addEventListener('change', () => {

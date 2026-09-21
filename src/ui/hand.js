@@ -137,15 +137,11 @@ export class HandUI {
     el.appendChild(row);
   }
 
-  /** 卡片尺寸适配(canvas 缩放联动) */
+  /** 卡片尺寸适配(canvas 缩放联动,全屏布局统一按 canvas 宽算) */
   static fitCards(canvas, scale) {
-    const isMobile = window.innerWidth <= 860;
     const canvasW = canvas.getBoundingClientRect().width || 0;
-    let cardW = 80;
-    if (isMobile) {
-      // 4卡 + next(0.75卡) + 4gap 需 ≤ canvasW
-      cardW = Math.max(52, Math.floor((canvasW - 4*6) / 4.75));
-    }
+    // 4卡 + next(0.75卡) + 4gap 需 ≤ canvasW;卡宽同时受 52~96 夹逼
+    let cardW = Math.max(52, Math.min(96, Math.floor((canvasW - 4*6) / 4.75)));
     // 手牌区(含圣水条)与战场 canvas 同宽,保证圣水条占满"当前栏"
     const ha = document.getElementById('handArea');
     if (ha) ha.style.maxWidth = Math.max(0, canvasW) + 'px';

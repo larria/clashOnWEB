@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>皇室战争 单机版</title>
 <link rel="stylesheet" href="css/main.css">
 </head>
@@ -20,24 +20,58 @@
       </div>
       <!-- 中央大提示(双倍圣水/终场等) -->
       <div id="bigAnnounce"></div>
-      <!-- 开始/暂停覆盖层(皇室战争 logo 仅在此出现;未来游戏封面) -->
+      <!-- 战中悬浮暂停按钮(右上角,游戏中显示) -->
+      <button id="pauseBtn" title="暂停">⏸</button>
+      <!-- 游戏封面 / 暂停浮层(同一套设计,ready 与 paused 共用) -->
       <div id="overlay">
-        <div class="ovLogo">
-          <span class="ovShield">⚔️</span>
-          <div class="ovLogoText">
-            <div class="ovLogoTitle">皇室战争</div>
-            <div class="ovLogoSub">SINGLE PLAYER EDITION</div>
+        <!-- 封面顶部:盾徽 + 大标题 -->
+        <div class="cvHero">
+          <div class="cvCrest">
+            <span class="cvCrestIcon">⚔️</span>
+            <div class="cvCrestGlow"></div>
           </div>
+          <div class="cvTitle">皇室战争</div>
+          <div class="cvSub">SINGLE PLAYER EDITION</div>
         </div>
-        <!-- 覆盖层右上角:设置入口(音乐音效等开关) -->
-        <div class="ovCornerBtns">
-          <button class="ovIconBtn" id="openSettings" title="设置">⚙</button>
-        </div>
+        <!-- 中央:情境标题 + 主按钮 -->
         <div class="ovInner">
           <div class="ovTitle" id="ovTitle">准备战斗</div>
-          <div class="ovDesc" id="ovDesc">选择卡组与 AI 强度后开始</div>
-          <button class="btn" id="ovBtn">开始战斗</button>
+          <div class="ovDesc" id="ovDesc">选择卡组与 AI 强度,摧毁对方国王塔</div>
+          <button class="btn btn-main" id="ovBtn">开始战斗</button>
           <div class="ovHint" id="ovHint">空格键 暂停/继续</div>
+        </div>
+        <!-- 封面配置区:卡组 + AI 强度(ready 态显示) -->
+        <div class="cvConfig" id="cvConfig">
+          <div class="cvCfgRow">
+            <span class="cvCfgLabel">卡组</span>
+            <select id="deckSelect"></select>
+          </div>
+          <div class="cvCfgRow">
+            <span class="cvCfgLabel">AI</span>
+            <select id="aiLevel">
+              <option value="1">普通</option>
+              <option value="1.3" selected>困难</option>
+              <option value="1.6">挑战</option>
+            </select>
+          </div>
+        </div>
+        <!-- 封面底部:功能入口(二级页) -->
+        <div class="cvMenu">
+          <button class="cvMenuItem" id="openDeckEditor">
+            <span class="cvMenuIcon">🃏</span><span>卡组</span>
+          </button>
+          <button class="cvMenuItem" id="openBattleLog">
+            <span class="cvMenuIcon">📜</span><span>日志</span>
+          </button>
+          <button class="cvMenuItem" id="openSettings">
+            <span class="cvMenuIcon">⚙️</span><span>设置</span>
+          </button>
+          <button class="cvMenuItem" id="openHelp">
+            <span class="cvMenuIcon">❓</span><span>玩法</span>
+          </button>
+          <button class="cvMenuItem danger" id="cvRestart">
+            <span class="cvMenuIcon">🔄</span><span>重开</span>
+          </button>
         </div>
       </div>
     </div>
@@ -49,30 +83,8 @@
       <div id="info"></div>
     </div>
     <div class="panel">
-      <h3>⚙️ 设置</h3>
-      <label>玩家卡组</label>
-      <select id="deckSelect"></select>
-      <label>AI 强度</label>
-      <select id="aiLevel">
-        <option value="1">普通</option>
-        <option value="1.3" selected>困难</option>
-        <option value="1.6">挑战</option>
-      </select>
-      <div style="margin-top:8px;display:flex;gap:6px;">
-        <button class="btn btn-blue" id="restart" style="flex:1;">重新开始</button>
-        <button class="btn btn-blue" id="pauseBtn" style="flex:1;">⏸ 暂停</button>
-      </div>
-      <div style="margin-top:6px;">
-        <button class="btn btn-blue" id="openDeckEditor" style="width:100%;">🃏 编辑卡组</button>
-      </div>
-    </div>
-    <div class="panel">
       <h3>📝 操作日志</h3>
       <div id="log"></div>
-    </div>
-    <div class="panel" style="font-size:11px;line-height:1.6">
-      <h3>❓ 玩法</h3>
-      点击下方手牌选中,再点击己方半场(河道下方)部署。法术可全场释放。摧毁对方国王塔获胜。
     </div>
   </div>
 </div>
@@ -101,7 +113,35 @@
   </div>
 </div>
 
-<!-- 设置页(独立界面,入口在开始遮罩右上角) -->
+<!-- 战斗日志(全屏二级页,封面入口) -->
+<div id="logScreen">
+  <div id="logScreenBox">
+    <div class="deTitle">📜 战斗日志</div>
+    <div id="logScreenList"></div>
+    <div class="settingsFooter">
+      <button class="btn btn-sm" id="logScreenClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 玩法说明(全屏二级页,封面入口) -->
+<div id="helpScreen">
+  <div id="helpScreenBox">
+    <div class="deTitle">❓ 玩法说明</div>
+    <div class="helpBody">
+      <div class="helpRow"><span class="helpIcon">👆</span><div><b>部署</b>:点击下方手牌选中,再点击己方半场(河道下方)部署;法术全场释放。越界点击会自动吸附到最近的合法边缘。</div></div>
+      <div class="helpRow"><span class="helpIcon">🏆</span><div><b>胜利</b>:摧毁对方国王塔立即获胜;常规时间结束皇冠多者胜;平皇冠进入 2 分钟加时(先推任意塔者胜)。</div></div>
+      <div class="helpRow"><span class="helpIcon">💧</span><div><b>圣水</b>:上限 10,每 2.8 秒回 1 费;120 秒后双倍圣水;加时最后 1 分钟三倍。</div></div>
+      <div class="helpRow"><span class="helpIcon">🔓</span><div><b>解锁区</b>:摧毁敌方一侧公主塔后,该侧敌方贴河 9×4 区域(含桥面)解锁供你部署。</div></div>
+      <div class="helpRow"><span class="helpIcon">⏸</span><div><b>暂停</b>:空格键或暂停按钮;页面切后台自动暂停。</div></div>
+    </div>
+    <div class="settingsFooter">
+      <button class="btn btn-sm" id="helpScreenClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置页(独立界面,入口在封面) -->
 <div id="settingsScreen">
   <div id="settingsBox">
     <div class="deTitle">⚙ 设置</div>

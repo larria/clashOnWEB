@@ -14,8 +14,10 @@ export class Screens {
     this.resultSubEl = resultSub;
   }
 
-  showOverlay({ title, desc, btn, hint }) {
+  showOverlay({ title, desc, btn, hint, paused }) {
     this.overlayEl.classList.remove('hidden');
+    // 暂停态:封面隐藏配置区(卡组/AI 强度),复用其余设计
+    this.overlayEl.classList.toggle('paused', !!paused);
     this.titleEl.textContent = title;
     this.descEl.textContent = desc || '';
     this.btnEl.textContent = btn;
