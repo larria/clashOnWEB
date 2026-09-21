@@ -80,12 +80,24 @@ audio.js ←──────┴──────────────┘ (
 `card.deployZone`:`undefined`(己方半场,默认)| `'anywhere'`(法术、矿工、飞桶)
 `canDeploy(side, x, y, enemyTowers, {zone})` 统一解释,游戏与渲染共用同一判定。
 
-### 5. 设置
+### 5. AI 决策与评测
+
+- `game/ai.js`:评分制决策(候选动作枚举打分),AI 类支持 `side` 参数
+  (评测镜像用);COUNTERS/ROLE 表为新卡接 AI 的入口
+- 评测(不改游戏规则,纯决策层验证):
+  - `node tools/eval-ai.mjs [N]` — AI 镜像对局(健康度/平衡性检查)
+  - `node tools/eval-ai-vs-baseline.mjs [N]` — 新 AI vs 基线
+    (`tools/baseline/ai_baseline.mjs` 为上次快照),交替侧别消除
+    地图侧优势;**改 AI 后必跑**
+  - 对战系统无 DOM 依赖,Node 直接 import 即可 headless 驱动
+  - 换基线:改进验收后 `git show HEAD:src/game/ai.js` 覆盖 baseline
+
+### 6. 设置
 
 `core/settings.js` 定义项 → `ui/settingsui.js` 自动渲染控件 → `settings:changed`
 事件驱动各处(音频开关、部署区显示、AI 强度)。新增设置只改 definitions + 一个订阅处。
 
-### 6. 数值口径
+### 7. 数值口径
 
 游戏内数值 = 官方 wiki 11 级 × 0.5(四舍五入)。数据来源与换算规则见
 `docs/CARD-STATS.md`,原始快照 `docs/card-stats.json`(离线可查,无需重新抓取)。
