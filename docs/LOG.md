@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-09-22 全面 code review:双 agent 评审 40 条,修复 1 高 + 8 中
+
+- 双评审 agent 并行(game 核心层 / UI+render 层)共报 40 条(高 1/中 14/低 25),
+  全部人工核实属实后按优先级修复;另附人工边界测试(圣水封顶/双国王塔同帧/
+  镜像拒付/加时塔血判定/150 单位压测 0.33ms/帧)全过
+- 高危:AI 过牌整体失效((13,7) 恒非法 → 候选点探测)
+- 中危正确性 9 项:match:end 重复发射、镜像跨阵营复制、冰冻不暂停产能、
+  击退推单位入河、塔弃目标缓冲、雷电 chain 未实现、AI 防守建筑落点静默失败、
+  收集器产量亏费、空卡组崩溃、Space/Esc 吞输入框
+- 性能/渲染 4 项:hud 每帧 innerHTML 节流、dt||0.016 暂停态动画、lineCap 泄漏、
+  原生 roundRect 兼容
+- 可维护性:狂暴倍率 RAGE_MULT 常量化、死代码/死导入批量清理(含 ai.js
+  中部 import 上移)
+- 遗留未修(低优先级,见评审清单):applySplash/applyAreaDamageAt 双实现合并、
+  canTarget 4 处复制、drawDeployMask 万次/帧 canDeploy 采样可离屏缓存、
+  formation 逐点部署校验、deckeditor 名称转义等
+
 ## 2026-09-22 对局记录(快照日志)+ headless 重放系统
 
 - 目标:日志能记录游戏快照、协助排查 bug(AI 错误行为等),支持按时间点
