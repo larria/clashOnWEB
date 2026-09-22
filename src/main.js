@@ -37,7 +37,6 @@ const els = {
   hudTimer: document.getElementById('hudTimer'),
   hudPhase: document.getElementById('hudPhase'),
   bigAnnounce: document.getElementById('bigAnnounce'),
-  pauseBtn: document.getElementById('pauseBtn'),
   restart: document.getElementById('cvRestart'),
   result: document.getElementById('result'),
   resultText: document.getElementById('resultText'),
@@ -48,7 +47,9 @@ const els = {
 
 // ===== 模块实例 =====
 const gameLog = new GameLog(els.log);
-const handUI = new HandUI(els.handArea, onHandCardClick, onHandCardDrag);
+const handUI = new HandUI(els.handArea, onHandCardClick, onHandCardDrag, () => {
+  if (phase === 'playing' || phase === 'paused') togglePause();
+});
 const hud = new Hud(els);
 const screens = new Screens(els);
 
@@ -267,11 +268,9 @@ function setPhase(p) {
       btn: '开始战斗',
       hint: '空格键 暂停/继续',
     });
-    els.pauseBtn.classList.remove('show');
   } else if (p === 'playing') {
     screens.hideOverlay();
-    els.pauseBtn.classList.add('show');
-    els.pauseBtn.textContent = '⏸';
+    if (handUI._pauseBtnEl) handUI._pauseBtnEl.classList.remove('isPlay');
   } else if (p === 'paused') {
     // 暂停浮层复用封面(paused 类隐藏配置区)
     screens.showOverlay({
@@ -281,10 +280,9 @@ function setPhase(p) {
       hint: '空格键 暂停/继续',
       paused: true,
     });
-    els.pauseBtn.textContent = '▶';
+    if (handUI._pauseBtnEl) handUI._pauseBtnEl.classList.add('isPlay');
   } else if (p === 'over') {
     screens.hideOverlay();
-    els.pauseBtn.classList.remove('show');
   }
 }
 
@@ -581,7 +579,6 @@ els.ovBtn.addEventListener('click', () => {
   if (phase === 'ready') startGame();
   else if (phase === 'paused') togglePause();
 });
-els.pauseBtn.addEventListener('click', () => { if (phase === 'playing' || phase === 'paused') togglePause(); });
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && (phase === 'playing' || phase === 'paused')) {
     e.preventDefault();
