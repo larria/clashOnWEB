@@ -36,6 +36,8 @@ const els = {
   ovHint: document.getElementById('ovHint'),
   hudTimer: document.getElementById('hudTimer'),
   hudPhase: document.getElementById('hudPhase'),
+  aiBadge: document.getElementById('aiBadge'),
+  aiBadgeName: document.getElementById('aiBadgeName'),
   bigAnnounce: document.getElementById('bigAnnounce'),
   restart: document.getElementById('cvRestart'),
   result: document.getElementById('result'),
@@ -176,6 +178,9 @@ function initGame() {
   playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
   const aiInfo = aiLevelInfo(settings.get('aiLevel'));
   aiLevel = aiInfo.thinkMult;          // 决策频率倍率(主循环用)
+  // 左上角 AI 难度徽章(噩梦档红字提示)
+  els.aiBadgeName.textContent = aiInfo.name;
+  els.aiBadge.classList.toggle('nightmare', aiInfo.level === 4);
   // AI 卡组:URL 指定优先(本局会话固定),否则每局随机
   if (!urlAiDeckFixed && urlAiDeckKey) {
     const resolved = resolveDeckKey(urlAiDeckKey);

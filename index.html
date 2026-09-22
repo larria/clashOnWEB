@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>皇室战争 单机版</title>
-<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/main.css?v=6">
 </head>
 <body>
 <script>window.__errs=[];window.addEventListener('error',function(e){window.__errs.push(e.message+' @'+(e.filename||'').split('/').pop()+':'+e.lineno);});</script>
@@ -13,10 +13,18 @@
     <div id="canvasWrap">
       <canvas id="game"></canvas>
       <div id="status"></div>
-      <!-- 常驻 HUD:倒计时(战场顶部中央空地,不遮挡公主塔) -->
+      <!-- 常驻 HUD:倒计时(右上角黑金卡片,不遮挡公主塔) -->
       <div id="hud">
         <div id="hudTimer">03:00</div>
         <div id="hudPhase">常规时间</div>
+      </div>
+      <!-- 左上角:AI 难度徽章(AI 左公主塔后方空地,不挡血条) -->
+      <div id="aiBadge">
+        <span class="abIcon">🤖</span>
+        <div class="abText">
+          <div class="abLabel">AI 难度</div>
+          <div class="abName" id="aiBadgeName">挑战</div>
+        </div>
       </div>
       <!-- 中央大提示(双倍圣水/终场等) -->
       <div id="bigAnnounce"></div>
@@ -163,6 +171,6 @@
 </div>
 
 <!-- 应用入口(ES Modules,无构建) -->
-<script type="module" src="src/main.js"></script>
+<script type="module" src="src/main.js?v=6"></script>
 </body>
 </html>
