@@ -264,9 +264,9 @@ class AudioSystem {
       if (unit && unit.cardId === 'prince') this.play('charge_prince', { volume: 0.9 });
     });
 
-    // 野猪骑士跳河(起跳)
+    // 野猪骑士跳河(起跳):用野猪自己的踏步声,不再是王子冲锋音
     bus.on('unit:jump', ({ unit }) => {
-      if (unit && unit.cardId === 'hogRider') this.play('charge_prince', { volume: 0.55, throttle: 300, playbackRate: 1.3 });
+      if (unit && unit.cardId === 'hogRider') this.play('step_hogRider', { volume: 0.55, throttle: 300, playbackRate: 1.3 });
     });
 
     // 小屋产兵 / 女巫召唤

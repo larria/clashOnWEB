@@ -10,6 +10,7 @@ import {
 import { CARDS, KIND } from '../data/cards.js';
 import { settings } from '../core/settings.js';
 import { PAL, sideColors, orbFill, shade, roundRect, drawUnitIcon, drawSpellFx } from './graphics.js';
+import { getDeployPositions } from '../game/formation.js';
 import { getCardImage, drawCardImage } from './cardart.js';
 
 export class Renderer {
@@ -1416,12 +1417,12 @@ export class Renderer {
       if (art && !p.invalid) {
         ctx.globalAlpha = ok ? 0.65 : 0.3;
         if (isSwarm) {
-          // 群体单位:画 count 个小圆头像围绕部署点(示意分布)
-          const n = Math.min(card.count, 5);
+          // 群体单位:按实际部署队形(formation.js 横排/方阵)逐个画小圆头像,
+          // 预览所见即部署所得
+          const positions = getDeployPositions(p.x, p.y, card.count, card.radius || 0.35);
           const rr = r * 2.1;
-          for (let i = 0; i < n; i++) {
-            const a = (i/n) * Math.PI*2 - Math.PI/2;
-            const px = x + Math.cos(a) * r*1.9, py = y + Math.sin(a) * r*1.9;
+          for (const pos of positions) {
+            const px = pos.x * CELL, py = pos.y * CELL;
             ctx.save();
             ctx.beginPath(); ctx.arc(px, py, rr*0.72, 0, Math.PI*2); ctx.clip();
             drawCardImage(ctx, art, px, py, rr*1.44, { cropSquare: true });
@@ -1440,12 +1441,23 @@ export class Renderer {
           drawCardImage(ctx, art, x, y, fxR*2);
         }
       }
-      // 光圈
+      // 光圈(多体按实际队形包围半径,单体按视觉半径)
+      let swarmR = r * 3.4;
+      if (isSwarm && art && !p.invalid) {
+        const positions = getDeployPositions(p.x, p.y, card.count, card.radius || 0.35);
+        let maxD2 = 0;
+        for (const pos of positions) {
+          const d2 = (pos.x - p.x) ** 2 + (pos.y - p.y) ** 2;
+          if (d2 > maxD2) maxD2 = d2;
+        }
+        swarmR = Math.sqrt(maxD2) * CELL + r * 2.1;
+      }
+      const ringR = (isSwarm ? swarmR : fxR) + 6;
       ctx.globalAlpha = 0.9;
       ctx.strokeStyle = ok ? '#7fff9e' : '#ff7b7b';
       ctx.lineWidth = 2.5;
       ctx.setLineDash([6, 4]); ctx.lineDashOffset = -t*20;
-      ctx.beginPath(); ctx.arc(x, y, (isSwarm ? r*3.4 : fxR) + 6, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, ringR, 0, Math.PI*2); ctx.stroke();
       ctx.setLineDash([]);
       // 多体指示
       if (card.count > 1) {
@@ -1453,7 +1465,7 @@ export class Renderer {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('×' + card.count, x + (isSwarm ? r*3.4 : fxR) + 8, y - (isSwarm ? r*3.4 : fxR) - 4);
+        ctx.fillText('×' + card.count, x + ringR + 8, y - ringR - 4);
       }
       // 吸附提示:指针在区域外附近,部署点已吸附到最近边缘 —— 画引导线 + 标记
       if (p.snapped && p.pointer) {
@@ -1476,7 +1488,7 @@ export class Renderer {
         ctx.fillStyle = '#7fff9e';
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        ctx.fillText('吸附部署', x, y - (isSwarm ? r*3.4 : fxR) - 8);
+        ctx.fillText('吸附部署', x, y - ringR - 8);
       }
       ctx.restore();
     }
