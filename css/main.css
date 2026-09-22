@@ -81,6 +81,9 @@ body {
 }
 canvas { display:block; }
 #status {
+  /* 默认隐藏:初始 textContent 为空时,胶囊会作为一个空壳挂在 AI 国王塔上
+     (top:42px 恰落在塔身中上部)。显示由 flashMsg 显式切到 block。 */
+  display:none;
   position:absolute; top:42px; left:50%; transform:translateX(-50%);
   background:rgba(10,14,26,0.82); padding:4px 14px; border-radius:16px; font-size:12px;
   border:1px solid rgba(255,255,255,0.15);

@@ -400,7 +400,10 @@ export class Game {
       if (!u.canAct) continue;
 
       // 索敌(如果当前目标失效)
-      if (u.target && (u.target.ref.dead || dist(u, u.target.ref) > (u.card.range + u.target.ref.radius + 1))) {
+      // 失效阈值 = 攻击范围 + 0.25 格小缓冲:官方行为是锁定后贴身追击
+      // 当前位置,只有真走远才弃目标重索(旧 +1 格缓冲让目标在
+      // "攻击范围外一点点"时既打不到也不换目标,造成边界抖动)
+      if (u.target && (u.target.ref.dead || dist(u, u.target.ref) > (u.card.range + u.target.ref.radius + 0.25))) {
         u.target = null;
       }
       if (!u.target) {

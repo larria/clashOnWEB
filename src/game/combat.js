@@ -196,8 +196,16 @@ export function nextWaypoint(unit, game, finalTarget) {
 // 移动单位
 export function moveUnit(unit, game, dt) {
   if (unit.isBuilding || unit.speed === 0) return;
-  // 确定移动目标
-  let marchTarget = unit.target ? { x: unit.target.x, y: unit.target.y } : getMarchTarget(unit, game);
+  // 确定移动目标:锁定的目标取其实时位置(快照坐标只作索敌时初值,
+  // 不随目标移动更新——用它当移动终点会让追兵朝旧位置跑,表现为
+  // "追错方向一段再回头"。塔是静态的,行为不变)
+  let marchTarget;
+  if (unit.target) {
+    marchTarget = { x: unit.target.ref.x, y: unit.target.ref.y };
+    marchTarget.lane = unit.target.lane;
+  } else {
+    marchTarget = getMarchTarget(unit, game);
+  }
   if (!marchTarget) return;
   unit.lanePreference = marchTarget.lane;
 
