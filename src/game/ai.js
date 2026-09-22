@@ -213,6 +213,9 @@ export class AI {
     const e = threat.unit;
 
     // counter 表首选:按交换效率(费用差)排序而非表序
+    // 法术不进防守部署:defensePosition 算的是部队拦截位(己方岸边),
+    // 法术走那里会在空地"部署"出一次空放——法术瞄准一律由 _collectSpells
+    // 按簇价值决策(曾经因此对未过河的火枪手在自家河边空放火球)
     const counters = COUNTERS[e.card.id] || [];
     const counterOptions = [];
     for (const c of counters) {
@@ -220,6 +223,7 @@ export class AI {
       if (idx < 0) continue;
       const cc = CARDS[c];
       if (elixir < cc.cost) continue;
+      if (cc.kind === KIND.SPELL) continue;
       counterOptions.push({ cardId: c, idx, cc, tradeRatio: e.card.cost / cc.cost });
     }
     // 已在场的我方单位若足以解威胁,降低再下牌的优先级(避免过度防守)
@@ -292,26 +296,29 @@ export class AI {
     // 2b. 解场:按簇内圣水总值决策(≥ 法术费 × 1.2 才值)
     const clusters = this._findClusters(enemies, 2.5);
     for (const cluster of clusters) {
-      const liveValue = cluster.units.reduce((s, u) => s + u.card.cost * (u.hp / u.card.hp > 0.4 ? 1 : 0.3), 0);
+      // 单只价值 = 整卡费用 / 卡片单位数(多体卡每只是均摊,不是整卡费)
+      const unitValue = (u) => (u.card.cost / (u.card.count || 1)) * (u.hp / u.card.hp > 0.4 ? 1 : 0.3);
+      const liveValue = cluster.units.reduce((s, u) => s + unitValue(u), 0);
       if (liveValue < 2.5) continue; // 簇总价值太低不值得法术
       // 深入敌方领土的簇(对手沉底部署/后场产出)不算法术目标:
       // 它们离威胁我方还很远,法术砸过去既亏费又可能蹭醒对方国王塔
+      // (side1=AI 在上方,敌方领土=玩家半场 y > RIVER_Y2+4;side0 对称)
       const inEnemyTerritory = this.side === 1
-        ? cluster.cy < RIVER_Y1 - 4    // AI 视角:簇在敌方(玩家)后场
-        : cluster.cy > RIVER_Y2 + 4;
+        ? cluster.cy > RIVER_Y2 + 4
+        : cluster.cy < RIVER_Y1 - 4;
       if (inEnemyTerritory) continue;
       for (let i = 0; i < this.hand.length; i++) {
         const c = CARDS[this.hand[i]];
         if (c.kind !== KIND.SPELL || !c.dmg) continue;
         if (elixir < c.cost) continue;
         const willKill = cluster.units.filter(u => u.hp <= c.dmg * ((c.special && c.special.hits) || 1)).length;
-        // 击杀的圣水价值 + 削血折算
+        // 击杀的圣水价值 + 削血折算(均摊单只价值,多体卡不虚高)
         const killValue = cluster.units
           .filter(u => u.hp <= c.dmg * ((c.special && c.special.hits) || 1))
-          .reduce((s, u) => s + u.card.cost, 0);
+          .reduce((s, u) => s + unitValue(u), 0);
         const chipValue = cluster.units
           .filter(u => u.hp > c.dmg * ((c.special && c.special.hits) || 1))
-          .reduce((s, u) => s + u.card.cost * 0.3, 0);
+          .reduce((s, u) => s + unitValue(u) * 0.3, 0);
         const value = killValue + chipValue;
         if (value >= c.cost * 1.2 && willKill >= 1) {
           let score = 15 + value * 6 - c.cost * 3;
