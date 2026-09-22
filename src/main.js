@@ -426,8 +426,8 @@ function getPreview() {
   const cost = card.cost;
   if (game.elixir[0] < cost) return { cardId, x: mouseGrid.x, y: mouseGrid.y, invalid: true };
   if (card.kind !== KIND.SPELL) {
-    // 与 deployAtMouse 完全同参(含己方塔:塔上不合法,预览须与实际一致)
-    const snapped = snapToDeployZone('player', mouseGrid.x, mouseGrid.y, game.towers[1], { zone: card.deployZone }, game.towers[0]);
+    // 与 deployAtMouse 完全同参(含己方塔+场上建筑占位:预览须与实际一致)
+    const snapped = snapToDeployZone('player', mouseGrid.x, mouseGrid.y, game.towers[1], { zone: card.deployZone }, game.towers[0], undefined, game.units.filter(u => u.isBuilding && !u.dead));
     if (snapped) {
       const moved = Math.abs(snapped.x - mouseGrid.x) > 0.01 || Math.abs(snapped.y - mouseGrid.y) > 0.01;
       return { cardId, x: snapped.x, y: snapped.y, invalid: false, snapped: moved, pointer: mouseGrid };
@@ -485,8 +485,10 @@ function deployAtMouse(idx) {
   if (game.elixir[0] < card.cost) { flashMsg('圣水不足'); return; }
   let g = mouseGrid;
   if (card.kind !== KIND.SPELL) {
-    if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0])) {
-      const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0]);
+    // 建筑单位占位与塔一致(场上 3×3/2×2 建筑不可重叠)
+    const buildings = game.units.filter(u => u.isBuilding && !u.dead);
+    if (!canDeploy('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0], buildings)) {
+      const snapped = snapToDeployZone('player', g.x, g.y, game.towers[1], { zone: card.deployZone }, game.towers[0], undefined, buildings);
       if (!snapped) { flashMsg('只能在己方半场(或已解锁区域)部署'); return; }
       g = snapped;
     }

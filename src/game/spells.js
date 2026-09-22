@@ -203,10 +203,12 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
     return true;
   }
   // 部署区域检查(镜像召唤可豁免;传入双方塔状态:敌方塔判解锁区,
-  // 己方塔判占面积;卡牌级部署规则 deployZone 由 canDeploy 解释)
+  // 己方塔判占面积;卡牌级部署规则 deployZone 由 canDeploy 解释;
+  // 场上建筑单位同样占位,不可重叠)
   const enemyTowers = game && game.towers ? game.towers[1 - side] : null;
   const myTowers = game && game.towers ? game.towers[side] : null;
-  if (!opts.bypass && !canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers, { zone: card.deployZone }, myTowers)) return false;
+  const buildings = game && game.units ? game.units.filter(u => u.isBuilding && !u.dead) : null;
+  if (!opts.bypass && !canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers, { zone: card.deployZone }, myTowers, buildings)) return false;
 
   const count = card.count || 1;
   // 多体单位排布

@@ -550,7 +550,9 @@ export class AI {
 
   canPlace(x, y, cardId) {
     const card = cardId ? CARDS[cardId] : null;
-    return canDeploy(this.sideName, x, y, this.game.towers[1 - this.side], { zone: card && card.deployZone }, this.game.towers[this.side]);
+    // 建筑单位同样占位:传入场上全部建筑(含敌方的,防重叠)
+    const buildings = this.game.units.filter(u => u.isBuilding && !u.dead);
+    return canDeploy(this.sideName, x, y, this.game.towers[1 - this.side], { zone: card && card.deployZone }, this.game.towers[this.side], buildings);
   }
 
   nearestMyTower(unit) {

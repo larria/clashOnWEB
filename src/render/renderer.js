@@ -66,10 +66,11 @@ export class Renderer {
     const t = this.animTime;
     const enemyTowers = this.game.towers[1];
     const myTowers = this.game.towers[0];
+    const buildings = this.game.units.filter(u => u.isBuilding && !u.dead);
     const step = 0.5;   // 半格粒度采样
     const okAt = (gx, gy) => {
       if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
-      return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers);
+      return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers, buildings);
     };
     ctx.save();
     // 逐格采样 canDeploy(与实际判定同源):不可部署 → 红遮罩
@@ -80,7 +81,7 @@ export class Renderer {
     for (let gy = 0; gy < GRID_H; gy += step) {
       for (let gx = 0; gx < GRID_W; gx += step) {
         const cx = gx + step/2, cy = gy + step/2;
-        if (canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers)) continue;
+        if (okAt(gx, gy)) continue;
         const px = gx*CELL, py = gy*CELL, s = CELL*step;
         ctx.rect(px, py, s, s);   // 合并成单次 fill,避免逐格留缝
       }
@@ -1424,8 +1425,9 @@ export class Renderer {
     } else {
       const r = (card.radius || 0.4) * CELL;
       ctx.save();
-      // 合法/非法标识(含推塔解锁区;卡牌级部署规则由 canDeploy 解释)
-      const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone }, this.game.towers[0]);
+      // 合法/非法标识(含推塔解锁区;卡牌级部署规则由 canDeploy 解释;
+      // 场上建筑占位同判定)
+      const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone }, this.game.towers[0], buildings);
       // 预览卡图(半透明,按单位视觉尺寸;多体单位显示小圆头像示意)
       const isSwarm = (card.count || 1) > 1;
       const isBuildingCard = card.kind === KIND.BUILDING;

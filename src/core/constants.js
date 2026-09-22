@@ -89,7 +89,7 @@ export const SIDE_AI = 1;
 //   'riverbanks'        → 仅河岸两侧(未来掘地矿工等特殊卡)
 // enemyTowers: 敌方塔 {left,right} 状态(推塔解锁区判定)
 // myTowers:    己方塔(占面积判定,可选;不传则跳过己方塔碰撞)
-export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers) {
+export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers, buildingUnits) {
   // 卡牌级部署规则优先(打破常规部署区域的卡:法术/矿工/飞桶…)
   if (opts.zone === 'anywhere') return true;
 
@@ -99,6 +99,16 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers) {
     // fallthrough 继续区域判定
   } else {
     return false;
+  }
+
+  // 已部署建筑单位占位:3×3/2×2 建筑不可重叠(双方的建筑都算——
+  // 敌方建筑可能被牵引部署在我方领土;此前不检查导致 AI 在同一
+  // 坐标叠放地狱塔+哥布林小屋)
+  if (buildingUnits) {
+    for (const b of buildingUnits) {
+      if (!b || b.dead || !b.isBuilding) continue;
+      if (Math.abs(x - b.x) <= b.radius && Math.abs(y - b.y) <= b.radius) return false;
+    }
   }
 
   const inOwnHalf = side === 'player'
@@ -158,13 +168,13 @@ function blockByTower(towers, x, y) {
 // 点击在可部署区域外附近时,吸附到最近的合法边缘(宽容操作,减少部署失败挫败感)
 // 返回吸附后的 {x, y};若点击点本身合法,原样返回;离区域太远(maxSnap 格)返回 null
 // 与 canDeploy 同源判定:己方半场 + 解锁区(含解锁侧桥面)
-export function snapToDeployZone(side, x, y, enemyTowers, opts = {}, myTowers, maxSnap = 2.5) {
-  if (canDeploy(side, x, y, enemyTowers, opts, myTowers)) return { x, y };
+export function snapToDeployZone(side, x, y, enemyTowers, opts = {}, myTowers, maxSnap = 2.5, buildingUnits) {
+  if (canDeploy(side, x, y, enemyTowers, opts, myTowers, buildingUnits)) return { x, y };
 
   // 候选锚点:沿可部署区域边缘采样,取最近的合法点
   let best = null, bestD2 = Infinity;
   const consider = (cx, cy) => {
-    if (!canDeploy(side, cx, cy, enemyTowers, opts, myTowers)) return;
+    if (!canDeploy(side, cx, cy, enemyTowers, opts, myTowers, buildingUnits)) return;
     const d2 = (cx-x)*(cx-x) + (cy-y)*(cy-y);
     if (d2 < bestD2) { bestD2 = d2; best = { x: cx, y: cy }; }
   };

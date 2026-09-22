@@ -108,8 +108,8 @@ export const CARDS = {
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, lifetime:35, color:'#ffd54f', radius:0.9 },
   infernoTower: { id:'infernoTower', name:'地狱之塔', cost:5, rarity:'稀有', kind:KIND.BUILDING,
     hp:874, dmg:60, hitSpeed:0.4, range:6.55, sightRange:6.0, speed:0,
-    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:40, color:'#ff5722', radius:1.35,
-    special:{ rampDamage:{ maxMult:8.0, rampTime:2.5 } } },
+    targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, lifetime:40, color:'#ff5722', radius:1.35,
+    special:{ rampDamage:{ maxMult:8.0, rampTime:2.5 } } },  // 对空(wiki:air-targeting,可打气球/亡灵)
   bombTower: { id:'bombTower', name:'炸弹塔', cost:4, rarity:'稀有', kind:KIND.BUILDING,
     hp:678, dmg:111, hitSpeed:1.8, range:6.55, sightRange:5.0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:2.0, deployTime:1, lifetime:35, color:'#37474f', radius:1.35 },
