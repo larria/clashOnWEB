@@ -34,19 +34,20 @@ export const KING_BACK = {
 // 宽 9(该路整宽)、深 4(贴河岸边向敌方纵深 4 格)
 export const UNLOCK_DEPTH = 4;
 
-// 塔位置(格坐标,塔心)—— 对齐真实 CR 场地测量:
-//   公主塔 3×3,中心距侧墙 3.5、距中线 6.5(河中心 y=16,塔心 y=9.5/22.5)
-//   → 射程 7.5 覆盖到对岸约 1 格,刚过河的单位必然被塔攻击到
-//   国王塔 4×4,位于半场中心后方,距底线 1 格(中心 y=3 / 29)
+// 塔位置(格坐标,塔心)—— 对齐官方场地测量:
+//   公主塔 3×3:前沿距河边 7 格(AI 侧塔占 y∈[5,8),前沿 y=8,距河 y=15 共 7 格);
+//             后沿 y=5 与国王塔前沿(占 y∈[1,5))对齐 —— 塔心 y=6.5/25.5
+//   射程 7.5 → 覆盖到己方岸边最后一格(y=14),不越河(官方行为)
+//   国王塔 4×4,距底线 1 格(中心 y=3 / 29)
 export const TOWERS = {
   ai: {
-    left:  { x: 3.5, y: 9.5,  type: 'princess', lane: 'left'  },
-    right: { x: 14.5, y: 9.5, type: 'princess', lane: 'right' },
+    left:  { x: 3.5, y: 6.5,  type: 'princess', lane: 'left'  },
+    right: { x: 14.5, y: 6.5, type: 'princess', lane: 'right' },
     king:  { x: 9,   y: 3,    type: 'king',     lane: 'king'  },
   },
   player: {
-    left:  { x: 3.5, y: 22.5, type: 'princess', lane: 'left'  },
-    right: { x: 14.5, y: 22.5, type: 'princess', lane: 'right' },
+    left:  { x: 3.5, y: 25.5, type: 'princess', lane: 'left'  },
+    right: { x: 14.5, y: 25.5, type: 'princess', lane: 'right' },
     king:  { x: 9,   y: 29,   type: 'king',     lane: 'king'  },
   },
 };
