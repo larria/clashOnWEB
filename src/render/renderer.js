@@ -235,7 +235,67 @@ export class Renderer {
     this.drawTowerPad(ctx, TOWERS.ai.right);
     this.drawTowerPad(ctx, TOWERS.ai.king);
 
+    // --- 底线石墙(国王塔后凸排两侧的不可部署角) ---
+    // y=0/31 行中 x∈[6,12) 是可部署的 6 格凸排,两侧各 6 格画石墙,
+    // 直观传达"这里是墙,不能部署"
+    this.drawBackWall(ctx, 0, false);           // AI 侧(顶)
+    this.drawBackWall(ctx, GRID_H - 1, true);   // 玩家侧(底)
+
     this.arenaCache = c;
+  }
+
+  /** 底线石墙:填满该行除 KING_BACK 凸排外的格子(两侧各 6 格) */
+  drawBackWall(ctx, gy, isBottom) {
+    // 墙基色带(整行,凸排格稍后由草地覆盖恢复——先画基带再重铺凸排草格)
+    const y = gy * CELL;
+    // 每侧角区:[0, x0) 与 [x1, GRID_W)
+    for (const [x0, x1] of [[0, KING_BACK.x0], [KING_BACK.x1, GRID_W]]) {
+      const px = x0 * CELL, pw = (x1 - x0) * CELL;
+      // 底色:深灰石砌渐变
+      const g = ctx.createLinearGradient(0, y, 0, y + CELL);
+      g.addColorStop(0, isBottom ? '#4a4238' : '#544b40');
+      g.addColorStop(0.55, isBottom ? '#3a332b' : '#443d33');
+      g.addColorStop(1, isBottom ? '#2d2721' : '#353028');
+      ctx.fillStyle = g;
+      ctx.fillRect(px, y, pw, CELL);
+      // 石块(错缝砌筑:两行圆角石,行间错位;伪随机尺寸/明暗)
+      let seed = (x0 + 1) * 977 + gy * 131;
+      const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+      for (let row = 0; row < 2; row++) {
+        const rh = CELL * 0.42;
+        const ry = y + 3 + row * (CELL * 0.5);
+        let rx = px + (row ? -CELL*0.22 : 0);
+        while (rx < px + pw) {
+          const rw = CELL * (0.42 + rnd() * 0.3);
+          const l = 0.85 + rnd() * 0.3;   // 明暗抖动
+          ctx.fillStyle = `rgb(${Math.round(126*l)},${Math.round(116*l)},${Math.round(102*l)})`;
+          ctx.beginPath();
+          ctx.roundRect(rx + 1, ry, Math.min(rw, px+pw-rx-1) - 2, rh, 3);
+          ctx.fill();
+          // 石块顶面高光(上缘亮线)
+          ctx.fillStyle = 'rgba(255,255,255,0.14)';
+          ctx.fillRect(rx + 2, ry + 1, Math.max(0, Math.min(rw, px+pw-rx-1) - 4), 2);
+          // 底缘阴影
+          ctx.fillStyle = 'rgba(0,0,0,0.22)';
+          ctx.fillRect(rx + 2, ry + rh - 2, Math.max(0, Math.min(rw, px+pw-rx-1) - 4), 2);
+          rx += rw;
+        }
+      }
+      // 苔藓点缀(墙脚,几处绿斑)
+      for (let i = 0; i < 5; i++) {
+        const mx = px + rnd() * pw, my = y + CELL - 4 - rnd() * 6;
+        ctx.fillStyle = `rgba(${86+rnd()*30|0},${110+rnd()*30|0},60,0.5)`;
+        ctx.beginPath(); ctx.ellipse(mx, my, 3 + rnd()*4, 2 + rnd()*2, 0, 0, Math.PI*2); ctx.fill();
+      }
+      // 墙顶压条(石帽,区分行边界)
+      ctx.fillStyle = isBottom ? '#5c5346' : '#665c4e';
+      ctx.fillRect(px, y + (isBottom ? CELL - 4 : 0), pw, 4);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(px, y + (isBottom ? CELL - 5 : 4), pw, 1.5);
+      // 侧端头:与场内草地的衔接阴影
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(x0 === 0 ? px + pw - 3 : px, y, 3, CELL);
+    }
   }
 
   drawTowerPad(ctx, pos) {
