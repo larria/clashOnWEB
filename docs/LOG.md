@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-09-22 电击/雷电法术击退与眩晕数据修正(对齐 wiki)
+
+- 用户反馈电击法术会导致单位位移。查官方 wiki(clashroyale.fandom.com)确认:
+  - Zap:"stun enemies in its radius for **0.5 seconds**",无击退;击退是
+    火球的特性(wiki 原文对比句 "as otherwise, the Fireball will knock them back"),
+    替代牌对比中滚木/雪球明确标 "pushes back/knocks back" 而 Zap 没有
+  - Lightning:同样是 0.5s 纯眩晕,无击退
+- 修正 `src/data/cards.js`:zap `knockback:0.4→0`、lightning `knockback:0.8→0`;
+  lightning 眩晕 `stun:1.0→0.5`(wiki 数据,原值也是错的)
+- 逐帧位移检测验证:电击/雷电命中后单位单帧最大位移回到行进常态
+  (0.033 格),火球(0.633)/火箭(0.333)击退保留 ✓
+
 ## 2026-09-22 修复 AI 空放法术(三处根因)
 
 - 现象:玩家火枪手等未过河时,AI 偶现在自家河边空放火球(命中 0)。

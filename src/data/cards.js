@@ -147,11 +147,11 @@ export const CARDS = {
   rocket: { id:'rocket', name:'火箭', cost:6, rarity:'稀有', kind:KIND.SPELL,
     radius:2.0, dmg:742, knockback:0.3, color:'#d50000', deployZone:'anywhere', projectile: 8.75 },  // 投射速度350(wiki),全场约3.2s
   lightning: { id:'lightning', name:'雷电法术', cost:6, rarity:'史诗', kind:KIND.SPELL,
-    radius:3.5, dmg:528, knockback:0.8, color:'#ffd600', deployZone:'anywhere',
-    special:{ chain:3, stun:1.0 } },  // 半径3.5(wiki:2018-04-25 从3恢复3.5)
+    radius:3.5, dmg:528, knockback:0, color:'#ffd600', deployZone:'anywhere',
+    special:{ chain:3, stun:0.5 } },  // 半径3.5(wiki:2018-04-25 从3恢复3.5);眩晕0.5s·无击退(wiki)
   zap: { id:'zap', name:'电击法术', cost:2, rarity:'普通', kind:KIND.SPELL,
-    radius:2.5, dmg:96, knockback:0.4, color:'#29b6f6', deployZone:'anywhere',
-    special:{ stun:0.5 }, castTime: 0.5 },  // 施法时间0.5s(wiki);半径2.5(wiki)
+    radius:2.5, dmg:96, knockback:0, color:'#29b6f6', deployZone:'anywhere',
+    special:{ stun:0.5 }, castTime: 0.5 },  // 施法时间0.5s(wiki);半径2.5(wiki);眩晕0.5s·无击退(wiki,击退是火球/滚木/雪球特性)
   rage: { id:'rage', name:'狂暴法术', cost:2, rarity:'史诗', kind:KIND.SPELL,
     radius:3.0, dmg:0, knockback:0, color:'#ff1744', deployZone:'anywhere',
     special:{ buff:1.35, duration:6.0 } },  // 半径3(wiki);狂暴是增益法术,半径是buff范围
