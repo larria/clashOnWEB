@@ -615,6 +615,16 @@ canvas { display:block; }
 #log::-webkit-scrollbar { width:5px; }
 #log::-webkit-scrollbar-thumb { background:#4a5178; border-radius:3px; }
 #log div { padding:1px 4px; border-radius:3px; }
+#log .logTs { color:#8891b3; font-size:9.5px; margin-right:5px; user-select:none; }
+/* 上一场归档区(换局不清零) */
+#log .logArchive { margin-bottom:4px; }
+#log .logArchive summary {
+  cursor:pointer; color:#a08a5c; font-size:10px; padding:3px 4px;
+  border-radius:4px; background:rgba(255,213,79,0.06);
+  user-select:none; list-style-position:inside;
+}
+#log .logArchive summary:hover { background:rgba(255,213,79,0.12); }
+#log .logArchiveBody { opacity:0.62; border-left:2px solid rgba(136,145,179,0.25); margin:4px 0 4px 4px; padding-left:4px; }
 .me { color:#7fd4ff; }
 .ai { color:#ffab91; }
 .sys { color:#ffe082; font-weight:700; }

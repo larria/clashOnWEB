@@ -13,6 +13,7 @@
 // ===============================================
 import { T, RIVER_Y1, RIVER_Y2, GRID_W, GRID_H, SIDE_PLAYER, MATCH_TIME, dist, canDeploy } from '../core/constants.js';
 import { CARDS, KIND } from '../data/cards.js';
+import { shuffle } from '../core/rng.js';
 
 // counter 关系:威胁卡 -> 推荐应对卡(按交换效率排序,前者优先)
 const COUNTERS = {
@@ -128,13 +129,10 @@ export class AI {
     });
   }
 
-  // 抽牌
+  // 抽牌(走 game.rng:记录 seed 即可确定性重放)
   drawHand() {
     this.drawPile = this.deck.slice();
-    for (let i = this.drawPile.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random()*(i+1));
-      [this.drawPile[i],this.drawPile[j]] = [this.drawPile[j],this.drawPile[i]];
-    }
+    shuffle(this.drawPile, this.game.rng);
     this.hand = [];
     for (let i = 0; i < this.handSize; i++) this.hand.push(this.drawPile.shift());
     this.nextCardId = this.drawPile.shift();

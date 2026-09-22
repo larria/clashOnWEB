@@ -10,6 +10,7 @@ import {
   T, GRID_W, GRID_H, RIVER_Y1, RIVER_Y2, TOWERS, MAX_ELIXIR, ELIXIR_RATE,
   MATCH_TIME, DOUBLE_ELIXIR_AT, OVERTIME, TRIPLE_ELIXIR_AT, dist, isRiver, isBridge,
 } from '../core/constants.js';
+import { makeRng } from '../core/rng.js';
 import { CARDS, KIND } from '../data/cards.js';
 import { EventBus } from '../core/events.js';
 import { Tower } from './tower.js';
@@ -20,7 +21,7 @@ import { findTarget, findNearestEnemyUnit, getMarchTarget, moveUnit, attackTarge
 import { castSpell, deployCard } from './spells.js';
 
 export class Game {
-  constructor() {
+  constructor(opts = {}) {
     this.bus = new EventBus();          // 本局事件总线
     this.units = [];
     this.effects = [];                  // 视觉特效队列(渲染层消费)
@@ -36,6 +37,8 @@ export class Game {
     this.winner = null; // 0/1/-1/null
     this.gameOver = false;
     this._timers = [];                  // 延迟结算队列 {due, fn}
+    // 本局 RNG:引擎内随机(洗牌等)必须走它;记录 seed 即可确定性重放
+    this.rng = opts.rng || makeRng(opts.seed);
     this.initTowers();
   }
 

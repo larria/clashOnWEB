@@ -84,6 +84,20 @@
 - AI 能力评测:tools/eval-ai.mjs(镜像对局)、tools/eval-ai-vs-baseline.mjs
   (新旧对比),Node headless 运行,用于改动后验证 AI 强度
 
+## 对局记录与重放(排查工具)
+
+- 引擎确定性:每局注入种子 RNG(mulberry32),"seed + 出牌脚本"即可
+  headless 重放整局到任意时刻
+- 记录:Recorder 自动记录初始条件(seed/卡组/AI 难度)、双方每次出牌
+  (时间/卡/坐标)、里程碑(塔毁/国王塔激活/圣水阶段/终局);
+  终局落盘 localStorage(不刷新页面保留上一场)
+- 导出:日志二级页"📋 复制对局记录"→ JSON(剪贴板,降级下载)
+- 重放:node tools/replay.mjs rec.json [--at 秒] [--continue 秒] [--strict]
+  [--json]——还原任意时刻全量状态快照(圣水/塔血/手牌/单位),可接管 AI
+  继续推演(--strict 为逐帧复刻模式)
+- 战斗日志:每条带 [m:ss] 时间戳(与重放工具同源);换局归档上一场
+  (折叠区,不清零)
+
 ## 界面
 
 - **全屏自适应布局**:PC 与移动端都铺满视口、禁止纵向滚动;战场与手牌

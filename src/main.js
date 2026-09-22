@@ -10,6 +10,8 @@ import { loadProgress } from './render/cardart.js';
 import { CARDS, KIND } from './data/cards.js';
 import { settings, aiLevelInfo, AI_LEVELS } from './core/settings.js';
 import { appBus } from './core/events.js';
+import { makeRng, shuffle } from './core/rng.js';
+import { Recorder } from './core/recorder.js';
 import { Game } from './game/game.js';
 import { AI } from './game/ai.js';
 import { Renderer } from './render/renderer.js';
@@ -56,7 +58,7 @@ const hud = new Hud(els);
 const screens = new Screens(els);
 
 // ===== 应用状态 =====
-let game, renderer, ai;
+let game, renderer, ai, recorder;
 let playerHand = [];
 let playerDeck = [];
 let aiDeck = [];
@@ -118,12 +120,10 @@ function sanitizeDeck(cards, forAI = false) {
 }
 
 // ===== 玩家手牌(与 AI 一致规则:4手牌+1next)=====
+// 洗牌走本局 game.rng(重放确定性;game 未建时用一次性随机)
 function drawPlayerHand() {
   playerDrawPile = playerDeck.slice();
-  for (let i = playerDrawPile.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [playerDrawPile[i],playerDrawPile[j]] = [playerDrawPile[j],playerDrawPile[i]];
-  }
+  shuffle(playerDrawPile, game ? game.rng : makeRng());
   playerHand = [];
   for (let i = 0; i < 4; i++) playerHand.push(playerDrawPile.shift());
   playerNext = playerDrawPile.shift();
@@ -193,12 +193,19 @@ function initGame() {
     aiDeck = sanitizeDeck(DECKS[pickKey].cards, true);
   }
 
-  game = new Game();
+  // 本局 RNG + 记录器:seed 记进 Recorder,"seed+出牌脚本"可确定性重放整局
+  // (上一局的记录先落盘——不刷新页面时上一场对局可随时导出/重放)
+  if (recorder) recorder.saveLocal();
+  const seed = (Math.random() * 0xffffffff) >>> 0;
+  game = new Game({ seed });
   game.aiElixirMult = aiInfo.elixirMult;   // 噩梦难度:AI 圣水 ×1.5
+  recorder = new Recorder(game, {
+    seed, playerDeck: playerDeck.slice(), aiDeck: aiDeck.slice(), aiLevel: aiInfo.level,
+  });
   renderer = new Renderer(canvas, game);
   ai = new AI(game, aiDeck.slice());
   window.CR = window.CR || {};
-  CR._dbg = { game, ai, get playerDeck(){return playerDeck;}, get aiDeck(){return aiDeck;} }; // 调试/测试出口
+  CR._dbg = { game, ai, recorder, get playerDeck(){return playerDeck;}, get aiDeck(){return aiDeck;} }; // 调试/测试出口
 
   // ===== 事件接线(表现层订阅)=====
   gameLog.bind(game.bus);
@@ -336,6 +343,7 @@ function loop(now) {
       // AI 更新(决策节律封装在 AI 内,编排层不感知 thinkTimer)
       ai.update(dt, aiLevel);
       hud.update(game);
+      gameLog.setTime(game.time);   // 日志时间戳数据源
       // 阶段提示
       const remain = MATCH_TIME - game.time;
       if (!announcedDouble && game.doubleElixir) {
@@ -379,6 +387,8 @@ function loop(now) {
           screens.showResult(finishedGame.winner);
         }
       }, 1200);
+      // 终局即落盘本局记录(重开不丢;下次建局会再 saveLocal 兜底)
+      if (recorder) recorder.saveLocal();
       phase = 'over-wait';
     }
   } catch (e) {
@@ -621,6 +631,35 @@ function syncLogScreen() {
   const dst = document.getElementById('logScreenList');
   if (src && dst) dst.innerHTML = src.innerHTML;
 }
+
+// 复制对局记录(可重放 JSON):优先当前局进行中的记录,终局/重开后
+// 回退到 localStorage 里已落盘的上一场
+document.getElementById('copyRecBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('copyRecBtn');
+  let payload = null, label = '';
+  if (recorder && recorder.plays && recorder.plays.length >= 0 && !game.gameOver) {
+    payload = recorder.export(); label = '当前局';
+  } else if (recorder && recorder.plays && recorder.plays.length > 0) {
+    payload = recorder.export(); label = '刚结束的一局';
+  } else {
+    const last = Recorder.loadLocal();
+    if (last) { payload = JSON.stringify(last); label = '上一场(本页会话)'; }
+  }
+  if (!payload) { flashMsg('暂无可复制的对局记录'); return; }
+  try {
+    await navigator.clipboard.writeText(payload);
+    flashMsg(`已复制${label}对局记录 JSON(${(payload.length / 1024).toFixed(1)}KB)`);
+  } catch (e) {
+    // 剪贴板 API 不可用时退化为下载文件
+    const blob = new Blob([payload], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'clash-recording.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    flashMsg('已下载对局记录 JSON');
+  }
+});
 
 // 封面 AI 难度下拉(四档)↔ settings 双向同步(设置页改动时联动)
 const aiLevelSelect = document.getElementById('aiLevel');
