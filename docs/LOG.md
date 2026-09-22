@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-09-22 PWA:离线缓存 + 静默更新 + 封面版本号(v0.4.1)
+
+- **完整离线**:sw.js 预缓存全部资源(核心 JS/CSS 先装,42 卡图+121 音效
+  后台补齐 ~8MB);stale-while-revalidate——秒开缓存、后台拉新;
+  manifest + maskable 图标(1024 logo 生成 5 尺寸),可安装到主屏幕
+- **更新方式**:新 SW 装好后底部"发现新版本"提示条 → 用户确认 →
+  skipWaiting → 自动刷新,不打断对局
+- **版本管理**:src/version.js 单一来源(0.4.0→0.4.1),封面标题下显示
+  版本徽标;新增 tools/version-check.mjs 发布前校验(版本三处同步/
+  SW 模块清单 vs 实际文件/assets-manifest 自动重生成)
+- assets-manifest.json:SW 无法枚举目录,生成资源清单(168 条)
+
 ## 2026-09-22 全面 code review:双 agent 评审 40 条,修复 1 高 + 8 中
 
 - 双评审 agent 并行(game 核心层 / UI+render 层)共报 40 条(高 1/中 14/低 25),

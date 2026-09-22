@@ -12,6 +12,7 @@ import { settings, aiLevelInfo, AI_LEVELS } from './core/settings.js';
 import { appBus } from './core/events.js';
 import { makeRng, shuffle } from './core/rng.js';
 import { Recorder } from './core/recorder.js';
+import { APP_VERSION } from './version.js';
 import { Game } from './game/game.js';
 import { AI } from './game/ai.js';
 import { Renderer } from './render/renderer.js';
@@ -685,6 +686,42 @@ appBus.on('decks:changed', () => {
   refreshDecks();
   if (phase === 'ready') { initGame(); handUI.invalidate(); renderer.draw(null, 0); }
 });
+
+// ===== PWA 版本显示 + 更新流 =====
+// 封面版本徽标(与 sw.js 的 APP_VERSION 同步维护)
+const cvVersionEl = document.getElementById('cvVersion');
+if (cvVersionEl) cvVersionEl.textContent = 'v' + APP_VERSION;
+// SW 更新流:检测到新 SW 已安装 → 底部提示条 → 用户确认 → skipWaiting → reload
+if ('serviceWorker' in navigator) {
+  const updateBar = document.getElementById('updateBar');
+  const updateBtn = document.getElementById('updateBtn');
+  let applying = false;
+  const applyUpdate = async () => {
+    if (applying) return;
+    applying = true;
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg && reg.waiting) reg.waiting.postMessage('skip-waiting');
+    // 兜底:controllerchange 3s 未触发(极端情况)直接刷新
+    setTimeout(() => location.reload(), 3000);
+  };
+  if (updateBtn) updateBtn.addEventListener('click', applyUpdate);
+  navigator.serviceWorker.ready.then((reg) => {
+    // 已有 waiting 的 SW(打开页面期间完成的更新)
+    if (reg.waiting && updateBar) updateBar.classList.add('show');
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller && updateBar) {
+          updateBar.classList.add('show');
+        }
+      });
+    });
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (applying) location.reload();
+  });
+}
 
 // ===== 启动:进入待开始状态,不自动开战 =====
 // 加载遮罩:等卡图预载完成(或 4s 超时)再显示界面,期间盖住全屏防止
