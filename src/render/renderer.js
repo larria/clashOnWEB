@@ -5,7 +5,7 @@
 // ===============================================
 import {
   CELL, CANVAS_W, CANVAS_H, GRID_W, GRID_H, RIVER_Y1, RIVER_Y2,
-  BRIDGE_LEFT, BRIDGE_RIGHT, TOWERS, canDeploy, UNLOCK_DEPTH, KING_BACK,
+  BRIDGE_LEFT, BRIDGE_RIGHT, TOWERS, canDeploy, KING_BACK,
 } from '../core/constants.js';
 import { CARDS, KIND } from '../data/cards.js';
 import { settings } from '../core/settings.js';
@@ -23,8 +23,6 @@ export class Renderer {
     // 静态战场层缓存(离屏 canvas,避免每帧重绘草地纹理)
     this.arenaCache = null;
     this.animTime = 0;
-    // 解锁区域当场闪烁提示 {lane, color:'r,g,b', until: 时间戳}
-    this.unlockFlash = null;
   }
 
   draw(deployPreview, dt) {
@@ -46,12 +44,10 @@ export class Renderer {
     ctx.save();
     if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
     this.drawArena();
-    // 选中部队/建筑卡时:高亮全部可部署区域(法术全场有效,不高亮)
+    // 选中部队/建筑卡时:红色遮罩覆盖不可部署区域(法术全场有效,不遮)
     const previewCard = deployPreview ? CARDS[deployPreview.cardId] : null;
     const showDeployZone = previewCard && previewCard.kind !== KIND.SPELL && settings.get('showDeployZone');
-    if (showDeployZone) this.drawDeployZoneHighlight();
-    // 解锁区当场闪烁(推塔后几秒内,不依赖选牌)
-    this.drawUnlockFlash();
+    if (showDeployZone) this.drawDeployMask();
     this.drawTowers();
     this.drawUnits();
     this.drawEffects();
@@ -60,93 +56,54 @@ export class Renderer {
     this.drawVignette();
   }
 
-  // 解锁区域当场闪烁(推塔瞬间触发,3 秒渐隐;期间脉冲呼吸)
-  drawUnlockFlash() {
-    const uf = this.unlockFlash;
-    if (!uf || performance.now() > uf.until) { this.unlockFlash = null; return; }
-    const ctx = this.ctx;
-    const t = this.animTime;
-    // 总进度 1→0
-    const p = (uf.until - performance.now()) / 3200;
-    // 脉冲 + 整体渐隐
-    const alpha = (0.22 + 0.13 * Math.sin(t * 6)) * Math.min(1, p * 1.6);
-    const x0 = uf.lane === 'left' ? 0 : 9;
-    const w = 9;
-    const isGold = uf.color.indexOf('255,213') === 0;
-    // 解锁区 = 贴河岸边向敌方纵深 UNLOCK_DEPTH 格(9×4)
-    let y0, h;
-    if (isGold) {
-      y0 = RIVER_Y1 - UNLOCK_DEPTH; h = UNLOCK_DEPTH;   // AI 半场该路(玩家新解锁区)
-    } else {
-      y0 = RIVER_Y2; h = UNLOCK_DEPTH;                  // 玩家半场该路(AI 新解锁区)
-    }
-    ctx.save();
-    ctx.fillStyle = `rgba(${uf.color},${alpha})`;
-    ctx.fillRect(x0*CELL+1, y0*CELL, w*CELL-2, h*CELL);
-    ctx.strokeStyle = `rgba(${uf.color},${Math.min(1, alpha*3)})`;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([10, 6]); ctx.lineDashOffset = -t * 30;
-    ctx.strokeRect(x0*CELL+1, y0*CELL, w*CELL-2, h*CELL);
-    ctx.setLineDash([]);
-    // 该侧桥面也闪烁(解锁后桥面可部署,与 canDeploy 一致)
-    const bridgeXs = uf.lane === 'left' ? BRIDGE_LEFT : BRIDGE_RIGHT;
-    for (const bx of bridgeXs) {
-      ctx.fillStyle = `rgba(${uf.color},${alpha})`;
-      ctx.fillRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
-      ctx.strokeStyle = `rgba(${uf.color},${Math.min(1, alpha*3)})`;
-      ctx.lineWidth = 3;
-      ctx.setLineDash([8, 5]); ctx.lineDashOffset = -t * 30;
-      ctx.strokeRect(bx*CELL+1, RIVER_Y1*CELL, CELL-2, (RIVER_Y2-RIVER_Y1)*CELL);
-      ctx.setLineDash([]);
-    }
-    // 区域文字
-    ctx.globalAlpha = Math.min(1, p * 2) * (0.75 + 0.25*Math.sin(t*6));
-    ctx.fillStyle = `rgba(${uf.color},0.95)`;
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(isGold ? '🔓 新部署区' : '⚠️ 敌方可在此部署', (x0 + w/2)*CELL, (y0 + h/2)*CELL);
-    ctx.restore();
-  }
-
-  // 可部署区域高亮(选中卡牌时):己方半场 + 推塔解锁区
-  drawDeployZoneHighlight() {
+  /**
+   * 部署遮罩(选中部队/建筑卡时):不可部署区域铺红色半透明,
+   * 可选区域保持原色透出——对齐原版"红色阴影标出不能放的地方"
+   */
+  drawDeployMask() {
     const ctx = this.ctx;
     const t = this.animTime;
     const enemyTowers = this.game.towers[1];
     const myTowers = this.game.towers[0];
+    const step = 0.5;   // 半格粒度采样
+    const okAt = (gx, gy) => {
+      if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
+      return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers);
+    };
     ctx.save();
-    // 呼吸透明度
-    const breathe = 0.16 + 0.07 * Math.sin(t * 3);
-    // 逐格采样 canDeploy(与实际判定同源):己方半场绿色,解锁区金色
-    // 自动体现塔占面积(塔上格子不高亮)与 pocket 阶梯形状
-    const step = 0.5;
+    // 逐格采样 canDeploy(与实际判定同源):不可部署 → 红遮罩
+    // 微呼吸:0.38~0.46,不抢戏但持续存在感
+    const a = 0.42 + 0.04 * Math.sin(t * 2.2);
+    ctx.fillStyle = `rgba(208,44,44,${a})`;
+    ctx.beginPath();
     for (let gy = 0; gy < GRID_H; gy += step) {
-      // 玩家视角只画玩家可部署区:己方半场(绿)+ 敌方解锁区(金)
-      // 国王塔后凸排(y=31 那行 6 格)也算己方,单独纳入
-      const inOwn = gy >= RIVER_Y2;
-      const inEnemy = gy < RIVER_Y1;
-      const inKingBack = Math.floor(gy) === GRID_H - 1;
-      if (!inOwn && !inEnemy && !inKingBack) continue;
       for (let gx = 0; gx < GRID_W; gx += step) {
         const cx = gx + step/2, cy = gy + step/2;
-        const ok = canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers);
-        if (!ok) continue;
-        // 己方半场(含凸排)绿色;敌方半场(推塔解锁区)金色
-        ctx.fillStyle = inEnemy
-          ? `rgba(255,213,79,${breathe * 0.9})`
-          : `rgba(100,220,140,${breathe})`;
-        ctx.fillRect(gx*CELL, gy*CELL, CELL*step, CELL*step);
+        if (canDeploy('player', cx, cy, enemyTowers, { zone: 'own' }, myTowers)) continue;
+        const px = gx*CELL, py = gy*CELL, s = CELL*step;
+        ctx.rect(px, py, s, s);   // 合并成单次 fill,避免逐格留缝
       }
     }
-    // 解锁区标记文字(有解锁时;解锁区为贴河 4 格深,文字放其中)
-    if (enemyTowers.left.dead || enemyTowers.right.dead) {
-      const labelY = (RIVER_Y1 - 2) * CELL; // 解锁区中部(y≈13)
-      ctx.fillStyle = 'rgba(255,213,79,0.9)';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      if (enemyTowers.left.dead) ctx.fillText('🔓 已解锁', 4.5*CELL, labelY);
-      if (enemyTowers.right.dead) ctx.fillText('🔓 已解锁', 13.5*CELL, labelY);
+    ctx.fill();
+    // 可选区边界描金线(呼吸):只在"可选 ↔ 红遮罩"分界处画,
+    // 地图外缘不描(避免多余边框)
+    const inField = (gx, gy) => gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H;
+    ctx.strokeStyle = `rgba(255,224,130,${0.45 + 0.2 * Math.sin(t * 2.6)})`;
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let gy = 0; gy < GRID_H; gy += step) {
+      for (let gx = 0; gx < GRID_W; gx += step) {
+        if (!okAt(gx, gy)) continue;
+        const px = gx*CELL, py = gy*CELL, s = CELL*step;
+        // 仅当相邻格"在场内且不可部署"(即红区)时描线
+        if (inField(gx, gy - step) && !okAt(gx, gy - step)) { ctx.moveTo(px, py + 1.5); ctx.lineTo(px + s, py + 1.5); }
+        if (inField(gx, gy + step) && !okAt(gx, gy + step)) { ctx.moveTo(px, py + s - 1.5); ctx.lineTo(px + s, py + s - 1.5); }
+        if (inField(gx - step, gy) && !okAt(gx - step, gy)) { ctx.moveTo(px + 1.5, py); ctx.lineTo(px + 1.5, py + s); }
+        if (inField(gx + step, gy) && !okAt(gx + step, gy)) { ctx.moveTo(px + s - 1.5, py); ctx.lineTo(px + s - 1.5, py + s); }
+      }
     }
+    ctx.stroke();
     ctx.restore();
   }
 

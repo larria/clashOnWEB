@@ -230,17 +230,12 @@ function initGame() {
     if (tower.lane === 'king') {
       gameLog.push(sideName === '你的' ? '💀 你的国王塔陨落,战斗失败!' : '🏆 AI国王塔陨落,胜利!', sideName === '你的' ? 'ai' : 'me');
     }
-    // 公主塔被推:解锁区域当场闪烁提示(几秒渐隐;常驻高亮仍仅选牌时显示)
+    // 公主塔被推:部署区解锁(不播特效,仅提示文案;选牌时用红遮罩标出可选范围)
     if (tower.lane !== 'king') {
-      const isMyKill = tower.side === 1; // 敌方(玩家打掉的塔)→ 金色增益提示
-      renderer.unlockFlash = {
-        lane: tower.lane,
-        color: isMyKill ? '255,213,79' : '255,90,79', // 金(我方解锁)/红(敌方解锁警示)
-        until: performance.now() + 3200,  // 闪烁 3.2 秒
-      };
+      const isMyKill = tower.side === 1; // 敌方(玩家打掉的塔)→ 我方解锁
       if (isMyKill) {
         hud.announce('🔓 部署区解锁', (tower.lane === 'left' ? '左路' : '右路') + '敌方区域已开放', '#ffd54f');
-        gameLog.push(`🔓 ${tower.lane === 'left' ? '左' : '右'}路敌方部署区已解锁(3秒高亮,选牌时可见)`, 'sys');
+        gameLog.push(`🔓 ${tower.lane === 'left' ? '左' : '右'}路敌方部署区已解锁`, 'sys');
       } else {
         hud.announce('⚠️ 防线告急', '敌方解锁了你的' + (tower.lane === 'left' ? '左' : '右') + '路部署区', '#ff5a4f');
       }
