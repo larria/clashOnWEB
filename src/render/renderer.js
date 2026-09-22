@@ -27,11 +27,12 @@ export class Renderer {
 
   draw(deployPreview, dt) {
     const ctx = this.ctx;
-    this.animTime = (this.animTime || 0) + (dt || 0.016);
+    // dt 显式传 0 = 冻结动画(暂停/结算态);仅未传(undefined)时取帧时长兜底
+    this.animTime = (this.animTime || 0) + (dt == null ? 0.016 : dt);
     // 屏幕震动(塔被摧毁):震动强度随剩余时间衰减
     let shakeX = 0, shakeY = 0;
     if (this.shake) {
-      this.shake.t -= (dt || 0.016);
+      this.shake.t -= (dt == null ? 0.016 : dt);
       if (this.shake.t <= 0) this.shake = null;
       else {
         const k = this.shake.t / this.shake.dur;         // 1→0 衰减
@@ -227,7 +228,7 @@ export class Renderer {
           const l = 0.85 + rnd() * 0.3;   // 明暗抖动
           ctx.fillStyle = `rgb(${Math.round(126*l)},${Math.round(116*l)},${Math.round(102*l)})`;
           ctx.beginPath();
-          ctx.roundRect(rx + 1, ry, Math.min(rw, px+pw-rx-1) - 2, rh, 3);
+          roundRect(ctx, rx + 1, ry, Math.min(rw, px+pw-rx-1) - 2, rh, 3);
           ctx.fill();
           // 石块顶面高光(上缘亮线)
           ctx.fillStyle = 'rgba(255,255,255,0.14)';
@@ -457,6 +458,7 @@ export class Renderer {
       ctx.fillStyle = rg;
       ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI*2); ctx.fill();
       ctx.restore();
+      ctx.save();
       ctx.strokeStyle = '#ffc107';
       ctx.lineWidth = 2.4;
       ctx.lineCap = 'round';
@@ -471,7 +473,7 @@ export class Renderer {
         ctx.lineTo(x + cw, yy + 5);
         ctx.stroke();
       }
-      ctx.globalAlpha = 1;
+      ctx.restore();
     }
 
     // 血条

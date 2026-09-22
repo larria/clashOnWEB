@@ -1,7 +1,7 @@
 // ===============================================
 // 塔类 - 公主塔/国王塔
 // ===============================================
-import { TOWER_STATS } from '../core/constants.js';
+import { TOWER_STATS, RAGE_MULT } from '../core/constants.js';
 
 let _tid = 1;
 
@@ -39,7 +39,7 @@ export class Tower {
     this.activated = (pos.type !== 'king');
   }
   get canAct() { return this.activated && this.frozen <= 0 && this.stunned <= 0 && !this.dead; }
-  get hitSpeed() { return this.rageTimer > 0 ? this._hitSpeed / 1.35 : this._hitSpeed; }
+  get hitSpeed() { return this.rageTimer > 0 ? this._hitSpeed / RAGE_MULT : this._hitSpeed; }
   // 受到伤害:国王塔被击中即激活
   onDamaged() {
     if (!this.activated) this.activated = true;

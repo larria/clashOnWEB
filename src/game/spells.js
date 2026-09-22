@@ -2,26 +2,25 @@
 // 法术系统 + 卡牌部署入口
 // ===============================================
 import { CARDS, KIND } from '../data/cards.js';
-import { canDeploy, dist2, GRID_W, GRID_H } from '../core/constants.js';
+import { canDeploy, dist2, GRID_W, GRID_H, isRiver, isBridge } from '../core/constants.js';
 import { isHeavy } from './abilities.js';
 import { getDeployPositions } from './formation.js';
-import { Unit } from './unit.js';
 
 // 法术对塔减伤倍率(单一权威来源;ai.js 补刀判定从这里 import)
 export const TOWER_MULT = {
   arrows: 0.20, rocket: 0.23, lightning: 0.15,
-  fireball: 0.25, zap: 0.25, freeze: 0.30, rage: 0.25,
+  fireball: 0.25, zap: 0.25, freeze: 0.30,
 };
 
 // 施放法术(返回 false = 施放失败,如镜像复制的部署位非法;
 // 调用方 playCard 依赖此返回值决定是否扣费)
-export function castSpell(cardId, side, x, y, game, mirrorSource) {
+export function castSpell(cardId, side, x, y, game) {
   let card = CARDS[cardId];
   if (!card || card.kind !== KIND.SPELL) return false;
 
-  // 镜像法术:复制上一张打出的牌
+  // 镜像法术:复制己方上一张打出的牌(对齐 CR:不复制对手的)
   if (card.special && card.special.mirror) {
-    const last = game.lastPlayedCard;
+    const last = game.lastPlayedCard[side];
     if (!last || last === 'mirror') return false; // 无可复制目标
     const lastCard = CARDS[last];
     if (lastCard.kind === KIND.SPELL) {
@@ -62,7 +61,7 @@ export function castSpell(cardId, side, x, y, game, mirrorSource) {
     }
   }
 
-  game.lastPlayedCard = cardId;
+  game.lastPlayedCard[side] = cardId;
   return true;
 }
 
@@ -87,34 +86,56 @@ function applySpellEffect(card, side, x, y, game) {
   let spellHits = 0;
   const spellKills = [];
 
-  for (const e of enemies) {
-    const d = dist2(x, y, e.x, e.y);
-    if (d <= (radius + e.radius) * (radius + e.radius)) {
-      spellHits++;
-      if (dmg > 0) {
-        // 多段命中(万箭齐发 3 次/单位)
-        const totalDmg = dmg * ((sp && sp.hits) || 1);
-        const hpBefore = e.hp;
-        game.dealDamage(e, totalDmg, null, card);
-        if (e.hp <= 0 || e.dead) spellKills.push(e.card.name); // 记录击杀(日志用)
+  // 连锁法术(雷电):只打击半径内血量最高的 N 个目标(对齐 CR)
+  let targets = enemies;
+  if (sp && sp.chain) {
+    targets = enemies
+      .filter(e => dist2(x, y, e.x, e.y) <= (radius + e.radius) * (radius + e.radius))
+      .sort((a, b) => b.hp - a.hp)
+      .slice(0, sp.chain);
+  }
+
+  for (const e of targets) {
+    if (!(sp && sp.chain)) {
+      const d = dist2(x, y, e.x, e.y);
+      if (d > (radius + e.radius) * (radius + e.radius)) continue;
+    }
+    spellHits++;
+    if (dmg > 0) {
+      // 多段命中(万箭齐发 3 次/单位)
+      const totalDmg = dmg * ((sp && sp.hits) || 1);
+      game.dealDamage(e, totalDmg, null, card);
+      if (e.hp <= 0 || e.dead) spellKills.push(e.card.name); // 记录击杀(日志用)
+    }
+    // 击退(重型单位免疫:巨人等大块头岿然不动;clamp 地图边界防止推出界外;
+    // 地面单位不得被推进非桥河道——被推入则沿 y 退回最近岸边)
+    if (card.knockback && card.knockback > 0 && !e.isBuilding && !isHeavy(e)) {
+      const dx = e.x - x, dy = e.y - y;
+      const dd = Math.sqrt(dx*dx+dy*dy) || 1;
+      let nx = e.x + (dx/dd) * card.knockback;
+      let ny = e.y + (dy/dd) * card.knockback;
+      nx = Math.max(e.radius, Math.min(GRID_W - e.radius, nx));
+      ny = Math.max(e.radius, Math.min(GRID_H - e.radius, ny));
+      if (!e.flying && isRiver(nx, ny) && !isBridge(nx, ny)) {
+        // 退回击退前的 y(岸边)或钳到桥 x
+        if (!isRiver(nx, e.y) || isBridge(nx, e.y)) {
+          ny = e.y;
+        } else {
+          const bx = nx < 9 ? 3.5 : 14.5;
+          nx = bx;
+          if (isRiver(nx, ny) && !isBridge(nx, ny)) ny = e.y;
+        }
       }
-      // 击退(重型单位免疫:巨人等大块头岿然不动;clamp 地图边界防止推出界外)
-      if (card.knockback && card.knockback > 0 && !e.isBuilding && !isHeavy(e)) {
-        const dx = e.x - x, dy = e.y - y;
-        const dd = Math.sqrt(dx*dx+dy*dy) || 1;
-        e.x += (dx/dd) * card.knockback;
-        e.y += (dy/dd) * card.knockback;
-        e.x = Math.max(e.radius, Math.min(GRID_W - e.radius, e.x));
-        e.y = Math.max(e.radius, Math.min(GRID_H - e.radius, e.y));
-      }
-      // 眩晕
-      if (sp && sp.stun) {
-        e.stunned = Math.max(e.stunned, sp.stun);
-      }
-      // 冰冻
-      if (sp && sp.freeze) {
-        e.frozen = Math.max(e.frozen, sp.freeze);
-      }
+      e.x = nx;
+      e.y = ny;
+    }
+    // 眩晕
+    if (sp && sp.stun) {
+      e.stunned = Math.max(e.stunned, sp.stun);
+    }
+    // 冰冻
+    if (sp && sp.freeze) {
+      e.frozen = Math.max(e.frozen, sp.freeze);
     }
   }
 
@@ -194,6 +215,6 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
     const p = positions[i];
     game.spawnUnit(cardId, side, p.x, p.y);
   }
-  game.lastPlayedCard = cardId;
+  game.lastPlayedCard[side] = cardId;
   return true;
 }

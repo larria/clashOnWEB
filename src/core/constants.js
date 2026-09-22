@@ -30,6 +30,10 @@ export const KING_BACK = {
   x0: 6, x1: 12,   // [6,12) 共 6 格,以国王塔 x=9 居中
 };
 
+// 狂暴法术增益倍率(移速/攻速/伤害;单位与塔统一取这一处——
+// cards.js 的 special.buff 数值与它保持一致)
+export const RAGE_MULT = 1.35;
+
 // 推塔解锁区深度(格):官方"破塔后多出一块 9×4 的区域"——
 // 宽 9(该路整宽)、深 4(贴河岸边向敌方纵深 4 格)
 export const UNLOCK_DEPTH = 4;

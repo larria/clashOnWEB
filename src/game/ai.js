@@ -11,9 +11,10 @@
 //   5. 开局收敛:不裸送首波 wincon
 // 日志通过 game.bus 发出(不直接依赖 UI)
 // ===============================================
-import { T, RIVER_Y1, RIVER_Y2, GRID_W, GRID_H, SIDE_PLAYER, MATCH_TIME, dist, canDeploy } from '../core/constants.js';
+import { T, RIVER_Y1, RIVER_Y2, GRID_W, GRID_H, dist, canDeploy } from '../core/constants.js';
 import { CARDS, KIND } from '../data/cards.js';
 import { shuffle } from '../core/rng.js';
+import { TOWER_MULT } from './spells.js';
 
 // counter 关系:威胁卡 -> 推荐应对卡(按交换效率排序,前者优先)
 const COUNTERS = {
@@ -62,9 +63,6 @@ export function getRole(cardId) {
   return 'TROOP';
 }
 
-// 法术对塔减伤倍率(权威来源 spells.js;此前双份硬编码已发生 freeze 漂移)
-import { TOWER_MULT } from './spells.js';
-
 // ===== 局面感知 =====
 
 // 威胁:已进入或即将进入我方半场的敌方单位
@@ -99,9 +97,6 @@ function collectThreats(game, side) {
   threats.sort((a, b) => b.score - a.score);
   return threats;
 }
-
-// 评估"我方单位 a 能否在威胁 e 打到塔之前拦住"——简化:距离/速度
-function interceptOk(defender, threat) { return true; } // 部署位置的拦截可行性由部署点决定
 
 export class AI {
   constructor(game, deck, side = 1) {
@@ -492,12 +487,16 @@ export class AI {
       const c = CARDS[this.hand[i]];
       if (c.kind === KIND.SPELL) continue;
       if (c.cost <= 3 && c.cost > 0 && elixir >= c.cost) {
-        // 过牌位置:国王塔侧后方的空地(原 (9,4) 落在国王塔占面积内恒非法)
-        const px = 13;
+        // 过牌位置候选:双塔之间的中场空地(首个合法点)。
+        // 历史:(9,4) 落国王塔内恒非法;(13,7) 恰在右公主塔占面积边界上
+        // (|13-14.5|=1.5≤1.5)同样恒非法 → 过牌功能整体失效。
+        // 现改为候选序列逐一探测,不再依赖写死坐标
         const py = this.side === 1 ? 7 : GRID_H - 7;
-        if (this.canPlace(px, py, this.hand[i])) {
-          out.push({ cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'cycle', score: 6 });
-          break;
+        for (const px of [11, 9, 13, 6, 15]) {
+          if (this.canPlace(px, py, this.hand[i])) {
+            out.push({ cardId: this.hand[i], x: px, y: py, handIndex: i, role: 'cycle', score: 6 });
+            return;
+          }
         }
       }
     }
@@ -519,8 +518,18 @@ export class AI {
       const d = Math.sqrt(dx*dx+dy*dy) || 1;
       const px = tower.x + (dx/d) * 3.5;
       const py = tower.y + (dy/d) * 3.5;
-      if (this.canPlace(px, py)) return { x: px, y: py };
-      return { x: tower.x, y: tower.y + dir * 2 };
+      if (this.canPlace(px, py, cardId)) return { x: px, y: py };
+      // fallback 逐一探测塔周围合法点(旧 fallback (9,塔y±2) 可能落在
+      // 国王塔占面积内恒非法 → playCard 静默失败,决策周期空转)
+      const candidates = [
+        { x: tower.x, y: tower.y + dir * 4 },
+        { x: tower.x - 3, y: tower.y + dir * 2 },
+        { x: tower.x + 3, y: tower.y + dir * 2 },
+      ];
+      for (const p of candidates) {
+        if (this.canPlace(p.x, p.y, cardId)) return p;
+      }
+      return null;
     }
     // 部队:威胁与塔之间偏塔侧(贴着威胁后方,让它走过来挨打)
     let py = threat.y + dir * 1.5;

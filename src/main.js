@@ -189,8 +189,11 @@ function initGame() {
   }
   if (!urlAiDeckFixed) {
     const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length > 0);
-    const pickKey = presetKeys[Math.floor(Math.random() * presetKeys.length)];
-    aiDeck = sanitizeDeck(DECKS[pickKey].cards, true);
+    // 全部卡组被清空时回退到经典卡组(否则 DECKS[undefined] 崩溃,界面卡死在封面)
+    const pickKey = presetKeys.length > 0
+      ? presetKeys[Math.floor(Math.random() * presetKeys.length)]
+      : null;
+    aiDeck = sanitizeDeck(pickKey ? DECKS[pickKey].cards : [], true);
   }
 
   // 本局 RNG + 记录器:seed 记进 Recorder,"seed+出牌脚本"可确定性重放整局
@@ -590,6 +593,8 @@ els.ovBtn.addEventListener('click', () => {
   else if (phase === 'paused') togglePause();
 });
 window.addEventListener('keydown', (e) => {
+  // 输入框内不劫持按键(卡组编辑器改名时按空格不应暂停游戏)
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if (e.code === 'Space' && (phase === 'playing' || phase === 'paused')) {
     e.preventDefault();
     togglePause();

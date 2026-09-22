@@ -3,7 +3,7 @@
 // 纯游戏逻辑:不直接操作 DOM,日志/特效通过 game.bus 事件发出
 // ===============================================
 import { T, RIVER_Y1, RIVER_Y2, dist, dist2 } from '../core/constants.js';
-import { afterAttack, applyDeathAbilities } from './abilities.js';
+import { afterAttack } from './abilities.js';
 
 // 判断单位能否攻击某目标类型
 // 建筑/塔是地面目标:可打地面(GROUND)或专打建筑(BUILDING)的单位都能攻击

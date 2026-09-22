@@ -38,8 +38,14 @@ export class Hud {
     }
   }
 
-  /** 信息面板(每帧,任意 phase) */
-  renderInfo(game) { this._renderInfo(game); }
+  /** 信息面板(每帧调用;内部节流到 ~5 次/秒——数值变化不需要 60fps,
+   *  每帧 innerHTML 重建是纯浪费且移动端掉帧源) */
+  renderInfo(game) {
+    const now = performance.now();
+    if (this._infoAt && now - this._infoAt < 200) return;
+    this._infoAt = now;
+    this._renderInfo(game);
+  }
 
   _renderInfo(game) {
     const remain = Math.max(0, Math.ceil(MATCH_TIME - game.time));

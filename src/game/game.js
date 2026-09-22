@@ -7,7 +7,7 @@
 //   - 伤害结算统一走 dealDamage/dealTowerDamage(死亡效果由 abilities 接管)
 // ===============================================
 import {
-  T, GRID_W, GRID_H, RIVER_Y1, RIVER_Y2, TOWERS, MAX_ELIXIR, ELIXIR_RATE,
+  T, GRID_W, GRID_H, TOWERS, MAX_ELIXIR, ELIXIR_RATE, RAGE_MULT,
   MATCH_TIME, DOUBLE_ELIXIR_AT, OVERTIME, TRIPLE_ELIXIR_AT, dist, isRiver, isBridge,
 } from '../core/constants.js';
 import { makeRng } from '../core/rng.js';
@@ -33,7 +33,7 @@ export class Game {
     this.tripleElixir = false;          // 加时最后 1 分钟三倍圣水
     this.overtime = false;              // 加时(sudden death:先推塔者胜)
     this.aiElixirMult = 1;              // AI 圣水产生倍率(噩梦难度 1.5;由应用层按难度注入)
-    this.lastPlayedCard = null;
+    this.lastPlayedCard = { 0: null, 1: null }; // 各自上一张出的牌(镜像只复制己方)
     this.winner = null; // 0/1/-1/null
     this.gameOver = false;
     this._timers = [];                  // 延迟结算队列 {due, fn}
@@ -203,6 +203,8 @@ export class Game {
   }
 
   checkWin() {
+    // 已终局不再重判(同帧内 splash/延时炸弹连拆多塔会重复 emit match:end)
+    if (this.gameOver) return;
     // 国王塔被摧毁即败
     if (this.towers[0].king.dead) { this.winner = 1; this.gameOver = true; }
     else if (this.towers[1].king.dead) { this.winner = 0; this.gameOver = true; }
@@ -317,8 +319,9 @@ export class Game {
         if (tw.shotFlash > 0) tw.shotFlash -= dt;
         if (!tw.canAct) continue;
 
-        // 索敌
-        if (!tw.target || tw.target.ref.dead || dist(tw, tw.target.ref) > tw.range + 1) {
+        // 索敌(弃目标阈值与攻击范围衔接,缓冲 0.25 格——与单位侧一致,
+        // 旧 +1 缓冲会让目标在"打不到也不换"区间卡住)
+        if (!tw.target || tw.target.ref.dead || dist(tw, tw.target.ref) > tw.range + tw.target.ref.radius + 0.25) {
           tw.target = this.findTowerTarget(tw);
         }
         if (tw.target) {
@@ -328,7 +331,7 @@ export class Game {
           const d = dist(tw, tw.target.ref);
           if (d <= tw.range + tw.target.ref.radius) {
             if (tw.atkCD <= 0) {
-              const dmg = tw.dmg * (tw.rageTimer > 0 ? 1.35 : 1);
+              const dmg = tw.dmg * (tw.rageTimer > 0 ? RAGE_MULT : 1);
               if (tw.target.type === 'unit') this.dealDamage(tw.target.ref, dmg, tw);
               else this.dealTowerDamage(tw.target.ref, dmg);
               tw.atkCD = tw.hitSpeed;
@@ -397,8 +400,10 @@ export class Game {
         }
       }
 
-      // 特殊:周期能力(产兵/召唤/产圣水)
-      tickPeriodic(u, this, dt);
+      // 特殊:周期能力(产兵/召唤/产圣水)。
+      // 冰冻/眩晕中暂停产能(对齐 CR);部署延时中也暂停(spawn 路径
+      // 原先不查 deployTimer,与 summon 路径规则不一致)
+      if (u.canAct) tickPeriodic(u, this, dt);
 
       if (!u.canAct) continue;
 
@@ -523,10 +528,10 @@ export class Game {
     const card = CARDS[cardId];
     if (!card) return false;
 
-    // 镜像法术费用 = 上一张牌费用 + 1
+    // 镜像法术费用 = 己方上一张牌费用 + 1(镜像只复制己方上一张,对齐 CR)
     let cost = card.cost;
     if (card.special && card.special.mirror) {
-      const last = this.lastPlayedCard;
+      const last = this.lastPlayedCard[side];
       if (!last || last === 'mirror') return false;
       cost = CARDS[last].cost + 1;
     }

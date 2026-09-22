@@ -42,6 +42,7 @@ export class GameLog {
       while (this.curEl.firstChild) this.archiveBody.appendChild(this.curEl.firstChild);
     }
     this.curEl.innerHTML = '';
+    this._curTime = 0;   // 新局时间戳从 0 起(避免开场日志带上局时刻)
     bus.on('log', ({ who, msg, cls }) => this.push(msg, cls || who));
   }
 

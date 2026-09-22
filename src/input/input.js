@@ -63,6 +63,8 @@ export class InputController {
     });
 
     window.addEventListener('keydown', (e) => {
+      // 输入框内不劫持 Esc(卡组编辑器改名等场景)
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       if (e.key === 'Escape' && this.handlers.onPressEscape) this.handlers.onPressEscape(e);
     });
   }

@@ -2,6 +2,7 @@
 // 单位类 - 部队/建筑实例
 // ===============================================
 import { CARDS, KIND } from '../data/cards.js';
+import { RAGE_MULT } from '../core/constants.js';
 
 let _uid = 1;
 
@@ -56,7 +57,7 @@ export class Unit {
   get flying() { return !!this.card.flying; }
   get speed() {
     let s = this.card.speed || 0;
-    if (this.rageTimer > 0) s *= 1.35;
+    if (this.rageTimer > 0) s *= RAGE_MULT;
     if (this.charged && this.card.special && this.card.special.charge) {
       s *= this.card.special.charge.speedMult;
     }
@@ -64,12 +65,12 @@ export class Unit {
   }
   get hitSpeed() {
     let hs = this.card.hitSpeed;
-    if (this.rageTimer > 0) hs /= 1.35;
+    if (this.rageTimer > 0) hs /= RAGE_MULT;
     return hs;
   }
   get currentDmg() {
     let d = this.dmg;
-    if (this.rageTimer > 0) d *= 1.35;
+    if (this.rageTimer > 0) d *= RAGE_MULT;
     if (this.charged && this.card.special && this.card.special.charge) {
       d *= this.card.special.charge.dmgMult;
     }

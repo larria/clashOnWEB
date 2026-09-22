@@ -38,7 +38,7 @@ export function tickPeriodic(unit, game, dt) {
   let produced = false;
 
   if (sp.spawn) {
-    // 首波较快(firstDelay),之后按 interval 循环
+    // 首波较快(firstDelay),之后按 interval 循环(部署延迟已由调用方 canAct 保证)
     unit.specialTimer += dt;
     const first = sp.spawn.firstDelay != null ? sp.spawn.firstDelay : sp.spawn.interval;
     const due = unit.spawnedOnce ? sp.spawn.interval : first;

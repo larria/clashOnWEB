@@ -127,8 +127,8 @@ export const CARDS = {
     special:{ spawn:{ card:'skeletons', count:1, interval:2.9, firstDelay:1 }, deathSummon:{ card:'skeletons', count:4 } } },
   elixirCollector: { id:'elixirCollector', name:'圣水收集器', cost:5, rarity:'稀有', kind:KIND.BUILDING,
     hp:535, dmg:0, hitSpeed:0, range:0, sightRange:0, speed:0,
-    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:50, color:'#d32f2f', radius:1.35,
-    special:{ produceElixir:{ amount:1, interval:8.5 } } },
+    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:70, color:'#d32f2f', radius:1.35,
+    special:{ produceElixir:{ amount:1, interval:8.5 } } },  // wiki:寿命70s产8滴(净+3);原50s只产5滴纯亏
   xbow: { id:'xbow', name:'X连弩', cost:6, rarity:'史诗', kind:KIND.BUILDING,
     hp:800, dmg:22, hitSpeed:0.3, range:12.1, sightRange:11.0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:40, color:'#5d4037', radius:1.35,
