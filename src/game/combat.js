@@ -167,24 +167,92 @@ export function nextWaypoint(unit, game, finalTarget) {
     if (d < bd) { bd = d; bridge = b; }
   }
 
+  // 塔避让:直线路径穿过存活塔的碰撞盒时,走"塔侧走廊"——
+  // 先横移到塔侧面 x,再沿该 x 纵向通过塔的 y 区间(之后自然汇回路线)。
+  // (单位常部署在公主塔正后方,不避让会顶在塔后反复挤压/穿模)
+  // 绕行状态记在 unit._dodge 上(绕哪座塔/哪一侧/是否已过塔心),
+  // 越过塔 y 区间后清除——防止"绕完又被重新捕获"死循环
+  const dodgeTower = (fromX, fromY, toX, toY) => {
+    for (const side of [0, 1]) {
+      const ts = game.towers[side];
+      for (const k of ['left', 'right', 'king']) {
+        const tw = ts[k];
+        if (tw.dead) continue;
+        const pad = tw.radius + unit.radius + 0.15;
+        // 目标就在这座塔上(攻它)不绕
+        if (Math.hypot(toX - tw.x, toY - tw.y) < pad) continue;
+        // 续行中的走廊:已越过塔 y 区间则清除,否则继续沿走廊走
+        if (unit._dodge && unit._dodge.tw === tw) {
+          const s = unit._dodge.side;
+          const laneX = tw.x + s * pad;
+          if (Math.abs(fromY - tw.y) > pad + 0.3) {
+            unit._dodge = null;   // 已通过,汇回正常路线
+          } else {
+            const dirY = toY >= tw.y ? 1 : -1;
+            return { x: laneX, y: tw.y + dirY * (pad + 0.5) };
+          }
+        }
+        // 单位到目标线段与塔圆的最近距离
+        const abx = toX - fromX, aby = toY - fromY;
+        const len2 = abx*abx + aby*aby;
+        if (len2 < 0.001) continue;
+        let t = ((tw.x - fromX)*abx + (tw.y - fromY)*aby) / len2;
+        t = Math.max(0, Math.min(1, t));
+        const px = fromX + abx*t, py = fromY + aby*t;
+        if (Math.hypot(px - tw.x, py - tw.y) < pad) {
+          // 会撞塔:进走廊模式(左/右侧取离单位近的一侧)
+          const s = fromX <= tw.x ? -1 : 1;
+          unit._dodge = { tw, side: s };
+          return { x: tw.x + s * pad, y: tw.y };
+        }
+      }
+    }
+    return null;
+  };
+
   // 阶段判断
   // 上半场(uy <= RIVER_Y1):AI 侧
   if (uy <= RIVER_Y1) {
-    // 目标也在上半场?直接走
-    if (ty <= RIVER_Y1) return { x: tx, y: ty };
+    // 目标也在上半场?直接走(先检查塔避让)
+    if (ty <= RIVER_Y1) {
+      const d = dodgeTower(ux, uy, tx, ty);
+      if (d) return d;
+      return { x: tx, y: ty };
+    }
     // 否则先对齐到桥的 x,再走向桥心(过河)
     if (Math.abs(ux - bridge.x) > 0.4) {
+      const wy = Math.min(uy + 0.5, RIVER_Y1 - 0.2);
+      // 避让探测用"当前位置→桥心"整段路径(短步探测看不到远处的塔)
+      const d = dodgeTower(ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
+      if (d) return d;
       // 先横向对齐到桥口(在己方岸边)
-      return { x: bridge.x, y: Math.min(uy + 0.5, RIVER_Y1 - 0.2) };
+      return { x: bridge.x, y: wy };
     }
-    // 已对齐,走向桥心再过河
+    // 已对齐,走向桥心再过河(直线可能穿塔,先避让)
+    {
+      const d = dodgeTower(ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
+      if (d) return d;
+    }
     return { x: bridge.x, y: RIVER_Y2 + 0.5 };
   }
   // 下半场(uy >= RIVER_Y2):玩家侧
   if (uy >= RIVER_Y2) {
-    if (ty >= RIVER_Y2) return { x: tx, y: ty };
+    if (ty >= RIVER_Y2) {
+      const d = dodgeTower(ux, uy, tx, ty);
+      if (d) return d;
+      return { x: tx, y: ty };
+    }
     if (Math.abs(ux - bridge.x) > 0.4) {
-      return { x: bridge.x, y: Math.max(uy - 0.5, RIVER_Y2 + 0.2) };
+      const wy = Math.max(uy - 0.5, RIVER_Y2 + 0.2);
+      // 避让探测用"当前位置→桥心"整段路径
+      const d = dodgeTower(ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
+      if (d) return d;
+      return { x: bridge.x, y: wy };
+    }
+    // 已对齐,走向桥口(直线可能穿塔——塔就在桥的正后方)
+    {
+      const d = dodgeTower(ux, uy, bridge.x, RIVER_Y1 - 0.5);
+      if (d) return d;
     }
     return { x: bridge.x, y: RIVER_Y1 - 0.5 };
   }

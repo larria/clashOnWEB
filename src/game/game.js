@@ -459,13 +459,22 @@ export class Game {
   }
 
   // 地面单位碰撞分离(每帧移动后调用)
-  // 飞行单位不参与(空中);建筑是静态障碍,把单位挤出
+  // 飞行单位不参与(空中);建筑是静态障碍,把单位挤出。
+  // 存活塔同样是静态障碍(塔不在 units 里,需单独纳入——
+  // 此前单位会径直穿过公主塔)
   separateUnits() {
     const movers = this.units.filter(u => !u.dead && !u.flying && !u.isBuilding && u.deployTimer <= 0);
     const solids = this.units.filter(u => !u.dead && !u.flying && u.isBuilding);
-    // 1. 单位 vs 建筑静态挤出
+    const towers = [];
+    for (const side of [0, 1]) {
+      for (const k of ['left', 'right', 'king']) {
+        const tw = this.towers[side][k];
+        if (!tw.dead) towers.push(tw);
+      }
+    }
+    // 1. 单位 vs 建筑/塔静态挤出
     for (const m of movers) {
-      for (const b of solids) {
+      for (const b of [...solids, ...towers]) {
         const minD = m.radius + b.radius;
         const dx = m.x - b.x, dy = m.y - b.y;
         const d = Math.sqrt(dx*dx + dy*dy);
