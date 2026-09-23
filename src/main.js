@@ -325,13 +325,26 @@ function togglePause() {
   }
 }
 
-// 页面不可见时自动暂停(防止后台节流导致游戏时间失真/错过操作)
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && phase === 'playing') {
+// 页面不可见/窗口失焦时自动暂停(防止后台节流导致游戏时间失真/错过操作)
+// - 浏览器标签页:visibilitychange(切标签/最小化)即 document.hidden
+// - PWA 独立窗口(standalone):窗口被遮挡/切到别的应用但未最小化时,
+//   document.hidden 可能保持 false、visibilitychange 不触发 → 补充
+//   window blur 失焦即暂停(仅 standalone 启用:标签页下点地址栏也会
+//   触发 blur,误暂停会很烦)
+const isStandalone =
+  window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function autoPause(reason) {
+  if (phase === 'playing') {
     togglePause();
-    gameLog.push('页面切到后台,游戏已自动暂停', 'sys');
+    gameLog.push(reason, 'sys');
   }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) autoPause('页面切到后台,游戏已自动暂停');
 });
+if (isStandalone) {
+  window.addEventListener('blur', () => autoPause('窗口失焦,游戏已自动暂停'));
+}
 // 切回前台时校准时间基准(避免恢复瞬间 dt 跳变)
 window.addEventListener('focus', () => {
   if (phase === 'playing') lastTime = performance.now();
