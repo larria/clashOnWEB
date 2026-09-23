@@ -67,8 +67,8 @@ export const CARDS = {
 
   // ===== 史诗 =====
   pekka: { id:'pekka', name:'皮卡超人', cost:7, rarity:'史诗', kind:KIND.TROOP,
-    hp:1880, dmg:421, hitSpeed:1.8, range:1.35, sightRange:5.5, speed:SPEED.MEDIUM,
-    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#90a4ae', radius:0.55 },
+    hp:1880, dmg:421, hitSpeed:1.8, range:1.2, sightRange:5.5, speed:SPEED.SLOW,
+    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#90a4ae', radius:0.55 },  // wiki 11级×0.5;速度 Slow(45)=0.6格/s;近战 Medium 1.2
   prince: { id:'prince', name:'王子', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:960, dmg:196, hitSpeed:1.4, range:2.08, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#5d4037', radius:0.5,
@@ -92,9 +92,9 @@ export const CARDS = {
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#cfd8dc', radius:0.52,
     special:{ deathDamage:{ dmg:138, splash:2.5, targets:T.ALL, delay:3, towerMult:2 } } },  // 对塔双倍
   golem: { id:'golem', name:'戈仑石人', cost:8, rarity:'史诗', kind:KIND.TROOP,
-    hp:2560, dmg:156, hitSpeed:2.5, range:1.35, sightRange:5.5, speed:SPEED.SLOW,
-    targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#558b2f', radius:0.60,
-    special:{ deathDamage:{ dmg:156, splash:2.0, targets:T.ALL }, summonOnDeath:{ card:'golemite', count:2 } } },
+    hp:2560, dmg:156, hitSpeed:2.5, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
+    targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:3, color:'#558b2f', radius:0.60,
+    special:{ deathDamage:{ dmg:112, splash:2.0, targets:T.ALL }, summonOnDeath:{ card:'golemite', count:2 } } },  // wiki 11级×0.5:部署3s(特有);近战 Short 0.75;死亡伤害 225/2≈112
   minionHorde: { id:'minionHorde', name:'亡灵大军', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:115, dmg:54, hitSpeed:1.2, range:2.5, sightRange:5.5, speed:SPEED.FAST,
     targets:T.ALL, flying:true, count:6, splash:0, deployTime:1, color:'#3949ab', radius:0.32 },
@@ -164,9 +164,9 @@ export const CARDS = {
 
   // ===== 内部卡(不在选择列表)=====
   golemite: { id:'golemite', name:'小戈仑', cost:0, rarity:'史诗', kind:KIND.TROOP,
-    hp:520, dmg:42, hitSpeed:2.5, range:1.17, sightRange:5.5, speed:SPEED.SLOW,
+    hp:520, dmg:42, hitSpeed:2.5, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:0, color:'#7cb342', radius:0.42,
-    special:{ deathDamage:{ dmg:42, splash:1.5, targets:T.ALL } }, hidden:true },
+    special:{ deathDamage:{ dmg:50, splash:1.5, targets:T.ALL } }, hidden:true },  // wiki 11级×0.5:hp 1039/2≈520 dmg 84/2=42 死亡 99/2≈50 近战 Short 0.75
 };
 
 export const SELECTABLE_CARDS = Object.keys(CARDS).filter(k => !CARDS[k].hidden && k !== 'golemite');
