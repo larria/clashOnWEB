@@ -45,7 +45,12 @@ export function findTarget(unit, game) {
       if (onlyBuilding && !e.isBuilding) continue;
       const d = dist(unit, e);
       if (blindSpot > 0 && d < blindSpot) continue;   // 近身盲区
-      if (d <= sightR && d < bestD) {
+      // 索敌半径含目标 hitbox(与攻击判定 d<=range+radius 同口径):
+      // 官方射程即"中心到目标边缘"——wiki 记载加农炮/特斯拉的
+      // "range bug"修复(显示 5.5 实际不变)即此口径。若索敌不含
+      // hitbox,目标恰好停在 range < d <= range+radius 区间时
+      // (如塔下拉扯野蛮人)永远不会被还手
+      if (d <= sightR + e.radius && d < bestD) {
         bestD = d;
         best = { type: 'unit', ref: e, x: e.x, y: e.y, flying: e.flying, isBuilding: e.isBuilding };
       }
@@ -72,7 +77,7 @@ export function findTarget(unit, game) {
     }
     if (preferred) {
       const d = dist(unit, preferred);
-      if (d <= sightR) {
+      if (d <= sightR + preferred.radius) {   // 含塔 hitbox(同攻击口径)
         best = { type: 'tower', ref: preferred, x: preferred.x, y: preferred.y, flying: false, isBuilding: true, lane: preferred.lane };
       }
     }
@@ -87,7 +92,7 @@ export function findTarget(unit, game) {
     if (!valid) continue;
     const d = dist(unit, tw);
     if (blindSpot > 0 && d < blindSpot) continue;     // 近身盲区(塔同样适用)
-    if (d <= sightR && d < bestD) {
+    if (d <= sightR + tw.radius && d < bestD) {       // 含塔 hitbox(同攻击口径)
       bestD = d;
       best = { type: 'tower', ref: tw, x: tw.x, y: tw.y, flying: false, isBuilding: true, lane: tw.lane };
     }
@@ -108,7 +113,7 @@ export function findNearestEnemyUnit(unit, game) {
     if (onlyBuilding && !e.isBuilding) continue;
     if (!canTarget(unit, e.card, e.flying, e.isBuilding)) continue;
     const d = dist(unit, e);
-    if (d <= sightR && d < bestD) { bestD = d; best = e; }
+    if (d <= sightR + e.radius && d < bestD) { bestD = d; best = e; }  // 含 hitbox(同攻击口径)
   }
   return best;
 }
