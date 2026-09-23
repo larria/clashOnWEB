@@ -211,11 +211,18 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
   if (!opts.bypass && !canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers, { zone: card.deployZone }, myTowers, buildings)) return false;
 
   const count = card.count || 1;
-  // 多体单位排布
+  // 多体单位排布 + 逐个落地(对齐官方 deploy stagger:多单位卡每个
+  // 间隔 ~0.1 秒依次出现,期间虚影/不可行动但可被攻击;骷髅军团是
+  // 官方例外——scatter 阵型全体同时落地,不设 stagger)
+  const stagger = (count > 1 && cardId !== 'skeletonArmy') ? 0.1 : 0;
   const positions = getDeployPositions(x, y, count, card.radius);
   for (let i = 0; i < count; i++) {
     const p = positions[i];
-    game.spawnUnit(cardId, side, p.x, p.y);
+    if (i === 0 || stagger === 0) {
+      game.spawnUnit(cardId, side, p.x, p.y);
+    } else {
+      game.schedule(stagger * i, () => game.spawnUnit(cardId, side, p.x, p.y));
+    }
   }
   game.lastPlayedCard[side] = cardId;
   return true;

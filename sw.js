@@ -14,7 +14,7 @@
 // 页面显示更新提示条 → 用户点"立即更新" → postMessage skipWaiting →
 // controllerchange → reload。
 // ===============================================
-const APP_VERSION = '0.4.2';
+const APP_VERSION = '0.4.3';
 
 const CACHE = `clash-v${APP_VERSION}`;
 const CORE = `clash-core-v${APP_VERSION}`;
