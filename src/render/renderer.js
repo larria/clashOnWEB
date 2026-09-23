@@ -574,10 +574,10 @@ export class Renderer {
         ctx.beginPath(); ctx.arc(x, cy, rr, 0, Math.PI*2); ctx.stroke();
       } else if (isBuilding) {
         // 建筑:卡图 + 阵营色方形底框
-        // 视觉尺寸与碰撞半径解耦:3×3 建筑视觉与火枪手卡图同大(≈81px),
-        // 特斯拉(2×2)更小(≈64px);碰撞半径(1.35/0.9)不变
-        const isSmall = u.radius < 1.1; // 特斯拉 2×2
-        const vr = (isSmall ? 0.84 : 1.07) * CELL; // 视觉半宽(格 × CELL)
+        // 视觉尺寸 = 碰撞半径(建筑占方形面积,画多大就占多大——
+        // 此前写死 1.07/0.84 格,3×3 建筑(radius 1.35)显示明显小于
+        // 占地,野蛮人小屋等"看着能放进去实际被挡"的错觉来源于此)
+        const vr = u.radius * CELL;
         const bg = ctx.createLinearGradient(x-vr, y-vr, x+vr, y+vr);
         bg.addColorStop(0, sc.light); bg.addColorStop(0.5, sc.base); bg.addColorStop(1, sc.dark);
         ctx.fillStyle = bg;
@@ -623,8 +623,8 @@ export class Renderer {
       drawUnitIcon(ctx, u.cardId, x, cy, r * (isBuilding ? 0.85 : 1));
     }
 
-    // 攻击闪光(扩大到卡图范围;建筑用视觉半径,部队用卡图半径)
-    const buildVR = isBuilding ? (u.radius < 1.1 ? 0.84 : 1.07) * CELL : 0;
+    // 攻击闪光(扩大到卡图范围;建筑用碰撞半径,部队用卡图半径)
+    const buildVR = isBuilding ? u.radius * CELL : 0;
     const fxR = art ? (isBuilding ? buildVR : Math.max(r, (isSwarm ? r*2.1 : r*2.6))) : r;
     if (u.atkAnim > 0) {
       const a = u.atkAnim / 0.3;
@@ -1199,7 +1199,7 @@ export class Renderer {
   drawDeathBreak(e, t) {
     const ctx = this.ctx;
     const x = e.x*CELL, y = e.y*CELL;
-    const R = Math.max(10, e.r * CELL * (e.isBuilding ? 1.07 : 2.2));
+    const R = Math.max(10, e.r * CELL * (e.isBuilding ? 1.0 : 2.2));
     const p = 1 - t;
     ctx.save();
     // 阵营色光环收缩(从单位大小收到中心)
@@ -1432,8 +1432,8 @@ export class Renderer {
       const isSwarm = (card.count || 1) > 1;
       const isBuildingCard = card.kind === KIND.BUILDING;
       const art = getCardImage(p.cardId);
-      // 建筑预览视觉半径与实际渲染一致(3×3→1.07 格,特斯拉 0.84)
-      const bvr = ((card.radius || 0.4) < 1.1 ? 0.84 : 1.07) * CELL;
+      // 建筑预览视觉半径 = 碰撞半径(与实际渲染/占位一致)
+      const bvr = (card.radius || 0.4) * CELL;
       const fxR = art ? (isSwarm ? r*2.1 : (isBuildingCard ? bvr : r*2.6)) : r;
       if (art && !p.invalid) {
         ctx.globalAlpha = ok ? 0.65 : 0.3;
