@@ -73,6 +73,9 @@
  "hogRider": {
   "file": "HogRiderCard.png"
  },
+ "iceWizard": {
+  "file": "IceWizardCard.png"
+ },
  "infernoTower": {
   "file": "InfernoTowerCard.png"
  },

@@ -33,6 +33,8 @@ export class Unit {
     this.frozen = 0;      // 冰冻剩余秒
     this.stunned = 0;     // 眩晕剩余秒
     this.rageTimer = 0;   // 狂暴剩余秒
+    this.slowTimer = 0;   // 减速剩余秒(冰法师攻击/落地)
+    this.slowFactor = 1;  // 减速系数(0.7 = -30%)
     this.dead = false;
 
     // 护盾(黑王子/皇家卫队):受击先扣盾,盾碎溢出伤害不穿透本体
@@ -62,6 +64,7 @@ export class Unit {
   get speed() {
     let s = this.card.speed || 0;
     if (this.rageTimer > 0) s *= RAGE_MULT;
+    if (this.slowTimer > 0) s *= this.slowFactor;
     if (this.charged && this.card.special && this.card.special.charge) {
       s *= this.card.special.charge.speedMult;
     }
@@ -70,6 +73,7 @@ export class Unit {
   get hitSpeed() {
     let hs = this.card.hitSpeed;
     if (this.rageTimer > 0) hs /= RAGE_MULT;
+    if (this.slowTimer > 0) hs /= this.slowFactor;   // 减速同样降低攻速
     return hs;
   }
   get currentDmg() {

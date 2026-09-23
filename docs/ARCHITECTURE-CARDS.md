@@ -35,6 +35,8 @@ src/game/combat.js       移动/攻击(查询式:canJumpRiver/charge)
 | `heavy` | 击退免疫 | abilities.isHeavy |
 | `shield` | 护盾(先扣盾,溢出不穿透) | game.dealDamage + unit.js |
 | `charge.splash` | 冲锋命中360°溅射 | combat.attackTarget |
+| `attackSlow` | 攻击附带范围减速 | combat.attackTarget + game.applySlowAt |
+| `spawnDamage` | 落地范围伤害+减速 | game.updateUnits(部署完成时) |
 
 ### 法术 special 键(spells.js)
 

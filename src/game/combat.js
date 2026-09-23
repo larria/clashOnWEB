@@ -151,6 +151,59 @@ export function getMarchTarget(unit, game) {
   return best;
 }
 
+// 塔避让:直线路径穿过存活塔的碰撞盒时,走"塔侧走廊"——
+// 先横移到塔侧面 x,再沿该 x 纵向通过塔的 y 区间(之后自然汇回路线)。
+// (单位常部署在公主塔正后方,不避让会顶在塔后反复挤压/穿模)
+// 绕行状态记在 unit._dodge 上(绕哪座塔/哪一侧/是否已过塔心),
+// 越过塔 y 区间后清除——防止"绕完又被重新捕获"死循环
+function dodgeTower(unit, game, fromX, fromY, toX, toY) {
+  for (const side of [0, 1]) {
+    const ts = game.towers[side];
+    for (const k of ['left', 'right', 'king']) {
+      const tw = ts[k];
+      if (tw.dead) continue;
+      const pad = tw.radius + unit.radius + 0.15;
+      // 目标就在这座塔上(攻它)不绕
+      if (Math.hypot(toX - tw.x, toY - tw.y) < pad) continue;
+      // 续行中的走廊:已越过塔 y 区间则清除,否则继续沿走廊走
+      if (unit._dodge && unit._dodge.tw === tw) {
+        const s = unit._dodge.side;
+        const laneX = tw.x + s * pad;
+        if (Math.abs(fromY - tw.y) > pad + 0.3) {
+          unit._dodge = null;   // 已通过,汇回正常路线
+        } else {
+          // 未到走廊 x:先横移(保持 y);到位后沿走廊纵向通过塔区
+          if (Math.abs(fromX - laneX) > 0.2) {
+            return { x: laneX, y: fromY };
+          }
+          const dirY = toY >= tw.y ? 1 : -1;
+          return { x: laneX, y: tw.y + dirY * (pad + 0.5) };
+        }
+      }
+      // 单位到目标线段与塔圆的最近距离
+      const abx = toX - fromX, aby = toY - fromY;
+      const len2 = abx*abx + aby*aby;
+      if (len2 < 0.001) continue;
+      let t = ((tw.x - fromX)*abx + (tw.y - fromY)*aby) / len2;
+      t = Math.max(0, Math.min(1, t));
+      const px = fromX + abx*t, py = fromY + aby*t;
+      if (Math.hypot(px - tw.x, py - tw.y) < pad) {
+        // 会撞塔:进走廊模式(左/右侧取离单位近的一侧)
+        const s = fromX <= tw.x ? -1 : 1;
+        unit._dodge = { tw, side: s };
+        // 先横移到走廊 x(保持当前 y),到达后再纵走——一步到位的
+        // 斜线本身会穿过塔圆,拆两段才能保证全程在塔外
+        const laneX = tw.x + s * pad;
+        if (Math.abs(fromX - laneX) > 0.2) {
+          return { x: laneX, y: fromY };
+        }
+        return { x: laneX, y: tw.y };
+      }
+    }
+  }
+  return null;
+}
+
 // 计算路径下一个目标点(简化寻路:地面单位需走桥)
 // RIVER_Y1=15, RIVER_Y2=17, 河道占 y=15,16;桥在 x=3.5 / x=14.5
 export function nextWaypoint(unit, game, finalTarget) {
@@ -162,6 +215,11 @@ export function nextWaypoint(unit, game, finalTarget) {
   // 可跳河单位(野猪骑士):不是无条件跳——贴近桥时仍走桥过河
   // (原版行为:离桥横向太近会寻找桥直接跑过去,远了才直线跳河;
   //  "pig push"技巧即利用桥最外沿格跳河绕开建筑拉扯)
+  // 王子/黑王子:跳河是行走状态的能力,冲锋中遇河必须中断冲锋走桥
+  // (原版:冲锋状态不允许跳河;走桥过程中冲锋距离照常累计,过桥后重新起冲)
+  if (canJump && unit.card.special.charge && unit.charged) {
+    canJump = false;
+  }
   if (canJump) {
     const bridges = [
       { x: 3.5, y: (RIVER_Y1 + RIVER_Y2) / 2 },
@@ -175,7 +233,13 @@ export function nextWaypoint(unit, game, finalTarget) {
       const nearBridgeX = bridges.some(b => Math.abs(unit.x - b.x) < 1.0);
       if (nearBridgeX) canJump = false;   // 按普通地面单位走桥
     }
-    if (canJump) return { x: finalTarget.x, y: finalTarget.y };
+    if (canJump) {
+      // 跳河≠穿塔:直线仍需避让存活塔(沉底放塔后的跳河单位会直线
+      // 穿过国王塔——先走塔侧走廊,出走廊后继续直线跳河)
+      const d = dodgeTower(unit, game, unit.x, unit.y, finalTarget.x, finalTarget.y);
+      if (d) return d;
+      return { x: finalTarget.x, y: finalTarget.y };
+    }
   }
   const ux = unit.x, uy = unit.y;
   const tx = finalTarget.x, ty = finalTarget.y;
@@ -191,55 +255,14 @@ export function nextWaypoint(unit, game, finalTarget) {
     if (d < bd) { bd = d; bridge = b; }
   }
 
-  // 塔避让:直线路径穿过存活塔的碰撞盒时,走"塔侧走廊"——
-  // 先横移到塔侧面 x,再沿该 x 纵向通过塔的 y 区间(之后自然汇回路线)。
-  // (单位常部署在公主塔正后方,不避让会顶在塔后反复挤压/穿模)
-  // 绕行状态记在 unit._dodge 上(绕哪座塔/哪一侧/是否已过塔心),
-  // 越过塔 y 区间后清除——防止"绕完又被重新捕获"死循环
-  const dodgeTower = (fromX, fromY, toX, toY) => {
-    for (const side of [0, 1]) {
-      const ts = game.towers[side];
-      for (const k of ['left', 'right', 'king']) {
-        const tw = ts[k];
-        if (tw.dead) continue;
-        const pad = tw.radius + unit.radius + 0.15;
-        // 目标就在这座塔上(攻它)不绕
-        if (Math.hypot(toX - tw.x, toY - tw.y) < pad) continue;
-        // 续行中的走廊:已越过塔 y 区间则清除,否则继续沿走廊走
-        if (unit._dodge && unit._dodge.tw === tw) {
-          const s = unit._dodge.side;
-          const laneX = tw.x + s * pad;
-          if (Math.abs(fromY - tw.y) > pad + 0.3) {
-            unit._dodge = null;   // 已通过,汇回正常路线
-          } else {
-            const dirY = toY >= tw.y ? 1 : -1;
-            return { x: laneX, y: tw.y + dirY * (pad + 0.5) };
-          }
-        }
-        // 单位到目标线段与塔圆的最近距离
-        const abx = toX - fromX, aby = toY - fromY;
-        const len2 = abx*abx + aby*aby;
-        if (len2 < 0.001) continue;
-        let t = ((tw.x - fromX)*abx + (tw.y - fromY)*aby) / len2;
-        t = Math.max(0, Math.min(1, t));
-        const px = fromX + abx*t, py = fromY + aby*t;
-        if (Math.hypot(px - tw.x, py - tw.y) < pad) {
-          // 会撞塔:进走廊模式(左/右侧取离单位近的一侧)
-          const s = fromX <= tw.x ? -1 : 1;
-          unit._dodge = { tw, side: s };
-          return { x: tw.x + s * pad, y: tw.y };
-        }
-      }
-    }
-    return null;
-  };
+
 
   // 阶段判断
   // 上半场(uy <= RIVER_Y1):AI 侧
   if (uy <= RIVER_Y1) {
     // 目标也在上半场?直接走(先检查塔避让)
     if (ty <= RIVER_Y1) {
-      const d = dodgeTower(ux, uy, tx, ty);
+      const d = dodgeTower(unit, game, ux, uy, tx, ty);
       if (d) return d;
       return { x: tx, y: ty };
     }
@@ -247,14 +270,14 @@ export function nextWaypoint(unit, game, finalTarget) {
     if (Math.abs(ux - bridge.x) > 0.4) {
       const wy = Math.min(uy + 0.5, RIVER_Y1 - 0.2);
       // 避让探测用"当前位置→桥心"整段路径(短步探测看不到远处的塔)
-      const d = dodgeTower(ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
+      const d = dodgeTower(unit, game, ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
       if (d) return d;
       // 先横向对齐到桥口(在己方岸边)
       return { x: bridge.x, y: wy };
     }
     // 已对齐,走向桥心再过河(直线可能穿塔,先避让)
     {
-      const d = dodgeTower(ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
+      const d = dodgeTower(unit, game, ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
       if (d) return d;
     }
     return { x: bridge.x, y: RIVER_Y2 + 0.5 };
@@ -262,20 +285,20 @@ export function nextWaypoint(unit, game, finalTarget) {
   // 下半场(uy >= RIVER_Y2):玩家侧
   if (uy >= RIVER_Y2) {
     if (ty >= RIVER_Y2) {
-      const d = dodgeTower(ux, uy, tx, ty);
+      const d = dodgeTower(unit, game, ux, uy, tx, ty);
       if (d) return d;
       return { x: tx, y: ty };
     }
     if (Math.abs(ux - bridge.x) > 0.4) {
       const wy = Math.max(uy - 0.5, RIVER_Y2 + 0.2);
       // 避让探测用"当前位置→桥心"整段路径
-      const d = dodgeTower(ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
+      const d = dodgeTower(unit, game, ux, uy, bridge.x, (RIVER_Y1+RIVER_Y2)/2);
       if (d) return d;
       return { x: bridge.x, y: wy };
     }
     // 已对齐,走向桥口(直线可能穿塔——塔就在桥的正后方)
     {
-      const d = dodgeTower(ux, uy, bridge.x, RIVER_Y1 - 0.5);
+      const d = dodgeTower(unit, game, ux, uy, bridge.x, RIVER_Y1 - 0.5);
       if (d) return d;
     }
     return { x: bridge.x, y: RIVER_Y1 - 0.5 };
@@ -378,12 +401,23 @@ export function attackTarget(attacker, target, game) {
     } else {
       game.dealDamage(e, dmg, attacker);
     }
+    // 攻击减速(冰法师):命中附带范围减速(溅射范围内敌人一起减速)
+    const aslow = card.special && card.special.attackSlow;
+    if (aslow) {
+      game.applySlowAt(e.x, e.y, card.splash || 0.5, attacker.side, aslow.duration, aslow.factor);
+    }
   } else if (target.type === 'tower') {
     const tw = target.ref;
     if (card.splash && card.splash > 0) {
       applySplash(game, attacker, tw.x, tw.y, card.splash, dmg, card.targets);
     } else {
       game.dealTowerDamage(tw, dmg);
+    }
+    // 塔同样被减速(攻速降低;塔攻击间隔由 tower.update 驱动)
+    const aslowT = card.special && card.special.attackSlow;
+    if (aslowT && !tw.dead) {
+      if (tw.slowTimer == null) { tw.slowTimer = 0; tw.slowFactor = 1; }
+      if (tw.slowTimer < aslowT.duration) { tw.slowTimer = aslowT.duration; tw.slowFactor = aslowT.factor; }
     }
   }
 

@@ -39,7 +39,12 @@ export class Tower {
     this.activated = (pos.type !== 'king');
   }
   get canAct() { return this.activated && this.frozen <= 0 && this.stunned <= 0 && !this.dead; }
-  get hitSpeed() { return this.rageTimer > 0 ? this._hitSpeed / RAGE_MULT : this._hitSpeed; }
+  get hitSpeed() {
+    let hs = this._hitSpeed;
+    if (this.rageTimer > 0) hs /= RAGE_MULT;
+    if (this.slowTimer > 0) hs /= this.slowFactor;   // 冰法师减速:攻速降低
+    return hs;
+  }
   // 受到伤害:国王塔被击中即激活
   onDamaged() {
     if (!this.activated) this.activated = true;

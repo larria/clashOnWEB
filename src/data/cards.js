@@ -64,6 +64,16 @@ export const CARDS = {
   wizard: { id:'wizard', name:'法师', cost:5, rarity:'稀有', kind:KIND.TROOP,
     hp:416, dmg:140, hitSpeed:1.4, range:5.5, sightRange:6.0, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#42a5f5', radius:0.38 },
+  iceWizard: { id:'iceWizard', name:'冰法师', cost:3, rarity:'传奇', kind:KIND.TROOP,
+    hp:344, dmg:44, hitSpeed:1.7, range:5.5, sightRange:6.0, speed:SPEED.MEDIUM,
+    targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#4fc3f7', radius:0.38,
+    special:{
+      attackSlow:{ duration:2.5, factor:0.7 },
+      spawnDamage:{ dmg:42, radius:3.0, slow:{ duration:1.0, factor:0.7 } },
+    } },
+    // wiki 11级×0.5:hp688/2=344 dmg89/2=44 攻速1.7 射程5.5 溅射1.5
+    // 首张传奇(2016-02-29):攻击附带范围减速30%/2.5s(移速+攻速);
+    // 落地伤害 84/2=42·半径3·落地减速30%/1s(可秒杀骷髅/蝙蝠)
 
   // ===== 史诗 =====
   pekka: { id:'pekka', name:'皮卡超人', cost:7, rarity:'史诗', kind:KIND.TROOP,

@@ -102,11 +102,9 @@ export class Game {
   // ===== 伤害结算(唯一入口;死亡效果由 abilities 接管)=====
   dealDamage(unit, dmg, attacker, sourceCard) {
     if (unit.dead) return;
-    // 护盾(黑王子类):先扣盾,盾碎的溢出伤害不穿透本体
-    // (官方机制:雷电 1056 打在 240 盾上,溢出 816 完全无效)
+    // 护盾(黑王子类):本次伤害全部由盾承担(最多吸到盾空),
+    // 溢出部分不穿透本体(官方:雷电1056打240盾,溢出816完全无效)
     if (unit.shield > 0) {
-      // 有盾:本次伤害全部由盾承担(最多吸到盾空),溢出部分不穿透本体
-      // (官方机制:雷电 1056 打在 240 盾上,溢出 816 完全无效)
       const absorbed = Math.min(unit.shield, dmg);
       unit.shield -= absorbed;
       if (unit.shield <= 0) {
@@ -158,6 +156,18 @@ export class Game {
   // 区域伤害(死亡伤害等;对双方单位生效 + 敌方塔)
   applyAreaDamage(source, dmg, radius, targetsMask) {
     this.applyAreaDamageAt(source.x, source.y, dmg, radius, targetsMask, source.side, 1, source);
+  }
+
+  // 区域减速(冰法师攻击/落地):范围内敌方单位移动+攻击减速
+  // (factor=0.7 即 -30%;持续取最大值不叠加)
+  applySlowAt(cx, cy, radius, side, duration, factor) {
+    for (const e of this.units) {
+      if (e.dead || e.side === side) continue;
+      const d = dist2s(cx, cy, e.x, e.y);
+      if (d <= (radius + e.radius) * (radius + e.radius)) {
+        if (e.slowTimer < duration) { e.slowTimer = duration; e.slowFactor = factor; }
+      }
+    }
   }
 
   // 按坐标的区域伤害(延时炸弹爆炸;towerMult:对塔伤害倍率)
@@ -326,6 +336,7 @@ export class Game {
         if (tw.dead) continue;
         if (tw.frozen > 0) tw.frozen -= dt;
         if (tw.stunned > 0) tw.stunned -= dt;
+        if (tw.slowTimer > 0) tw.slowTimer -= dt;
         if (tw.rageTimer > 0) tw.rageTimer -= dt;
         if (tw.atkCD > 0) tw.atkCD -= dt;
         if (tw.atkAnim > 0) tw.atkAnim -= dt;
@@ -384,10 +395,24 @@ export class Game {
       if (u.dead) continue;
 
       // 计时器
-      if (u.deployTimer > 0) u.deployTimer -= dt;
+      if (u.deployTimer > 0) {
+        u.deployTimer -= dt;
+        // 部署完成瞬间:落地伤害(冰法师类——部署时对周围敌人
+        // 造成范围伤害+减速,官方 spawn damage)
+        if (u.deployTimer <= 0 && u.card.special && u.card.special.spawnDamage) {
+          const sd = u.card.special.spawnDamage;
+          this.applyAreaDamage(u, sd.dmg, sd.radius, u.card.targets);
+          // 落地减速(可独立时长;默认与攻击减速一致)
+          const slow = sd.slow != null ? sd.slow : (u.card.special.attackSlow || null);
+          if (slow) this.applySlowAt(u.x, u.y, sd.radius, u.side, slow.duration, slow.factor);
+          this.addEffect({ type: 'spawnFrost', x: u.x, y: u.y, r: sd.radius, life: 0.5, maxLife: 0.5 });
+          this.bus.emit('unit:spawnDamage', { unit: u });
+        }
+      }
       if (u.frozen > 0) u.frozen -= dt;
       if (u.stunned > 0) u.stunned -= dt;
       if (u.rageTimer > 0) u.rageTimer -= dt;
+      if (u.slowTimer > 0) u.slowTimer -= dt;
       if (u.atkCD > 0) u.atkCD -= dt;
       if (u.atkAnim > 0) u.atkAnim -= dt;
 

@@ -697,6 +697,14 @@ export class Renderer {
         ctx.lineTo(x + Math.cos(a)*(fxR+2), cy + Math.sin(a)*(fxR+2));
         ctx.stroke();
       }
+    } else if (u.slowTimer > 0) {
+      // 减速(冰法师):淡青色底圈(弱化版冰冻视觉,与硬冰冻区分)
+      ctx.fillStyle = 'rgba(100,200,255,0.22)';
+      ctx.beginPath(); ctx.arc(x, cy, fxR, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(129,212,250,0.7)'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]); ctx.lineDashOffset = -this.animTime*12;
+      ctx.beginPath(); ctx.arc(x, cy, fxR, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
     }
     // 狂暴状态:金色速度线(向上流动的 chevron)——红色已让位给受击特效
     if (u.rageTimer > 0) {
@@ -843,6 +851,21 @@ export class Renderer {
           ctx.globalAlpha = t * 0.9;
           ctx.fillRect(x + Math.cos(a)*d - 2, y + Math.sin(a)*d - 2, 4, 4);
         }
+        ctx.restore();
+      } else if (e.type === 'spawnFrost') {
+        // 落地冰霜(冰法师):青蓝冲击环 + 地面霜圈
+        const x = e.x*CELL, y = e.y*CELL;
+        const p = 1 - t;
+        ctx.save();
+        ctx.globalAlpha = t * 0.8;
+        ctx.strokeStyle = '#4fc3f7';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(x, y, (0.3 + p * 0.9) * e.r * CELL, 0, Math.PI*2); ctx.stroke();
+        ctx.globalAlpha = t * 0.35;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, e.r*CELL);
+        g.addColorStop(0, 'rgba(79,195,247,0.7)'); g.addColorStop(1, 'rgba(79,195,247,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, e.r*CELL, 0, Math.PI*2); ctx.fill();
         ctx.restore();
       } else if (e.type === 'elixirPop') {
         // 圣水收集器产费:紫色圣水滴升腾 + 光晕闪现
