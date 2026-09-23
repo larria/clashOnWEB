@@ -1426,7 +1426,8 @@ export class Renderer {
       const r = (card.radius || 0.4) * CELL;
       ctx.save();
       // 合法/非法标识(含推塔解锁区;卡牌级部署规则由 canDeploy 解释;
-      // 场上建筑占位同判定)
+      // 场上建筑占位同判定;buildings 在本函数内取,勿引用 drawDeployMask 的局部变量)
+      const buildings = this.game.units.filter(u => u.isBuilding && !u.dead);
       const ok = canDeploy('player', p.x, p.y, this.game.towers[1], { zone: card.deployZone }, this.game.towers[0], buildings);
       // 预览卡图(半透明,按单位视觉尺寸;多体单位显示小圆头像示意)
       const isSwarm = (card.count || 1) > 1;

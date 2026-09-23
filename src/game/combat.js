@@ -149,9 +149,28 @@ export function getMarchTarget(unit, game) {
 // 计算路径下一个目标点(简化寻路:地面单位需走桥)
 // RIVER_Y1=15, RIVER_Y2=17, 河道占 y=15,16;桥在 x=3.5 / x=14.5
 export function nextWaypoint(unit, game, finalTarget) {
-  // 飞行单位 或 可跳河单位(野猪骑士):直线朝目标,河道不构成障碍
-  if (unit.flying || (unit.card.special && unit.card.special.canJumpRiver)) {
+  let canJump = !!(unit.card.special && unit.card.special.canJumpRiver);
+  // 飞行单位:直线朝目标,河道不构成障碍
+  if (unit.flying) {
     return { x: finalTarget.x, y: finalTarget.y };
+  }
+  // 可跳河单位(野猪骑士):不是无条件跳——贴近桥时仍走桥过河
+  // (原版行为:离桥横向太近会寻找桥直接跑过去,远了才直线跳河;
+  //  "pig push"技巧即利用桥最外沿格跳河绕开建筑拉扯)
+  if (canJump) {
+    const bridges = [
+      { x: 3.5, y: (RIVER_Y1 + RIVER_Y2) / 2 },
+      { x: 14.5, y: (RIVER_Y1 + RIVER_Y2) / 2 },
+    ];
+    // 目标与自己在河两侧(需要过河)时,若横向贴近任一桥 → 走桥
+    const needCross =
+      (unit.y < RIVER_Y1 && finalTarget.y >= RIVER_Y1) ||
+      (unit.y >= RIVER_Y2 && finalTarget.y < RIVER_Y2);
+    if (needCross) {
+      const nearBridgeX = bridges.some(b => Math.abs(unit.x - b.x) < 1.0);
+      if (nearBridgeX) canJump = false;   // 按普通地面单位走桥
+    }
+    if (canJump) return { x: finalTarget.x, y: finalTarget.y };
   }
   const ux = unit.x, uy = unit.y;
   const tx = finalTarget.x, ty = finalTarget.y;
