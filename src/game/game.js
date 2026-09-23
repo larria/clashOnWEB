@@ -102,6 +102,19 @@ export class Game {
   // ===== 伤害结算(唯一入口;死亡效果由 abilities 接管)=====
   dealDamage(unit, dmg, attacker, sourceCard) {
     if (unit.dead) return;
+    // 护盾(黑王子类):先扣盾,盾碎的溢出伤害不穿透本体
+    // (官方机制:雷电 1056 打在 240 盾上,溢出 816 完全无效)
+    if (unit.shield > 0) {
+      // 有盾:本次伤害全部由盾承担(最多吸到盾空),溢出部分不穿透本体
+      // (官方机制:雷电 1056 打在 240 盾上,溢出 816 完全无效)
+      const absorbed = Math.min(unit.shield, dmg);
+      unit.shield -= absorbed;
+      if (unit.shield <= 0) {
+        this.addEffect({ type: 'shieldBreak', x: unit.x, y: unit.y, r: unit.radius + 0.3, life: 0.35, maxLife: 0.35 });
+      }
+      this.bus.emit('unit:damaged', { unit, dmg: absorbed, attacker });
+      return;   // 盾在场时不掉本体血
+    }
     unit.hp -= dmg;
     this.bus.emit('unit:damaged', { unit, dmg, attacker }); // 受击音效
     // 受击迸发特效(同一单位 0.15s 内不重复,防止群攻刷屏)

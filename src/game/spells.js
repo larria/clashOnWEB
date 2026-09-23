@@ -4,7 +4,7 @@
 import { CARDS, KIND } from '../data/cards.js';
 import { canDeploy, dist2, GRID_W, GRID_H, isRiver, isBridge } from '../core/constants.js';
 import { isHeavy } from './abilities.js';
-import { getDeployPositions } from './formation.js';
+import { getDeployPositions, getRingPositions } from './formation.js';
 
 // 法术对塔减伤倍率(单一权威来源;ai.js 补刀判定从这里 import)
 export const TOWER_MULT = {
@@ -85,7 +85,12 @@ function applySpellEffect(card, side, x, y, game) {
   // 后即可行动——对齐原版"落地后单位还有部署时间"的窗口,可被预判法术反制)
   if (sp && sp.spawnUnits) {
     const s = sp.spawnUnits;
-    const positions = game.getDeployPositions(x, y, s.count, 0.35);
+    // 队形:ring=围绕落点环形散开(飞桶扔塔中心的官方行为——3 哥布林
+    // 分居塔四周成等边三角形,加大 AOE 反制难度);
+    // 默认横排(其他 spawnUnits 卡可自选)
+    const positions = s.ring
+      ? getRingPositions(x, y, s.count, s.ring)
+      : game.getDeployPositions(x, y, s.count, 0.35);
     for (let i = 0; i < s.count; i++) {
       const u = game.spawnUnit(s.card, side, positions[i].x, positions[i].y);
       if (s.deployTime != null) u.deployTimer = s.deployTime;

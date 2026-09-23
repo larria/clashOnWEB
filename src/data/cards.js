@@ -73,6 +73,14 @@ export const CARDS = {
     hp:960, dmg:196, hitSpeed:1.4, range:1.6, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#5d4037', radius:0.5,
     special:{ charge:{ distance:2, dmgMult:2.0, speedMult:1.6 } } },  // 冲锋:走2格充能(wiki:travels 2 tiles),命中/眩晕/击退重置
+  darkPrince: { id:'darkPrince', name:'黑王子', cost:4, rarity:'史诗', kind:KIND.TROOP,
+    hp:600, dmg:133, hitSpeed:1.3, range:1.2, sightRange:5.5, speed:SPEED.MEDIUM,
+    targets:T.GROUND, flying:false, count:1, splash:1.1, deployTime:1, color:'#37474f', radius:0.5,
+    special:{ shield:128, canJumpRiver:true,
+      charge:{ distance:3, dmgMult:2.0, speedMult:2.0, splash:1.1 } } },
+    // wiki 11级×0.5:hp1200/2=600 盾256/2=128 dmg266/2=133 冲锋532/2=266(=2×dmg)
+    // 攻速1.3(wiki atk_speed) 射程1.2 溅射1.1 冲锋3格充能·速度极快(2×中速)
+    // 冲锋命中360°溅射(围杀无效);护盾先扣·溢出不穿透;可跳河(2016-02-29 实装)
   babyDragon: { id:'babyDragon', name:'飞龙宝宝', cost:4, rarity:'史诗', kind:KIND.TROOP,
     hp:576, dmg:84, hitSpeed:1.5, range:3.5, sightRange:5.5, speed:SPEED.FAST,
     targets:T.ALL, flying:true, count:1, splash:1.5, deployTime:1, color:'#ec407a', radius:0.45 },
@@ -161,9 +169,11 @@ export const CARDS = {
     special:{ freeze:4.0 } },  // 即时生效;伤害 115/2=58(11级×0.5),对塔约 17.5(倍率表 0.3 换算)
   goblinBarrel: { id:'goblinBarrel', name:'哥布林飞桶', cost:3, rarity:'史诗', kind:KIND.SPELL,
     radius:1.5, dmg:0, knockback:0, color:'#7cb342', deployZone:'anywhere', projectile: 13,
-    special:{ spawnUnits:{ card:'goblins', count:3, deployTime:1.1 } } },
+    special:{ spawnUnits:{ card:'goblins', count:3, deployTime:1.1, ring:1.6 } } },
     // wiki:3费·半径1.5·2016-01-04 首发;桶从国王塔抛物线飞出,落地炸开3哥布林;
     // 哥布林落地后 1.1s 才可行动(可被预判法术反制的窗口);桶本体无伤害(2016-07 移除)
+    // ring=1.6:落地哥布林围绕落点等边三角形散开(扔塔中心时三面包围塔,
+    // 官方行为——塔先打靠国王塔一侧的,AOE 难一次全清)
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },

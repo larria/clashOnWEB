@@ -33,6 +33,8 @@ src/game/combat.js       移动/攻击(查询式:canJumpRiver/charge)
 | `summonOnDeath` | 死亡分裂 | abilities.applyDeathAbilities |
 | `deathSummon` | 死亡召唤(建筑到期也触发) | applyDeath/Expire |
 | `heavy` | 击退免疫 | abilities.isHeavy |
+| `shield` | 护盾(先扣盾,溢出不穿透) | game.dealDamage + unit.js |
+| `charge.splash` | 冲锋命中360°溅射 | combat.attackTarget |
 
 ### 法术 special 键(spells.js)
 

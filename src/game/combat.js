@@ -402,6 +402,12 @@ export function attackTarget(attacker, target, game) {
   // 冲锋命中(王子):重击白闪+放射冲击线(双倍伤害的分量感)
   if (attacker.charged) {
     game.addEffect({ type: 'chargeHit', x: tx, y: ty, life: 0.4, maxLife: 0.4 });
+    // 冲锋溅射(黑王子):命中瞬间 360° 环形伤害,围一圈的小兵全吃
+    // 冲锋伤害(官方:冲锋命中"hits all enemies in a 360º area")
+    const ch = card.special && card.special.charge;
+    if (ch && ch.splash) {
+      applySplash(game, attacker, attacker.x, attacker.y, ch.splash, dmg, card.targets);
+    }
   }
 
   // 远程攻击有投射物(简化:直接命中,加动画)

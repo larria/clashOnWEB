@@ -35,6 +35,10 @@ export class Unit {
     this.rageTimer = 0;   // 狂暴剩余秒
     this.dead = false;
 
+    // 护盾(黑王子/皇家卫队):受击先扣盾,盾碎溢出伤害不穿透本体
+    this.shield = (this.card.special && this.card.special.shield) || 0;
+    this.maxShield = this.shield;
+
     // 特殊:冲锋(王子)
     this.chargeTimer = 0; // 累计直行距离(格),走满 charge.distance 触发冲锋
     this.charged = false; // 当前是否已冲锋

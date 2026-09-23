@@ -36,6 +36,9 @@
  "cannon": {
   "file": "CannonCard.png"
  },
+ "darkPrince": {
+  "file": "DarkPrinceCard.png"
+ },
  "elixirCollector": {
   "file": "ElixirCollectorCard.png"
  },

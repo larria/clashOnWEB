@@ -734,18 +734,26 @@ export class Renderer {
     if (u.hp < u.maxHp - 0.5) {
       const topR = art ? (isBuilding ? buildVR : (isSwarm ? r*2.1 : r*2.6)) : r;
       this.drawHpBar(x, cy - topR - 8, Math.max(r*1.9, 18), 4, u.hp/u.maxHp, u.side);
+      // 护盾条(黑王子类):血条上方青白色细条,先于血条消耗
+      if (u.shield > 0) {
+        this.drawHpBar(x, cy - topR - 13, Math.max(r*1.9, 18), 3, u.shield/u.maxShield, u.side, '#9fd8ff');
+      }
+    } else if (u.shield > 0 && u.shield < u.maxShield - 0.5) {
+      // 本体未损但盾已破:只显示盾条
+      const topR = art ? (isBuilding ? buildVR : (isSwarm ? r*2.1 : r*2.6)) : r;
+      this.drawHpBar(x, cy - topR - 13, Math.max(r*1.9, 18), 3, u.shield/u.maxShield, u.side, '#9fd8ff');
     }
   }
 
   // ===== 血条(分段式CR风格) =====
-  drawHpBar(x, y, w, h, ratio, side) {
+  drawHpBar(x, y, w, h, ratio, side, forceColor) {
     const ctx = this.ctx;
     ratio = Math.max(0, Math.min(1, ratio));
     // 底
     ctx.fillStyle = 'rgba(12,16,24,0.82)';
     roundRect(ctx, x-w/2-1.5, y-1.5, w+3, h+3, 2.5); ctx.fill();
     // 填充
-    const col = side === 0 ? '#5cd65c' : '#ff5a4f';
+    const col = forceColor || (side === 0 ? '#5cd65c' : '#ff5a4f');
     const g = ctx.createLinearGradient(x-w/2, y, x-w/2, y+h);
     g.addColorStop(0, shade(col, 45)); g.addColorStop(1, col);
     ctx.fillStyle = g;
@@ -818,6 +826,24 @@ export class Renderer {
         this.drawKingActivate(e, t);
       } else if (e.type === 'chargeHit') {
         this.drawChargeHit(e, t);
+      } else if (e.type === 'shieldBreak') {
+        // 护盾碎裂(黑王子):青白色环形碎裂 + 碎片飞散
+        const x = e.x*CELL, y = e.y*CELL;
+        ctx.save();
+        const p = 1 - t;
+        ctx.globalAlpha = t;
+        ctx.strokeStyle = '#9fd8ff';
+        ctx.lineWidth = 3 * t + 1;
+        ctx.beginPath(); ctx.arc(x, y, e.r*CELL + p*14, 0, Math.PI*2); ctx.stroke();
+        // 碎片(6 个方向飞散的小方块)
+        ctx.fillStyle = '#cdeaff';
+        for (let i = 0; i < 6; i++) {
+          const a = i * Math.PI / 3;
+          const d = e.r*CELL + p * 20;
+          ctx.globalAlpha = t * 0.9;
+          ctx.fillRect(x + Math.cos(a)*d - 2, y + Math.sin(a)*d - 2, 4, 4);
+        }
+        ctx.restore();
       } else if (e.type === 'elixirPop') {
         // 圣水收集器产费:紫色圣水滴升腾 + 光晕闪现
         const x = e.x*CELL, y = e.y*CELL;

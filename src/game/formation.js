@@ -51,3 +51,24 @@ export function getDeployPositions(cx, cy, count, r) {
   });
   return clamped;
 }
+
+// 环形布局:count 个单位围绕中心点 (cx,cy) 均匀分布(等边三角形/正方形…)
+// 用途:飞桶扔在塔中心时哥布林向四周散开(官方行为——加大 AOE 反制难度)
+// ring: 距中心距离(格);rotation: 起始角(弧度,默认 -90°=正上方)
+export function getRingPositions(cx, cy, count, ring, rotation = -Math.PI / 2) {
+  const positions = [];
+  for (let i = 0; i < count; i++) {
+    const a = rotation + (i * 2 * Math.PI) / count;
+    positions.push({ x: cx + Math.cos(a) * ring, y: cy + Math.sin(a) * ring });
+  }
+  // 边界钳制(同 getDeployPositions:不出地图、不落非桥河道)
+  const r = 0.35;
+  const inRiver = (x, y) => isRiver(x, y) && !isBridge(x, y);
+  return positions.map(p => {
+    let x = Math.max(r + 0.1, Math.min(GRID_W - r - 0.1, p.x));
+    let y = p.y;
+    if (inRiver(x, y)) y = cy < 16 ? 14.5 : 17.5;   // 退回近侧岸边
+    y = Math.max(r + 0.1, Math.min(GRID_H - r - 0.1, y));
+    return { x, y };
+  });
+}

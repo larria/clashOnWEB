@@ -22,14 +22,14 @@ const SFX_FILES = [
   'deploy_knight','deploy_archers','deploy_goblins','deploy_spearGoblins','deploy_skeletons',
   'deploy_minions','deploy_barbarians','deploy_bomber','deploy_giant','deploy_miniPekka',
   'deploy_musketeer','deploy_valkyrie','deploy_hogRider','deploy_wizard','deploy_pekka',
-  'deploy_prince','deploy_babyDragon','deploy_skeletonArmy','deploy_witch','deploy_balloon',
+  'deploy_prince','deploy_darkPrince','deploy_babyDragon','deploy_skeletonArmy','deploy_witch','deploy_balloon',
   'deploy_giantSkeleton','deploy_golem','deploy_minionHorde','deploy_cannon','deploy_tesla',
   'deploy_infernoTower','deploy_bombTower','deploy_goblinHut','deploy_barbarianHut',
   'deploy_tombstone','deploy_elixirCollector','deploy_xbow','deploy_mortar',
   // 攻击(卡牌专属)
   'atk_knight','atk_archers','atk_goblins','atk_spearGoblins','atk_skeletons','atk_minions',
   'atk_barbarians','atk_bomber','atk_giant','atk_miniPekka','atk_musketeer','atk_valkyrie',
-  'atk_hogRider','atk_wizard','atk_pekka','atk_prince','atk_babyDragon','atk_skeletonArmy',
+  'atk_hogRider','atk_wizard','atk_pekka','atk_prince','atk_darkPrince','atk_babyDragon','atk_skeletonArmy',
   'atk_witch','atk_balloon','atk_giantSkeleton','atk_golem','atk_minionHorde','atk_cannon',
   'atk_tesla','atk_infernoTower','atk_bombTower','atk_xbow','atk_mortar',
   // 法术
@@ -50,7 +50,7 @@ const SFX_FILES = [
   'hit_knight','hit_giant','hit_miniPekka','hit_valkyrie','hit_pekka','hit_prince',
   'hit_giantSkeleton',
   // 专属死亡/冲锋/召唤/建筑
-  'die_golem','charge_prince','charge_hit_prince','building_destroyed','death_bomb',
+  'die_golem','charge_prince','charge_darkPrince','charge_hit_prince','charge_hit_darkPrince','building_destroyed','death_bomb',
   'hut_spawn','summon_skeletons','tesla_open',
   // 音乐
   'music_battle',
@@ -259,9 +259,11 @@ class AudioSystem {
       this.play('hit_' + unit.cardId, { throttle: 250, volume: 0.5, fallback: null });
     });
 
-    // 王子冲锋
+    // 王子/黑王子冲锋
     bus.on('unit:charge', ({ unit }) => {
-      if (unit && unit.cardId === 'prince') this.play('charge_prince', { volume: 0.9 });
+      if (unit && (unit.cardId === 'prince' || unit.cardId === 'darkPrince')) {
+        this.play('charge_' + unit.cardId, { volume: 0.9 });
+      }
     });
 
     // 野猪骑士跳河(起跳):用野猪自己的踏步声,不再是王子冲锋音
