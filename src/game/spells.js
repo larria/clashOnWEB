@@ -128,14 +128,18 @@ function applySpellEffect(card, side, x, y, game) {
       }
       e.x = nx;
       e.y = ny;
+      // 击退同样重置冲锋充能(原版:滚木/雪球击退打断王子冲锋)
+      if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
     }
-    // 眩晕
+    // 眩晕(重置王子等单位的冲锋充能——原版电系打断充能)
     if (sp && sp.stun) {
       e.stunned = Math.max(e.stunned, sp.stun);
+      if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
     }
-    // 冰冻
+    // 冰冻(同样打断充能)
     if (sp && sp.freeze) {
       e.frozen = Math.max(e.frozen, sp.freeze);
+      if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
     }
   }
 

@@ -437,12 +437,14 @@ export class Game {
           if (u.atkCD <= 0) {
             attackTarget(u, u.target, this);
             u.atkCD = u.hitSpeed;
-            // 充能重置(攻击后取消冲锋)
-            if (u.charged) { u.charged = false; u.chargeTimer = 0; }
+            // 充能重置(攻击命中后取消冲锋并清零累计距离——
+            // 原版需重新直行 2 格才能再次冲锋;此前只取消状态
+            // 不清进度,杀完敌立即快充导致二次冲锋间隔过短)
+            if (u.charged) { u.charged = false; }
+            if (u.card.special && u.card.special.charge) u.chargeTimer = 0;
             // 攻击事件(音效订阅)
             this.bus.emit('unit:attack', { attacker: u, isTower: false, isKing: false });
           }
-          // 停下来攻击:充能计时暂停(不清零,保持充能进度)
         } else {
           // 不在范围,移动接近(充能计时在 moveUnit 内累计)
           moveUnit(u, this, dt);

@@ -36,7 +36,7 @@ export class Unit {
     this.dead = false;
 
     // 特殊:冲锋(王子)
-    this.chargeTimer = 0; // 持续直行时间,用于触发冲锋
+    this.chargeTimer = 0; // 累计直行距离(格),走满 charge.distance 触发冲锋
     this.charged = false; // 当前是否已冲锋
 
     // 地狱塔:伤害递增

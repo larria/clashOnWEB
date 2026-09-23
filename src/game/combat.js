@@ -243,11 +243,12 @@ export function moveUnit(unit, game, dt) {
     }
   }
 
-  // 充能判定(王子):持续向同一方向移动累计
+  // 充能判定(王子):按累计移动距离充能(wiki:走 2 格后开始冲锋)。
+  // 距离制而非时间制——攻击/眩晕/击退后从零重新走,原版行为
   if (unit.card.special && unit.card.special.charge) {
-    // 简化:持续向同一方向移动累计
-    unit.chargeTimer += dt;
-    if (unit.chargeTimer > 1.5 && !unit.charged) {
+    const moved = Math.min(spd, d);   // 本帧实际位移
+    unit.chargeTimer += moved;
+    if (unit.chargeTimer >= unit.card.special.charge.distance && !unit.charged) {
       unit.charged = true;
       game.bus.emit('unit:charge', { unit }); // 冲锋音效
     }

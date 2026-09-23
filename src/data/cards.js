@@ -72,7 +72,7 @@ export const CARDS = {
   prince: { id:'prince', name:'王子', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:960, dmg:196, hitSpeed:1.4, range:2.08, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#5d4037', radius:0.5,
-    special:{ charge:{ distance:3.5, dmgMult:2.0, speedMult:1.6 } } },
+    special:{ charge:{ distance:2, dmgMult:2.0, speedMult:1.6 } } },  // 冲锋:走2格充能(wiki:travels 2 tiles),命中/眩晕/击退重置
   babyDragon: { id:'babyDragon', name:'飞龙宝宝', cost:4, rarity:'史诗', kind:KIND.TROOP,
     hp:576, dmg:84, hitSpeed:1.5, range:3.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:true, count:1, splash:1.5, deployTime:1, color:'#ec407a', radius:0.45 },
