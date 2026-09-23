@@ -81,6 +81,18 @@ function applySpellEffect(card, side, x, y, game) {
   const dmg = card.dmg;
   const sp = card.special;
 
+  // 落地生成部队(飞桶类:桶落地炸开,内部单位按队形出现;deployTime
+  // 后即可行动——对齐原版"落地后单位还有部署时间"的窗口,可被预判法术反制)
+  if (sp && sp.spawnUnits) {
+    const s = sp.spawnUnits;
+    const positions = game.getDeployPositions(x, y, s.count, 0.35);
+    for (let i = 0; i < s.count; i++) {
+      const u = game.spawnUnit(s.card, side, positions[i].x, positions[i].y);
+      if (s.deployTime != null) u.deployTimer = s.deployTime;
+    }
+    game.bus.emit('unit:spawned', { spawner: { card, side }, card: s.card }); // 生兵音效
+  }
+
   // 伤害敌方单位(皇室战争中法术只伤害敌方)
   const enemies = game.units.filter(u => u.side !== side && !u.dead);
   let spellHits = 0;

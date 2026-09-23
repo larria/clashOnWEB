@@ -159,6 +159,11 @@ export const CARDS = {
   freeze: { id:'freeze', name:'冰冻法术', cost:4, rarity:'史诗', kind:KIND.SPELL,
     radius:3.0, dmg:58, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
     special:{ freeze:4.0 } },  // 即时生效;伤害 115/2=58(11级×0.5),对塔约 17.5(倍率表 0.3 换算)
+  goblinBarrel: { id:'goblinBarrel', name:'哥布林飞桶', cost:3, rarity:'史诗', kind:KIND.SPELL,
+    radius:1.5, dmg:0, knockback:0, color:'#7cb342', deployZone:'anywhere', projectile: 13,
+    special:{ spawnUnits:{ card:'goblins', count:3, deployTime:1.1 } } },
+    // wiki:3费·半径1.5·2016-01-04 首发;桶从国王塔抛物线飞出,落地炸开3哥布林;
+    // 哥布林落地后 1.1s 才可行动(可被预判法术反制的窗口);桶本体无伤害(2016-07 移除)
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },

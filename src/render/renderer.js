@@ -915,6 +915,22 @@ export class Renderer {
       ctx.beginPath();
       ctx.moveTo(-4, -3.5); ctx.lineTo(-26, 0); ctx.lineTo(-4, 3.5);
       ctx.closePath(); ctx.fill();
+    } else if (e.cardId === 'goblinBarrel') {
+      // 飞桶:木桶(旋转) + 抛物线高度模拟(桶飞行中离地"高度"用缩放+阴影表达)
+      const hop = Math.sin(Math.PI * p) * 10;   // 0→峰→0
+      ctx.translate(0, -hop);
+      ctx.rotate(this.animTime * 9);            // 滚动旋转
+      ctx.fillStyle = '#8d6e63';
+      ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2); ctx.stroke();
+      // 桶箍
+      ctx.strokeStyle = '#4e342e'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-10, -3); ctx.lineTo(10, -3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-10, 3); ctx.lineTo(10, 3); ctx.stroke();
+      // 桶面哥布林标记(绿色小圆)
+      ctx.fillStyle = '#7cb342';
+      ctx.beginPath(); ctx.arc(0, 0, 3.5, 0, Math.PI*2); ctx.fill();
     } else if (e.cardId === 'arrows') {
       // 万箭:一簇箭矢(扇形)
       ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 2; ctx.lineCap = 'round';

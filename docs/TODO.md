@@ -1,13 +1,15 @@
 # TODO - 待办与规划
 
 当前版本规格见 PRODUCT.md;历史变更见 LOG.md。
+新卡实装 SOP(架构/能力键/检查单)见 docs/ARCHITECTURE-CARDS.md;
+全卡 ReleaseDate 排序索引见 docs/card-release-dates.json(实装顺序依据)。
 官方卡牌完整数据(离线可查):`docs/cards-wiki/`(113 张卡,
 来源 clashroyale.fandom.com,2026-09-22 抓取,每卡一文件含
 完整 wikitext:数值表/更新历史/策略描述)。
 
 ## 卡牌实装进度
 
-**已实装 41 张**(数值已对齐官方 wiki 11 级 × 0.5,核对记录见
+**已实装 42 张**(数值已对齐官方 wiki 11 级 × 0.5,核对记录见
 LOG.md v0.4.6):
 
 - 部队 23:骑士、弓箭手、哥布林、投矛哥布林、骷髅兵、亡灵、野蛮人、
@@ -15,10 +17,10 @@ LOG.md v0.4.6):
   王子、飞龙宝宝、骷髅军团、女巫、气球兵、骷髅巨人、戈仑石人、亡灵大军
 - 建筑 10:加农炮、特斯拉电磁塔、地狱之塔、炸弹塔、哥布林小屋、
   野蛮人小屋、骷髅墓碑、圣水收集器、X连弩、迫击炮
-- 法术 8:火球、万箭齐发、火箭、雷电法术、电击法术、狂暴法术、
-  冰冻法术、镜像法术
+- 法术 9:火球、万箭齐发、火箭、雷电法术、电击法术、狂暴法术、
+  冰冻法术、镜像法术、哥布林飞桶
 
-**未实装 72 张**(类型取自官方 Card Infobox;中文名后括号内为
+**未实装 71 张**(类型取自官方 Card Infobox;中文名后括号内为
 `docs/cards-wiki/` 文件名,查数据直接开对应文件):
 
 ### 部队 Troop(49)
@@ -45,8 +47,7 @@ LOG.md v0.4.6):
 
 ### 法术 Spell(12)
 野蛮人木桶(Barbarian Barrel)、复制(Clone)、地震(Earthquake)、
-大雪球(Giant Snowball)、哥布林飞桶(Goblin Barrel)、
-哥布林诅咒(Goblin Curse)、墓园(Graveyard)、治疗法术(Heal)、
+大雪球(Giant Snowball)、哥布林诅咒(Goblin Curse)、墓园(Graveyard)、治疗法术(Heal)、
 毒药(Poison)、滚木(The Log)、龙卷风(Tornado)、虚空(Void)
 
 ### 冠军卡 Champion(6)

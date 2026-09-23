@@ -1,0 +1,1132 @@
+[
+ {
+  "file": "Archers",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Arrows",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Baby_Dragon",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "P.E.K.K.A.'s Playhouse",
+  "implemented": true
+ },
+ {
+  "file": "Balloon",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Royal Arena",
+  "implemented": true
+ },
+ {
+  "file": "Barbarian_Hut",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Rare",
+  "cost": "6",
+  "arena": "Jungle Arena",
+  "implemented": true
+ },
+ {
+  "file": "Barbarians",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "5",
+  "arena": "Barbarian Bowl",
+  "implemented": true
+ },
+ {
+  "file": "Bomb_Tower",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Spell Valley",
+  "implemented": true
+ },
+ {
+  "file": "Bomber",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Bone Pit",
+  "implemented": true
+ },
+ {
+  "file": "Cannon",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Barbarian Bowl",
+  "implemented": true
+ },
+ {
+  "file": "Fireball",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Freeze",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "Frozen Peak",
+  "implemented": true
+ },
+ {
+  "file": "Giant",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "5",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Giant_Skeleton",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "6",
+  "arena": "Frozen Peak",
+  "implemented": true
+ },
+ {
+  "file": "Goblin_Barrel",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "3",
+  "arena": "P.E.K.K.A.'s Playhouse",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Hut",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Goblin Stadium",
+  "implemented": true
+ },
+ {
+  "file": "Goblins",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Goblin Stadium",
+  "implemented": true
+ },
+ {
+  "file": "Golem",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "8",
+  "arena": "Hog Mountain",
+  "implemented": true
+ },
+ {
+  "file": "Hog_Rider",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Builder's Workshop",
+  "implemented": true
+ },
+ {
+  "file": "Inferno_Tower",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Rare",
+  "cost": "5",
+  "arena": "Spell Valley",
+  "implemented": true
+ },
+ {
+  "file": "Knight",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Lightning",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "6",
+  "arena": "Frozen Peak",
+  "implemented": true
+ },
+ {
+  "file": "Mini_P.E.K.K.A.",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Minion_Horde",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "5",
+  "arena": "Hog Mountain",
+  "implemented": true
+ },
+ {
+  "file": "Minions",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "Mirror",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "? ''(Cost of previous card played +1)''",
+  "arena": "Miner's Mine",
+  "implemented": true
+ },
+ {
+  "file": "Mortar",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Common",
+  "cost": "4",
+  "arena": "Builder's Workshop",
+  "implemented": true
+ },
+ {
+  "file": "Musketeer",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Training Camp",
+  "implemented": true
+ },
+ {
+  "file": "P.E.K.K.A.",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "7",
+  "arena": "P.E.K.K.A.'s Playhouse",
+  "implemented": true
+ },
+ {
+  "file": "Prince",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Royal Arena",
+  "implemented": true
+ },
+ {
+  "file": "Rage",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "2",
+  "arena": "Serenity Peak",
+  "implemented": true
+ },
+ {
+  "file": "Rocket",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Rare",
+  "cost": "6",
+  "arena": "Builder's Workshop",
+  "implemented": true
+ },
+ {
+  "file": "Skeleton_Army",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "3",
+  "arena": "P.E.K.K.A.'s Playhouse",
+  "implemented": true
+ },
+ {
+  "file": "Skeletons",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "1",
+  "arena": "Bone Pit",
+  "implemented": true
+ },
+ {
+  "file": "Spear_Goblins",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Goblin Stadium",
+  "implemented": true
+ },
+ {
+  "file": "Tesla",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Common",
+  "cost": "4",
+  "arena": "Hog Mountain",
+  "implemented": true
+ },
+ {
+  "file": "Tombstone",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Rare",
+  "cost": "3",
+  "arena": "Bone Pit",
+  "implemented": true
+ },
+ {
+  "file": "Valkyrie",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Bone Pit",
+  "implemented": true
+ },
+ {
+  "file": "Witch",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "P.E.K.K.A.'s Playhouse",
+  "implemented": true
+ },
+ {
+  "file": "Wizard",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "5",
+  "arena": "Spell Valley",
+  "implemented": true
+ },
+ {
+  "file": "X-Bow",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Building",
+  "rarity": "Epic",
+  "cost": "6",
+  "arena": "Hog Mountain",
+  "implemented": true
+ },
+ {
+  "file": "Zap",
+  "dt": "2016-01-04",
+  "date": "4 January 2016",
+  "type": "Spell",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Builder's Workshop",
+  "implemented": true
+ },
+ {
+  "file": "Dark_Prince",
+  "dt": "2016-02-29",
+  "date": "29 February 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "Royal Arena",
+  "implemented": false
+ },
+ {
+  "file": "Ice_Wizard",
+  "dt": "2016-02-29",
+  "date": "29 February 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "3",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Poison",
+  "dt": "2016-02-29",
+  "date": "29 February 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Three_Musketeers",
+  "dt": "2016-02-29",
+  "date": "29 February 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "9",
+  "arena": "Royal Arena",
+  "implemented": false
+ },
+ {
+  "file": "Fire_Spirit",
+  "dt": "2016-05-03",
+  "date": "3 May 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "1",
+  "arena": "Spell Valley",
+  "implemented": false
+ },
+ {
+  "file": "Furnace",
+  "dt": "2016-05-03",
+  "date": "3 May 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Hog Mountain",
+  "implemented": false
+ },
+ {
+  "file": "Guards",
+  "dt": "2016-05-03",
+  "date": "3 May 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "3",
+  "arena": "P.E.K.K.A.'s Playhouse",
+  "implemented": false
+ },
+ {
+  "file": "Lava_Hound",
+  "dt": "2016-05-03",
+  "date": "3 May 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "7",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Miner",
+  "dt": "2016-05-03",
+  "date": "3 May 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "3",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Sparky",
+  "dt": "2016-05-03",
+  "date": "3 May 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "6",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Bowler",
+  "dt": "2016-07-04",
+  "date": "4 July 2016",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Ice_Spirit",
+  "dt": "2016-07-04",
+  "date": "4 July 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "1",
+  "arena": "Frozen Peak",
+  "implemented": false
+ },
+ {
+  "file": "Lumberjack",
+  "dt": "2016-07-04",
+  "date": "4 July 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Serenity Peak",
+  "implemented": false
+ },
+ {
+  "file": "The_Log",
+  "dt": "2016-07-04",
+  "date": "4 July 2016",
+  "type": "Spell",
+  "rarity": "Legendary",
+  "cost": "2",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Mega_Minion",
+  "dt": "2016-09-19",
+  "date": "19 September 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "3",
+  "arena": "Barbarian Bowl",
+  "implemented": false
+ },
+ {
+  "file": "Inferno_Dragon",
+  "dt": "2016-09-30",
+  "date": "30 September 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Ice_Golem",
+  "dt": "2016-10-14",
+  "date": "14 October 2016",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "2",
+  "arena": "Frozen Peak",
+  "implemented": false
+ },
+ {
+  "file": "Graveyard",
+  "dt": "2016-10-28",
+  "date": "28 October 2016",
+  "type": "Spell",
+  "rarity": "Legendary",
+  "cost": "5",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Tornado",
+  "dt": "2016-11-11",
+  "date": "11 November 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "3",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Elite_Barbarians",
+  "dt": "2016-11-25",
+  "date": "25 November 2016",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "6",
+  "arena": "Hog Mountain",
+  "implemented": false
+ },
+ {
+  "file": "Clone",
+  "dt": "2016-12-09",
+  "date": "9 December 2016",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "3",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Electro_Wizard",
+  "dt": "2016-12-30",
+  "date": "30 December 2016",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Dart_Goblin",
+  "dt": "2017-01-13",
+  "date": "13 January 2017",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "3",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Executioner",
+  "dt": "2017-01-27",
+  "date": "27 January 2017",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Serenity Peak",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Gang",
+  "dt": "2017-02-24",
+  "date": "24 February 2017",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Bandit",
+  "dt": "2017-03-24",
+  "date": "24 March 2017",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "3",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Heal",
+  "dt": "2017-05-01",
+  "date": "1 May 2017",
+  "type": "Spell",
+  "rarity": "Rare",
+  "cost": "1",
+  "arena": null,
+  "implemented": false
+ },
+ {
+  "file": "Night_Witch",
+  "dt": "2017-05-31",
+  "date": "31 May 2017",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Serenity Peak",
+  "implemented": false
+ },
+ {
+  "file": "Bats",
+  "dt": "2017-07-07",
+  "date": "7 July 2017",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Builder's Workshop",
+  "implemented": false
+ },
+ {
+  "file": "Cannon_Cart",
+  "dt": "2017-08-05",
+  "date": "5 August 2017",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Mega_Knight",
+  "dt": "2017-09-08",
+  "date": "8 September 2017",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "7",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Flying_Machine",
+  "dt": "2017-10-06",
+  "date": "6 October 2017",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Builder's Workshop",
+  "implemented": false
+ },
+ {
+  "file": "Skeleton_Barrel",
+  "dt": "2017-11-17",
+  "date": "17 November 2017",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Hunter",
+  "dt": "2017-12-12",
+  "date": "12 December 2017",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "Hog Mountain",
+  "implemented": false
+ },
+ {
+  "file": "Zappies",
+  "dt": "2017-12-12",
+  "date": "12 December 2017",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Hog Mountain",
+  "implemented": false
+ },
+ {
+  "file": "Magic_Archer",
+  "dt": "2018-03-02",
+  "date": "2 March 2018",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Barbarian_Barrel",
+  "dt": "2018-04-06",
+  "date": "6 April 2018",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "2",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Rascals",
+  "dt": "2018-05-25",
+  "date": "25 May 2018",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "5",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Giant_Snowball",
+  "dt": "2018-06-20",
+  "date": "20 June 2018",
+  "type": "Spell",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Frozen Peak",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Giant",
+  "dt": "2018-09-05",
+  "date": "5 September 2018",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "6",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Electro_Dragon",
+  "dt": "2018-11-09",
+  "date": "9 November 2018",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Ram_Rider",
+  "dt": "2018-12-24",
+  "date": "24 December 2018",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "5",
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Wall_Breakers",
+  "dt": "2019-02-26",
+  "date": "26 February 2019",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "2",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Earthquake",
+  "dt": "2019-04-15",
+  "date": "15 April 2019",
+  "type": "Spell",
+  "rarity": "Rare",
+  "cost": "3",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Cage",
+  "dt": "2019-05-17",
+  "date": "17 May 2019",
+  "type": "Building",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Goblin Stadium",
+  "implemented": false
+ },
+ {
+  "file": "Fisherman",
+  "dt": "2019-08-05",
+  "date": "5 August 2019",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "3",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Firecracker",
+  "dt": "2020-02-03",
+  "date": "3 February 2020",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "3",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Electro_Giant",
+  "dt": "2020-11-02",
+  "date": "2 November 2020",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "7",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Electro_Spirit",
+  "dt": "2020-11-02",
+  "date": "2 November 2020",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "1",
+  "arena": "Spell Valley",
+  "implemented": false
+ },
+ {
+  "file": "Mother_Witch",
+  "dt": "2020-12-07",
+  "date": "7 December 2020",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Drill",
+  "dt": "2021-07-11",
+  "date": "11 July 2021",
+  "type": "Building",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "Serenity Peak",
+  "implemented": false
+ },
+ {
+  "file": "Archer_Queen",
+  "dt": "2021-10-27",
+  "date": "27 October 2021",
+  "type": "Troop",
+  "rarity": "Champion",
+  "cost": "5",
+  "arena": "Royal Crypt",
+  "implemented": false
+ },
+ {
+  "file": "Skeleton_King",
+  "dt": "2021-10-27",
+  "date": "27 October 2021",
+  "type": "Troop",
+  "rarity": "Champion",
+  "cost": "4",
+  "arena": "Executioner's Kitchen",
+  "implemented": false
+ },
+ {
+  "file": "Monk",
+  "dt": "2022-10-26",
+  "date": "26 October 2022",
+  "type": "Troop",
+  "rarity": "Champion",
+  "cost": "5",
+  "arena": "Silent Sanctuary",
+  "implemented": false
+ },
+ {
+  "file": "Phoenix",
+  "dt": "2022-10-26",
+  "date": "26 October 2022",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "4",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Little_Prince",
+  "dt": "2023-11-06",
+  "date": "6 November 2023",
+  "type": "Troop",
+  "rarity": "Champion",
+  "cost": "3",
+  "arena": "Silent Sanctuary",
+  "implemented": false
+ },
+ {
+  "file": "Cannoneer",
+  "dt": "2024-01-01",
+  "date": "1 January 2024",
+  "type": "Tower Troop",
+  "rarity": "Epic",
+  "cost": null,
+  "arena": "Frozen Peak",
+  "implemented": false
+ },
+ {
+  "file": "Dagger_Duchess",
+  "dt": "2024-04-01",
+  "date": "1 April 2024",
+  "type": "Tower Troop",
+  "rarity": "Legendary",
+  "cost": null,
+  "arena": "Electro Valley",
+  "implemented": false
+ },
+ {
+  "file": "Void",
+  "dt": "2024-05-06",
+  "date": "6 May 2024",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "5",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Curse",
+  "dt": "2024-06-17",
+  "date": "17 June 2024",
+  "type": "Spell",
+  "rarity": "Epic",
+  "cost": "2",
+  "arena": "Serenity Peak",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Demolisher",
+  "dt": "2024-06-17",
+  "date": "17 June 2024",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "4",
+  "arena": "Spooky Town",
+  "implemented": false
+ },
+ {
+  "file": "Goblin_Machine",
+  "dt": "2024-06-17",
+  "date": "17 June 2024",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "5",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Suspicious_Bush",
+  "dt": "2024-07-30",
+  "date": "30 July 2024",
+  "type": "Troop",
+  "rarity": "Rare",
+  "cost": "2",
+  "arena": "Rascal's Hideout",
+  "implemented": false
+ },
+ {
+  "file": "Goblinstein",
+  "dt": "2024-10-07",
+  "date": "7 October 2024",
+  "type": "Troop",
+  "rarity": "Champion",
+  "cost": "5",
+  "arena": "Silent Sanctuary",
+  "implemented": false
+ },
+ {
+  "file": "Rune_Giant",
+  "dt": "2025-01-06",
+  "date": "6 January 2025",
+  "type": "Troop",
+  "rarity": "Epic",
+  "cost": "4",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Berserker",
+  "dt": "2025-02-03",
+  "date": "3 February 2025",
+  "type": "Troop",
+  "rarity": "Common",
+  "cost": "2",
+  "arena": "Jungle Arena",
+  "implemented": false
+ },
+ {
+  "file": "Spirit_Empress",
+  "dt": "2025-07-07",
+  "date": "7 July 2025",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "6 ''(Air form: if the player's Elixir count ≥ 6)''<br />3 ''(Ground form: otherwise)''",
+  "arena": "Miner's Mine",
+  "implemented": false
+ },
+ {
+  "file": "Ronin",
+  "dt": "2026-07-06",
+  "date": "6 July 2026",
+  "type": "Troop",
+  "rarity": "Legendary",
+  "cost": "5",
+  "arena": "Serenity Peak",
+  "implemented": false
+ },
+ {
+  "file": "Heal_Spirit",
+  "dt": null,
+  "date": null,
+  "type": null,
+  "rarity": null,
+  "cost": null,
+  "arena": null,
+  "implemented": false
+ },
+ {
+  "file": "Mighty_Miner",
+  "dt": null,
+  "date": null,
+  "type": null,
+  "rarity": null,
+  "cost": null,
+  "arena": null,
+  "implemented": false
+ },
+ {
+  "file": "Minion_Giant",
+  "dt": null,
+  "date": null,
+  "type": null,
+  "rarity": null,
+  "cost": null,
+  "arena": null,
+  "implemented": false
+ },
+ {
+  "file": "Skeleton_Dragons",
+  "dt": null,
+  "date": null,
+  "type": null,
+  "rarity": null,
+  "cost": null,
+  "arena": null,
+  "implemented": false
+ }
+]
