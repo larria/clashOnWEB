@@ -77,7 +77,19 @@ export class Game {
     this.bus.emit('unit:deployed', { unit: u });
     return u;
   }
-  addEffect(e) { this.effects.push(e); }
+  // 特效入队(性能护栏:超上限时丢弃低频视觉特效,防止大团战
+  // 法术齐爆时 effects 数组膨胀拖慢渲染;伤害等逻辑不走这里不受影响)
+  addEffect(e) {
+    if (this.effects.length >= 40) {
+      // 满了:优先丢"非关键"的(脚步/水花/攻击闪光类短命特效)
+      const dropIdx = this.effects.findIndex(f =>
+        f.type === 'jumpDust' || f.type === 'jumpLand' || f.type === 'shotTrail' ||
+        f.type === 'meleeSlash' || f.type === 'elixirPop' || f.type === 'spellIcon');
+      if (dropIdx >= 0) this.effects.splice(dropIdx, 1);
+      else return;   // 全是关键特效:不再入队
+    }
+    this.effects.push(e);
+  }
   getDeployPositions(cx, cy, count, r) { return getDeployPositions(cx, cy, count, r); }
 
   addElixir(side, amount, source) {

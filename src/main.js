@@ -351,6 +351,7 @@ window.addEventListener('focus', () => {
 });
 
 // ===== 主循环 =====
+let _renderAcc = 0;   // 渲染节流累积器(动态帧率)
 function loop(now) {
   try {
     const dt = Math.min(0.05, (now - lastTime) / 1000);
@@ -387,7 +388,18 @@ function loop(now) {
         elixir: game.elixir[0], elixirFloat: game.elixirFloat[0], selectedIdx: selectedCardIdx,
       });
       hud.renderInfo(game); // 信息面板每帧刷新(ready 态也显示)
-      renderer.draw(phase === 'playing' ? getPreview() : null, phase === 'playing' ? dt : 0);
+      // 动态渲染节流(发热优化):
+      // - 对局中(playing):低端设备(lowFx)渲染降到 ~33fps(游戏逻辑
+      //   仍满帧跑,策略游戏 33fps 渲染无感知差异,GPU 占用近乎减半);
+      //   高端设备满帧
+      // - 非对局(ready/paused/over):一律 ~33fps(战场静止,只余呼吸动画)
+      const RENDER_INTERVAL = 0.03;   // 33fps 节流帧距
+      _renderAcc += dt;
+      const wantFull = phase === 'playing' && !renderer.lowFx;
+      if (wantFull || _renderAcc >= RENDER_INTERVAL) {
+        _renderAcc = 0;
+        renderer.draw(phase === 'playing' ? getPreview() : null, phase === 'playing' ? dt : 0);
+      }
     }
     if (phase === 'playing' && game && game.gameOver) {
       // 终场提示后稍作停顿再弹结算

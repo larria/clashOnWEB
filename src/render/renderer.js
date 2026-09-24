@@ -23,6 +23,36 @@ export class Renderer {
     // 静态战场层缓存(离屏 canvas,避免每帧重绘草地纹理)
     this.arenaCache = null;
     this.animTime = 0;
+    // 设备性能档:手机(触屏+窄屏)或低端 → 关闭 shadowBlur(手机 GPU
+    // 上 shadow 是最贵操作之一,发热主因),发光用多层描边模拟
+    this.lowFx = (typeof navigator !== 'undefined' &&
+      (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
+      Math.min(window.screen.width, window.screen.height) < 900);
+  }
+
+  /** 发光描边:高端设备 shadowBlur,低端设备多层半透明描边模拟(视觉近似) */
+  glowStroke(x, y, r, color, alpha, width, blur) {
+    const ctx = this.ctx;
+    if (!this.lowFx) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = blur;
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
+      ctx.shadowBlur = 0;
+    } else {
+      // 降级:3 层递减透明度的加宽描边(近似光晕,开销 ~1/10)
+      for (let i = 3; i >= 1; i--) {
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = alpha * (0.25 * i);
+        ctx.lineWidth = width + i * 2.2;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.stroke();
+    }
   }
 
   draw(deployPreview, dt) {
@@ -60,6 +90,10 @@ export class Renderer {
   /**
    * 部署遮罩(选中部队/建筑卡时):不可部署区域铺红色半透明,
    * 可选区域保持原色透出——对齐原版"红色阴影标出不能放的地方"
+   *
+   * 性能:逐格 canDeploy 采样(36×64/0.25=9216 次)只在部署区形状
+   * 变化时重算(塔被毁/建筑增减),缓存到离屏;每帧仅 drawImage +
+   * 呼吸透明度。alpha 呼吸用整层 globalAlpha 变化,不动缓存内容
    */
   drawDeployMask() {
     const ctx = this.ctx;
@@ -67,45 +101,56 @@ export class Renderer {
     const enemyTowers = this.game.towers[1];
     const myTowers = this.game.towers[0];
     const buildings = this.game.units.filter(u => u.isBuilding && !u.dead);
-    const step = 0.5;   // 半格粒度采样
-    const okAt = (gx, gy) => {
-      if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
-      return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers, buildings);
-    };
-    ctx.save();
-    // 逐格采样 canDeploy(与实际判定同源):不可部署 → 红遮罩
-    // 微呼吸:0.38~0.46,不抢戏但持续存在感
+    // 缓存键:塔存活状态 + 建筑占位集合(决定部署区形状的全部因素)
+    const towersSig = ['left','right','king'].map(k => enemyTowers[k].dead ? 0 : 1).join('') +
+      ['left','right','king'].map(k => myTowers[k].dead ? 0 : 1).join('');
+    const bSig = buildings.map(b => `${b.x.toFixed(1)},${b.y.toFixed(1)},${b.radius}`).join(';');
+    const sig = towersSig + '|' + bSig;
+    if (this._maskSig !== sig || !this._maskCache) {
+      this._maskSig = sig;
+      const c = document.createElement('canvas');
+      c.width = CANVAS_W; c.height = CANVAS_H;
+      const mc = c.getContext('2d');
+      const step = 0.5;   // 半格粒度采样
+      const okAt = (gx, gy) => {
+        if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
+        return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers, buildings);
+      };
+      // 不可部署 → 红遮罩(单路径合并 fill)
+      mc.fillStyle = 'rgba(208,44,44,1)';
+      mc.beginPath();
+      for (let gy = 0; gy < GRID_H; gy += step) {
+        for (let gx = 0; gx < GRID_W; gx += step) {
+          if (okAt(gx, gy)) continue;
+          const px = gx*CELL, py = gy*CELL, s = CELL*step;
+          mc.rect(px, py, s, s);
+        }
+      }
+      mc.fill();
+      // 可选区边界描金线:只在"可选 ↔ 红遮罩"分界处画
+      const inField = (gx, gy) => gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H;
+      mc.strokeStyle = 'rgba(255,224,130,1)';
+      mc.lineWidth = 3;
+      mc.lineJoin = 'round';
+      mc.beginPath();
+      for (let gy = 0; gy < GRID_H; gy += step) {
+        for (let gx = 0; gx < GRID_W; gx += step) {
+          if (!okAt(gx, gy)) continue;
+          const px = gx*CELL, py = gy*CELL, s = CELL*step;
+          if (inField(gx, gy - step) && !okAt(gx, gy - step)) { mc.moveTo(px, py + 1.5); mc.lineTo(px + s, py + 1.5); }
+          if (inField(gx, gy + step) && !okAt(gx, gy + step)) { mc.moveTo(px, py + s - 1.5); mc.lineTo(px + s, py + s - 1.5); }
+          if (inField(gx - step, gy) && !okAt(gx - step, gy)) { mc.moveTo(px + 1.5, py); mc.lineTo(px + 1.5, py + s); }
+          if (inField(gx + step, gy) && !okAt(gx + step, gy)) { mc.moveTo(px + s - 1.5, py); mc.lineTo(px + s - 1.5, py + s); }
+        }
+      }
+      mc.stroke();
+      this._maskCache = c;
+    }
+    // 每帧:仅 drawImage + 呼吸(红区基准 0.42,金线随层透明度同步呼吸)
     const a = 0.42 + 0.04 * Math.sin(t * 2.2);
-    ctx.fillStyle = `rgba(208,44,44,${a})`;
-    ctx.beginPath();
-    for (let gy = 0; gy < GRID_H; gy += step) {
-      for (let gx = 0; gx < GRID_W; gx += step) {
-        const cx = gx + step/2, cy = gy + step/2;
-        if (okAt(gx, gy)) continue;
-        const px = gx*CELL, py = gy*CELL, s = CELL*step;
-        ctx.rect(px, py, s, s);   // 合并成单次 fill,避免逐格留缝
-      }
-    }
-    ctx.fill();
-    // 可选区边界描金线(呼吸):只在"可选 ↔ 红遮罩"分界处画,
-    // 地图外缘不描(避免多余边框)
-    const inField = (gx, gy) => gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H;
-    ctx.strokeStyle = `rgba(255,224,130,${0.45 + 0.2 * Math.sin(t * 2.6)})`;
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    for (let gy = 0; gy < GRID_H; gy += step) {
-      for (let gx = 0; gx < GRID_W; gx += step) {
-        if (!okAt(gx, gy)) continue;
-        const px = gx*CELL, py = gy*CELL, s = CELL*step;
-        // 仅当相邻格"在场内且不可部署"(即红区)时描线
-        if (inField(gx, gy - step) && !okAt(gx, gy - step)) { ctx.moveTo(px, py + 1.5); ctx.lineTo(px + s, py + 1.5); }
-        if (inField(gx, gy + step) && !okAt(gx, gy + step)) { ctx.moveTo(px, py + s - 1.5); ctx.lineTo(px + s, py + s - 1.5); }
-        if (inField(gx - step, gy) && !okAt(gx - step, gy)) { ctx.moveTo(px + 1.5, py); ctx.lineTo(px + 1.5, py + s); }
-        if (inField(gx + step, gy) && !okAt(gx + step, gy)) { ctx.moveTo(px + s - 1.5, py); ctx.lineTo(px + s - 1.5, py + s); }
-      }
-    }
-    ctx.stroke();
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.drawImage(this._maskCache, 0, 0);
     ctx.restore();
   }
 
@@ -652,13 +697,8 @@ export class Renderer {
       const a = 0.22 + 0.18 * ratio;
       ctx.fillStyle = `rgba(120,170,255,${a * pulse})`;
       ctx.beginPath(); ctx.arc(x, cy, sr, 0, Math.PI*2); ctx.fill();
-      // 光晕边(双层:外发光 + 内实线)
-      ctx.shadowColor = '#7ab8ff';
-      ctx.shadowBlur = 8 * pulse;
-      ctx.strokeStyle = `rgba(159,216,255,${(0.55 + 0.35 * ratio) * pulse})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(x, cy, sr, 0, Math.PI*2); ctx.stroke();
-      ctx.shadowBlur = 0;
+      // 光晕边(发光描边,低端设备自动降级多层描边)
+      this.glowStroke(x, cy, sr, '#7ab8ff', (0.55 + 0.35 * ratio) * pulse, 2, 8 * pulse);
       // 顶端高光弧(强化"罩"的立体感)
       ctx.strokeStyle = `rgba(220,240,255,${0.5 * pulse})`;
       ctx.lineWidth = 1.5;
@@ -682,16 +722,10 @@ export class Renderer {
         ctx.ellipse(x, cy + dirY * off, w * 0.7, w * 1.1, 0, 0, Math.PI*2);
         ctx.fill();
       }
-      // 发光冲刺环(双层:外发光实线 + 内虚线,脉动)
+      // 发光冲刺环(外发光实线 + 内虚线,脉动;低端设备自动降级)
       const pulse = 0.7 + 0.3 * Math.sin(tt * 16);
       ctx.save();
-      ctx.shadowColor = hex;
-      ctx.shadowBlur = 12 * pulse;
-      ctx.strokeStyle = hex;
-      ctx.globalAlpha = 0.9 * pulse;
-      ctx.lineWidth = 2.8;
-      ctx.beginPath(); ctx.arc(x, cy, fxR + 4, 0, Math.PI*2); ctx.stroke();
-      ctx.shadowBlur = 0;
+      this.glowStroke(x, cy, fxR + 4, hex, 0.9 * pulse, 2.8, 12 * pulse);
       ctx.globalAlpha = 0.5;
       ctx.lineWidth = 1.2;
       ctx.setLineDash([5, 5]);
@@ -813,19 +847,23 @@ export class Renderer {
   }
 
   // ===== 血条(分段式CR风格) =====
+  // 性能:填充用纯色+顶部高光线替代 createLinearGradient(每帧 ~35 次
+  // 渐变对象分配;视觉几乎无差,颜色仅 3 种)
   drawHpBar(x, y, w, h, ratio, side, forceColor) {
     const ctx = this.ctx;
     ratio = Math.max(0, Math.min(1, ratio));
     // 底
     ctx.fillStyle = 'rgba(12,16,24,0.82)';
     roundRect(ctx, x-w/2-1.5, y-1.5, w+3, h+3, 2.5); ctx.fill();
-    // 填充
+    // 填充(纯色 + 顶部高光,替代渐变)
     const col = forceColor || (side === 0 ? '#5cd65c' : '#ff5a4f');
-    const g = ctx.createLinearGradient(x-w/2, y, x-w/2, y+h);
-    g.addColorStop(0, shade(col, 45)); g.addColorStop(1, col);
-    ctx.fillStyle = g;
     if (ratio > 0) {
-      roundRect(ctx, x-w/2, y, w*ratio, h, 1.5); ctx.fill();
+      const fw = w*ratio;
+      ctx.fillStyle = col;
+      roundRect(ctx, x-w/2, y, fw, h, 1.5); ctx.fill();
+      // 顶部高光线(模拟渐变的立体感)
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      roundRect(ctx, x-w/2, y, fw, Math.max(1, h*0.4), 1.5); ctx.fill();
     }
     // 分段刻度
     ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1;
@@ -1274,10 +1312,12 @@ export class Renderer {
     ctx.save();
     ctx.globalAlpha = Math.min(1, alpha) * 0.95;
     if (art) {
-      // 卡图(裁圆形,带发光描边)
+      // 卡图(裁圆形,带发光描边;低端设备省 shadow,靠白描边)
       ctx.save();
-      ctx.shadowColor = 'rgba(255,255,255,0.8)';
-      ctx.shadowBlur = 12;
+      if (!this.lowFx) {
+        ctx.shadowColor = 'rgba(255,255,255,0.8)';
+        ctx.shadowBlur = 12;
+      }
       ctx.beginPath(); ctx.arc(x, y + dy, size/2, 0, Math.PI*2); ctx.clip();
       drawCardImage(ctx, art, x, y + dy, size, { cropSquare: true });
       ctx.restore();
@@ -1686,13 +1726,22 @@ export class Renderer {
   // 暗角(氛围)
   drawVignette() {
     const ctx = this.ctx;
-    const g = ctx.createRadialGradient(
-      CANVAS_W/2, CANVAS_H/2, CANVAS_H*0.35,
-      CANVAS_W/2, CANVAS_H/2, CANVAS_H*0.75
-    );
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, 'rgba(0,0,0,0.22)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    // 暗角是固定的 → 离屏缓存,每帧 1 次 drawImage(原先每帧
+    // createRadialGradient+全屏 fill,纯浪费)
+    if (!this._vignetteCache) {
+      const c = document.createElement('canvas');
+      c.width = CANVAS_W; c.height = CANVAS_H;
+      const vc = c.getContext('2d');
+      const g = vc.createRadialGradient(
+        CANVAS_W/2, CANVAS_H/2, CANVAS_H*0.35,
+        CANVAS_W/2, CANVAS_H/2, CANVAS_H*0.75
+      );
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(0,0,0,0.22)');
+      vc.fillStyle = g;
+      vc.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      this._vignetteCache = c;
+    }
+    ctx.drawImage(this._vignetteCache, 0, 0);
   }
 }
