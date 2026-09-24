@@ -80,6 +80,11 @@ body {
     inset 0 0 24px rgba(0,0,0,0.35);
 }
 canvas { display:block; }
+/* fx 覆盖层:特效/状态圈/血条等矢量绘制,盖在 Pixi 场景层之上 */
+#fx {
+  position:absolute; left:0; top:0;
+  pointer-events:none; z-index:2;
+}
 #status {
   /* 默认隐藏:初始 textContent 为空时,胶囊会作为一个空壳挂在 AI 国王塔上
      (top:42px 恰落在塔身中上部)。显示由 flashMsg 显式切到 block。 */

@@ -206,10 +206,13 @@ function initGame() {
   recorder = new Recorder(game, {
     seed, playerDeck: playerDeck.slice(), aiDeck: aiDeck.slice(), aiLevel: aiInfo.level,
   });
-  renderer = new Renderer(canvas, game);
+  // Renderer 跨局复用(Pixi Application/GL 上下文与纹理缓存昂贵);
+  // 已存在时仅切到新 game(sprite 池/遮罩签名由 setGame 重置)
+  if (renderer) renderer.setGame(game);
+  else renderer = new Renderer(canvas, game);
   ai = new AI(game, aiDeck.slice());
   window.CR = window.CR || {};
-  CR._dbg = { game, ai, recorder, get playerDeck(){return playerDeck;}, get aiDeck(){return aiDeck;} }; // 调试/测试出口
+  CR._dbg = { game, ai, recorder, get renderer(){return renderer;}, get playerDeck(){return playerDeck;}, get aiDeck(){return aiDeck;} }; // 调试/测试出口
 
   // ===== 事件接线(表现层订阅)=====
   gameLog.bind(game.bus);
@@ -597,6 +600,12 @@ function fitCanvas() {
   const finalScale = cw / CANVAS_W;
   canvas.style.width = cw + 'px';
   canvas.style.height = Math.floor(CANVAS_H * finalScale) + 'px';
+  // fx 覆盖层跟随 #game 同尺寸(叠放在其上)
+  const fxC = document.getElementById('fx');
+  if (fxC) {
+    fxC.style.width = cw + 'px';
+    fxC.style.height = Math.floor(CANVAS_H * finalScale) + 'px';
+  }
   // 同步手牌卡尺寸(卡宽与 canvas 宽联动)
   HandUI.fitCards(canvas, finalScale);
   handUI.invalidate();

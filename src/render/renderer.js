@@ -1,7 +1,13 @@
 // ===============================================
-// 渲染器 - Canvas 绘制(战场/塔/单位/特效/部署区)
-// 只读 Game 状态 + 消费 game.effects;不修改游戏逻辑
-// 设置(部署区显示/瞄准线)通过 settings 读取
+// 渲染器 - fx 矢量层(canvas 2D)+ Pixi 场景层编排
+//
+// v0.6.0 起渲染分两层:
+//   #game 画布:PixiLayer(WebGL)—— 战场/部署遮罩/河水/塔/单位 sprite
+//   #fx   画布:本文件(canvas 2D)—— 特效/状态圈/血条/部署预览/暗角
+//   (短生命周期矢量绘制,保留原实现;数量大且稳定的 sprite 走 GPU 批渲染)
+//
+// 对外接口不变:main.js 仍 new Renderer(canvas, game) + draw(preview, dt)。
+// Pixi 初始化失败时自动回退:本层沿用 v0.5.x 的完整 canvas 2D 绘制。
 // ===============================================
 import {
   CELL, CANVAS_W, CANVAS_H, GRID_W, GRID_H, RIVER_Y1, RIVER_Y2,
@@ -12,22 +18,47 @@ import { settings } from '../core/settings.js';
 import { PAL, sideColors, orbFill, shade, roundRect, drawUnitIcon, drawSpellFx } from './graphics.js';
 import { getDeployPositions } from '../game/formation.js';
 import { getCardImage, drawCardImage } from './cardart.js';
+import { PixiLayer } from './pixilayer.js';
 
 export class Renderer {
   constructor(canvas, game) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.canvas = canvas;                 // #game → Pixi(WebGL)
     this.game = game;
-    canvas.width = CANVAS_W;
-    canvas.height = CANVAS_H;
-    // 静态战场层缓存(离屏 canvas,避免每帧重绘草地纹理)
-    this.arenaCache = null;
     this.animTime = 0;
     // 设备性能档:手机(触屏+窄屏)或低端 → 关闭 shadowBlur(手机 GPU
     // 上 shadow 是最贵操作之一,发热主因),发光用多层描边模拟
     this.lowFx = (typeof navigator !== 'undefined' &&
       (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
       Math.min(window.screen.width, window.screen.height) < 900);
+    // fx 覆盖画布(#fx):本层 2D 绘制目标(特效/状态/血条/预览/暗角)
+    const fxCanvas = document.getElementById('fx');
+    if (fxCanvas) {
+      fxCanvas.width = CANVAS_W;
+      fxCanvas.height = CANVAS_H;
+      this.ctx = fxCanvas.getContext('2d');
+      this.fxCanvas = fxCanvas;
+    } else {
+      // 兜底:#fx 不存在(旧 DOM)→ 直接画在 #game(canvas 2D 模式)
+      canvas.width = CANVAS_W;
+      canvas.height = CANVAS_H;
+      this.ctx = canvas.getContext('2d');
+    }
+    canvas.width = CANVAS_W;
+    canvas.height = CANVAS_H;
+    // Pixi 场景层(异步初始化;就绪前由 canvas 2D 全量绘制兜底)
+    this.pixi = new PixiLayer(this, canvas);
+    this.pixi.init().catch(e => {
+      console.warn('[Pixi] 初始化失败,回退纯 canvas 模式:', e);
+      this.pixi.ready = false;
+    });
+  }
+
+  /** 跨局复用:切到新 Game(清离屏缓存与 Pixi sprite 池) */
+  setGame(game) {
+    this.game = game;
+    this._maskSig = null;
+    this._maskCache = null;
+    if (this.pixi) this.pixi.rebind(game);
   }
 
   /** 发光描边:高端设备 shadowBlur,低端设备多层半透明描边模拟(视觉近似) */
@@ -71,16 +102,34 @@ export class Renderer {
         shakeY = (Math.cos(this.animTime * 71) + Math.sin(this.animTime * 59)) * amp * 0.5;
       }
     }
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // Pixi 层是否承担战场/塔/单位(就绪即接管;失败回退 canvas 2D)
+    const pixiOn = this.pixi && this.pixi.ready;
+    if (pixiOn) {
+      this.pixi.setShake(shakeX, shakeY);
+      this.pixi.showDeployZone = !!(deployPreview &&
+        CARDS[deployPreview.cardId].kind !== KIND.SPELL && settings.get('showDeployZone'));
+      this.pixi.render(dt == null ? 0.016 : dt);
+    }
+    // ===== fx 层(本层):状态叠加 + 特效 + 预览 + 暗角 =====
+    const cw = this.fxCanvas ? this.fxCanvas.width : this.canvas.width;
+    const ch = this.fxCanvas ? this.fxCanvas.height : this.canvas.height;
+    ctx.clearRect(0, 0, cw, ch);
     ctx.save();
     if (shakeX || shakeY) ctx.translate(shakeX, shakeY);
-    this.drawArena();
-    // 选中部队/建筑卡时:红色遮罩覆盖不可部署区域(法术全场有效,不遮)
-    const previewCard = deployPreview ? CARDS[deployPreview.cardId] : null;
-    const showDeployZone = previewCard && previewCard.kind !== KIND.SPELL && settings.get('showDeployZone');
-    if (showDeployZone) this.drawDeployMask();
-    this.drawTowers();
-    this.drawUnits();
+    if (!pixiOn) {
+      // 回退:canvas 2D 全量绘制(v0.5.x 原路径)
+      this.drawArena();
+      const previewCard = deployPreview ? CARDS[deployPreview.cardId] : null;
+      const showDeployZone = previewCard && previewCard.kind !== KIND.SPELL && settings.get('showDeployZone');
+      if (showDeployZone) this.drawDeployMask();
+      this.drawTowers();
+      this.drawUnits();
+    } else {
+      // Pixi 模式:塔/单位的状态叠加仍画在 fx 层(冰冻/狂暴/瞄准线/
+      // 血条/装填条/zZ 沉睡/废墟);单位不画本体与攻击闪光外的光环底
+      this.drawTowerStates();
+      this.drawUnitStates();
+    }
     this.drawEffects();
     if (deployPreview) this.drawPreview(deployPreview);
     ctx.restore();
@@ -356,6 +405,18 @@ export class Renderer {
     }
   }
 
+  /** Pixi 模式:塔状态叠加(不画塔身,sprite 已由 Pixi 层渲染) */
+  drawTowerStates() {
+    for (const side of [1, 0]) {
+      const ts = this.game.towers[side];
+      for (const k of ['left','right','king']) {
+        const tw = ts[k];
+        if (tw.dead) { this.drawRubble(tw); continue; }
+        this.drawTowerOverlay(tw);
+      }
+    }
+  }
+
   drawTower(tw) {
     const ctx = this.ctx;
     const x = tw.x * CELL, y = tw.y * CELL;
@@ -396,15 +457,6 @@ export class Renderer {
       // 炮口
       ctx.fillStyle = 'rgba(0,0,0,0.45)';
       ctx.beginPath(); ctx.arc(x, y + r*0.38, r*0.22, 0, Math.PI*2); ctx.fill();
-      // 未激活睡眠
-      if (!tw.activated) {
-        ctx.fillStyle = 'rgba(10,14,25,0.42)';
-        roundRect(ctx, x-r, y-r, r*2, r*2, 6); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.font = `bold ${Math.floor(r*0.5)}px sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('zZ', x + r*0.45, y - r*0.45);
-      }
     } else {
       // ===== 公主塔:圆形石塔 =====
       // 阴影
@@ -440,6 +492,27 @@ export class Renderer {
 
     ctx.restore();
 
+    // ===== 状态叠加(两种模式共用) =====
+    this.drawTowerOverlay(tw);
+  }
+
+  /** 塔状态叠加(独立于塔身绘制;Pixi 模式下塔身由 sprite 承担,
+   *  本方法负责 zZ 沉睡/瞄准线/射击闪光/装填条/冰冻/狂暴/血条) */
+  drawTowerOverlay(tw) {
+    const ctx = this.ctx;
+    const x = tw.x * CELL, y = tw.y * CELL;
+    const r = tw.radius * CELL;
+    // 未激活睡眠(zZ):Pixi 纹理是激活色,暗罩+文字盖在 sprite 上
+    if (tw.type === 'king' && !tw.activated) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(10,14,25,0.42)';
+      roundRect(ctx, x-r, y-r, r*2, r*2, 6); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = `bold ${Math.floor(r*0.5)}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('zZ', x + r*0.45, y - r*0.45);
+      ctx.restore();
+    }
     // ===== 攻击状态 =====
     if (settings.get('showAimLine') && tw.aimAngle !== null && tw.aimAngle !== undefined) {
       const a = tw.aimAngle;
@@ -561,6 +634,18 @@ export class Renderer {
     for (const u of units) this.drawUnit(u);
   }
 
+  /** Pixi 模式:单位状态叠加(本体 sprite 由 Pixi 层渲染,
+   *  本方法画地面阴影/部署波纹/攻击闪光/护盾/冲锋/眩晕/冰冻减速/
+   *  狂暴/血条;无卡图时仍回退到 drawUnit 的 orb 全量绘制) */
+  drawUnitStates() {
+    const units = this.game.units.slice().sort((a,b) => a.y - b.y);
+    for (const u of units) {
+      const art = getCardImage(u.card.artCard || u.cardId);
+      if (!art) { this.drawUnit(u); continue; }   // 卡图未加载:回退全量
+      this.drawUnitStatesOne(u, art);
+    }
+  }
+
   drawUnit(u) {
     const ctx = this.ctx;
     const x = u.x * CELL, y = u.y * CELL;
@@ -673,6 +758,45 @@ export class Renderer {
         ctx.beginPath(); ctx.ellipse(x - r*0.3, cy - r*0.4, r*0.28, r*0.18, -0.6, 0, Math.PI*2); ctx.fill();
       }
       drawUnitIcon(ctx, u.cardId, x, cy, r * (isBuilding ? 0.85 : 1));
+    }
+
+    this.drawUnitStatesOne(u, art, x, cy, r);
+    ctx.restore();
+  }
+
+  /** 单位状态叠加(两种模式共用;Pixi 模式传入预计算的 x/cy/r) */
+  drawUnitStatesOne(u, art, xPre, cyPre, rPre) {
+    const ctx = this.ctx;
+    const x = xPre != null ? xPre : u.x * CELL;
+    const r = rPre != null ? rPre : u.radius * CELL;
+    const y = u.y * CELL;
+    const bob = u.flying ? Math.sin(this.animTime*4 + u.uid) * r*0.12 : 0;
+    let jumpLift = 0;
+    if (u.jumpTimer > 0) {
+      const jp = u.jumpTimer / 0.55;
+      jumpLift = Math.sin((1 - jp) * Math.PI) * r * 3.2;
+    }
+    const cy = cyPre != null ? cyPre : (y - (u.flying ? r*0.55 : 0) + bob - jumpLift);
+    const isBuilding = u.isBuilding;
+    const isSwarm = (u.card.count || 1) > 1;
+
+    // 地面阴影 + 部署波纹(Pixi 模式也画: sprite 无自带阴影)
+    if (xPre == null) { /* 全量路径已在 drawUnit 画过阴影,不重复 */ }
+    else {
+      ctx.save();
+      ctx.globalAlpha = u.deployTimer > 0 ? 0.55 : 1;
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      const shScale = 1 - Math.min(0.6, jumpLift / (r*4));
+      ctx.beginPath();
+      ctx.ellipse(x, y + (isBuilding ? r*0.75 : r*0.55), r*0.85*shScale, r*0.32*shScale, 0, 0, Math.PI*2);
+      ctx.fill();
+      if (u.deployTimer > 0) {
+        const p = 1 - u.deployTimer / (u.card.deployTime || 1);
+        ctx.strokeStyle = `rgba(255,255,255,${0.6*(1-p)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, r*0.6 + p*r*1.4, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
     }
 
     // 攻击闪光(扩大到卡图范围;建筑用碰撞半径,部队用卡图半径)

@@ -7,4 +7,4 @@
 // 注意:sw.js 通过 importScripts('./src/version.js') 共享此值,
 // 改版本只改这一个文件。
 // ===============================================
-export const APP_VERSION = '0.5.1';
+export const APP_VERSION = '0.6.0';

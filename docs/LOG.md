@@ -5,6 +5,51 @@
 
 ---
 
+## 2026-09-25 渲染层迁移 PixiJS(v0.6.0)
+
+**背景**:v0.5.0 免换引擎优化后仍不满足(手机发热),按既定计划迁移
+PixiJS(WebGL 批渲染)。策略为**双层渲染**,而非全量重写:
+
+- `#game` 画布 → **Pixi 场景层**(新 render/pixilayer.js):静态战场
+  纹理、部署遮罩 Graphics、河水波光、塔/单位 Sprite(按 y 排序 +
+  sprite 池 uid 映射)。数量大且持续存在的实体全走 GPU 批渲染
+- `#fx` 覆盖画布 → **canvas 2D fx 层**(renderer.js 改造):特效/
+  状态叠加(冰冻/狂暴/眩晕/冲锋/护盾)/血条/部署预览/暗角,保留
+  v0.5.x 原实现代码不动
+
+**视觉零偏移**:所有 Pixi 纹理由现有 canvas 2D 代码预烘焙——arena
+沿用 buildArenaCache;塔身 6 变体(侧别×公主/国王)照 drawTower
+烘焙;卡图 4 变体(full 完整/square 裁方/circle 圆头像含阵营描边/
+roundrect 建筑底框含阵营渐变)按需烘焙缓存
+
+**关键坑**:
+- Pixi 8 的 `Texture.from(canvas)` 报 "Could not find a source
+  type" —— 必须显式 `new Texture(new CanvasSource({resource}))`/
+  `ImageSource`,且 baseTexture 已更名 source
+- ES module 有独立 HTTP 缓存,改代码后浏览器仍跑旧模块导致误诊,
+  须 cache:reload 验证服务器内容再强刷
+- 塔纹理半径必须用 TOWER_STATS 实值(公主 1.2/国王 1.6),不是
+  drawTowerPad 的地基装饰半径(1.05/1.25)
+
+**兜底**:Pixi init 失败时 renderer.draw 自动回退完整 canvas 2D
+路径(v0.5.x 代码保留),功能不缺失仅性能回落。验证时该兜底被实际
+触发过一次(Texture.from 坑),44 单位压力 0.36ms/帧仍可玩
+
+**Renderer 跨局复用**:GL 上下文与纹理缓存昂贵,main.js 每局调
+`renderer.setGame(game)`(清 sprite 池/遮罩签名)而非重建
+
+**验证**:
+- 场景回归 17/17 全绿;AI 镜像 20 局无异常
+- 浏览器实测(Mac/Chrome):44 单位压力帧 0.36ms(60fps 预算的
+  2.1%),WebGL 场景层+fx 叠加层均确认渲染,法术/爆炸/震动/预览/
+  部署遮罩逐项过
+- 性能对比:v0.5.1 canvas 2D 同场景 ~0.8-1.2ms/帧 → 0.36ms,
+  帧耗时降约 60%;移动端 GPU 占用预期显著下降(批渲染替代逐个
+  drawImage + 状态切换)
+
+---
+
+
 ## 2026-09-24 射程口径修复+场景回归测试机制(v0.5.1)
 
 **bug 1: 火枪在国王塔射程外白嫖国王塔**

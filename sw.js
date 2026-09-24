@@ -14,7 +14,7 @@
 // 页面显示更新提示条 → 用户点"立即更新" → postMessage skipWaiting →
 // controllerchange → reload。
 // ===============================================
-const APP_VERSION = '0.5.1';
+const APP_VERSION = '0.6.0';
 
 const CACHE = `clash-v${APP_VERSION}`;
 const CORE = `clash-core-v${APP_VERSION}`;
@@ -26,6 +26,7 @@ const CORE_ASSETS = [
   './css/main.css',
   './manifest.webmanifest',
   './src/main.js',
+  './libs/pixi.min.mjs',
 ];
 // src 模块(index.html 只引 main.js,其余为 ES Modules 按需加载,
 // 用显式清单列出保证离线可用)
@@ -36,7 +37,7 @@ const SRC_MODULES = [
   'data/cards.js',
   'game/game.js', 'game/ai.js', 'game/combat.js', 'game/spells.js',
   'game/abilities.js', 'game/unit.js', 'game/tower.js', 'game/formation.js',
-  'render/renderer.js', 'render/graphics.js', 'render/cardart.js',
+  'render/renderer.js', 'render/pixilayer.js', 'render/graphics.js', 'render/cardart.js',
   'ui/hand.js', 'ui/hud.js', 'ui/gamelog.js', 'ui/deckeditor.js',
   'ui/settingsui.js', 'ui/screens.js',
   'input/input.js',

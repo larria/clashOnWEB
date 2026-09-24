@@ -7,8 +7,9 @@
 
 ```
 clash/
-├── index.html            入口(DOM 骨架,无逻辑)
+├── index.html            入口(DOM 骨架,无逻辑;#game + #fx 双画布)
 ├── css/main.css          全部样式
+├── libs/pixi.min.mjs     PixiJS 8(vendored 单文件,零构建静态托管)
 ├── src/
 │   ├── main.js           应用入口:流程状态机 + 模块编排(唯一知道所有模块的文件)
 │   ├── core/             与游戏无关的基础设施
@@ -26,8 +27,12 @@ clash/
 │   │   ├── abilities.js  ★ 能力系统:卡牌特殊效果的唯一解释器
 │   │   ├── formation.js  多体部署队形
 │   │   └── ai.js         AI 决策
-│   ├── render/           表现层
-│   │   ├── renderer.js   Canvas 渲染(只读 Game 状态)
+│   ├── render/           表现层(v0.6.0 起双层)
+│   │   ├── renderer.js   Renderer:fx 矢量层(#fx canvas 2D:特效/状态/
+│   │   │                 血条/预览/暗角)+ Pixi 编排 + canvas 2D 兜底路径
+│   │   ├── pixilayer.js  Pixi 场景层(#game WebGL:战场/遮罩/河水/塔/
+│   │   │                 单位 sprite 批渲染;纹理由 canvas 2D 预烘焙保
+│   │   │                 持视觉一致;init 失败自动回退 renderer 2D 路径)
 │   │   ├── graphics.js   绘制原语/调色板/单位图形/法术特效(orb 回退样式)
 │   │   └── cardart.js    卡牌图片资源(assets/cards/,统一加载与绘制)
 │   ├── ui/               DOM 界面
@@ -43,6 +48,21 @@ clash/
 │       └── audio.js      音频系统(WebAudio:懒加载/节流/事件订阅/音乐循环)
 └── docs/                 DEV.md / PRODUCT.md / LOG.md / 数值存档
 ```
+
+### 渲染双层架构(v0.6.0)
+
+- **#game 画布 = Pixi WebGL**(pixilayer.js):静态战场纹理、部署遮罩
+  Graphics、河水波光、塔/单位 Sprite(按 y 排序)。数量大且持续存在的
+  实体全部批渲染,GPU 直出
+- **#fx 画布 = canvas 2D**(renderer.js):特效(法术/爆炸/碎裂)、状态
+  叠加(冰冻/狂暴/眩晕/冲锋/护盾)、血条、部署预览、暗角——短生命周期
+  矢量绘制,保留 v0.5.x 原实现
+- **纹理策略**:塔身/卡图变体(circle/roundrect)用 canvas 2D 预烘焙
+  成纹理再上 GPU,视觉与旧版逐像素一致,无重绘风格
+- **兜底**:Pixi init 失败时 renderer.draw 自动走完整 canvas 2D 路径
+  (v0.5.x 原代码保留),功能不缺失仅性能回落
+- **跨局复用**:Renderer 只建一次,GL 上下文/纹理缓存跨局保留,
+  main.js 每局调 renderer.setGame(game) 换实例
 
 ## 核心约定
 
