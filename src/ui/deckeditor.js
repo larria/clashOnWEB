@@ -17,7 +17,7 @@ const DECK_SIZE = 8;
 // 槽 0 = 玩家默认卡组(野猪快攻)
 const DEFAULT_DECKS = [
   { name: '野猪快攻', cards: ['hogRider', 'musketeer', 'archers', 'skeletons', 'zap', 'fireball', 'cannon', 'goblins'] },
-  { name: '巨人体系', cards: ['giant', 'darkPrince', 'musketeer', 'wizard', 'skeletons', 'arrows', 'poison', 'minions'] },
+  { name: '巨人体系', cards: ['giant', 'darkPrince', 'threeMusketeers', 'wizard', 'skeletons', 'arrows', 'poison', 'minions'] },
   { name: '戈仑重击', cards: ['golem', 'babyDragon', 'miniPekka', 'iceWizard', 'minions', 'arrows', 'zap', 'barbarianHut'] },
   { name: '空军流',   cards: ['balloon', 'minionHorde', 'minions', 'babyDragon', 'musketeer', 'arrows', 'fireball', 'skeletons'] },
   { name: '速转流',   cards: ['hogRider', 'skeletons', 'goblins', 'spearGoblins', 'zap', 'archers', 'fireball', 'musketeer'] },

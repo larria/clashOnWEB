@@ -54,6 +54,12 @@ export const CARDS = {
   musketeer: { id:'musketeer', name:'火枪手', cost:4, rarity:'稀有', kind:KIND.TROOP,
     hp:360, dmg:108, hitSpeed:1.0, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, color:'#ab47bc', radius:0.38 },
+  threeMusketeers: { id:'threeMusketeers', name:'三个火枪手', cost:9, rarity:'稀有', kind:KIND.TROOP,
+    hp:442, dmg:102, hitSpeed:1.3, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
+    targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#7e57c2', radius:0.38 },
+    // wiki 11级×0.5:hp883/2=442 dmg204/2=102 攻速1.3 射程6 对空对地 中速
+    // 2016-02-29 实装;部署分兵:放中线附近时 1 只走一侧路、2 只走另一侧
+    // (横排队形+各自索敌最近塔天然实现;火枪手本体用 4 费单卡数值)
   valkyrie: { id:'valkyrie', name:'女武神', cost:4, rarity:'稀有', kind:KIND.TROOP,
     hp:954, dmg:133, hitSpeed:1.5, range:1.2, sightRange:5.0, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:2.0, deployTime:1, color:'#e91e63', radius:0.42 },

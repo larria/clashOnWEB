@@ -22,14 +22,14 @@ const SFX_FILES = [
   'deploy_knight','deploy_archers','deploy_goblins','deploy_spearGoblins','deploy_skeletons',
   'deploy_minions','deploy_barbarians','deploy_bomber','deploy_giant','deploy_miniPekka',
   'deploy_musketeer','deploy_valkyrie','deploy_hogRider','deploy_wizard','deploy_pekka',
-  'deploy_prince','deploy_darkPrince','deploy_iceWizard','deploy_babyDragon','deploy_skeletonArmy','deploy_witch','deploy_balloon',
+  'deploy_prince','deploy_darkPrince','deploy_iceWizard','deploy_threeMusketeers','deploy_babyDragon','deploy_skeletonArmy','deploy_witch','deploy_balloon',
   'deploy_giantSkeleton','deploy_golem','deploy_minionHorde','deploy_cannon','deploy_tesla',
   'deploy_infernoTower','deploy_bombTower','deploy_goblinHut','deploy_barbarianHut',
   'deploy_tombstone','deploy_elixirCollector','deploy_xbow','deploy_mortar',
   // 攻击(卡牌专属)
   'atk_knight','atk_archers','atk_goblins','atk_spearGoblins','atk_skeletons','atk_minions',
   'atk_barbarians','atk_bomber','atk_giant','atk_miniPekka','atk_musketeer','atk_valkyrie',
-  'atk_hogRider','atk_wizard','atk_pekka','atk_prince','atk_darkPrince','atk_iceWizard','atk_babyDragon','atk_skeletonArmy',
+  'atk_hogRider','atk_wizard','atk_pekka','atk_prince','atk_darkPrince','atk_iceWizard','atk_threeMusketeers','atk_babyDragon','atk_skeletonArmy',
   'atk_witch','atk_balloon','atk_giantSkeleton','atk_golem','atk_minionHorde','atk_cannon',
   'atk_tesla','atk_infernoTower','atk_bombTower','atk_xbow','atk_mortar',
   // 法术

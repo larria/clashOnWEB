@@ -132,6 +132,9 @@
  "tesla": {
   "file": "TeslaCard.png"
  },
+ "threeMusketeers": {
+  "file": "ThreeMusketeersCard.png"
+ },
  "tombstone": {
   "file": "TombstoneCard.png"
  },
