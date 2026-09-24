@@ -194,7 +194,6 @@ export class PixiLayer {
 
   /** 卡图纹理(按需烘焙):variant 决定裁剪/形状
    *  full:完整等比卡图(单体部队)
-   *  square:中央裁方(建筑/预览用)
    *  circle:圆头像+阵营描边底(群体单位) —— 阵营描边需 2 份(side0/1)
    *  roundrect:圆角方+阵营色渐变底框(建筑) —— 同样 2 份
    */
@@ -207,10 +206,6 @@ export class PixiLayer {
     let tex = null;
     if (variant === 'full') {
       tex = toTexture(img);
-    } else if (variant === 'square') {
-      const s = Math.min(w, h);
-      const frame = new PIXI.Rectangle((w-s)/2, (h-s)/2, s, s);
-      tex = new PIXI.Texture(toTexture(img).source, frame);
     } else if (variant === 'circle') {
       // 圆头像:阵营描边圆底 + 圆形裁剪卡图(直径 = img 短边)
       const s = Math.min(w, h);
@@ -285,23 +280,23 @@ export class PixiLayer {
     const g = this.riverG;
     g.clear();
     const ry1 = RIVER_Y1*CELL, ry2 = RIVER_Y2*CELL;
-    // 流动波光带
+    // 流动波光带(注意 Pixi 8 语义:shape 先行,fill() 提交)
     for (let row = 0; row < 3; row++) {
       const y = ry1 + 8 + row * ((ry2-ry1-10)/3);
-      g.fill({ color: PAL.riverLight, alpha: 0.14 });
       const off = (t * (18 + row*8)) % (CELL*4);
       for (let x = -CELL*4; x < CANVAS_W + CELL*4; x += CELL*4) {
         const xx = x + off;
         g.ellipse(xx, y, CELL*0.9, 2.2);
       }
+      g.fill({ color: PAL.riverLight, alpha: 0.14 });
     }
-    // 高光点
+    // 高光点(每点独立透明度,逐个 fill)
     for (let i = 0; i < 5; i++) {
       const phase = (t * 0.5 + i * 0.37) % 1;
       const x = ((i*337 + t*26) % CANVAS_W);
       const y = ry1 + 6 + ((i*89) % (ry2-ry1-12));
-      g.fill({ color: 0xbde3ff, alpha: 0.2 * Math.sin(phase * Math.PI) });
       g.circle(x, y, 1.8);
+      g.fill({ color: 0xbde3ff, alpha: 0.2 * Math.sin(phase * Math.PI) });
     }
   }
 
@@ -332,8 +327,10 @@ export class PixiLayer {
       if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
       return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers, buildings);
     };
-    // 红遮罩(单次 fill:Graphics 合并所有 rect)
-    g.fill({ color: 0xd02c2c, alpha: 1 });
+    // 红遮罩 + 金色边界线
+    // Pixi 8 Graphics 语义:先 rect 后 fill()提交当前 path(与 canvas 2D
+    // 的 fill→rect 顺序相反);fill() 后 path 重置,shape 不会被后一个
+    // fill 重新着色
     for (let gy = 0; gy < GRID_H; gy += step) {
       for (let gx = 0; gx < GRID_W; gx += step) {
         if (okAt(gx, gy)) continue;
@@ -341,8 +338,7 @@ export class PixiLayer {
         g.rect(px, py, s, s);
       }
     }
-    // 金色边界线
-    g.fill({ color: 0xffe082, alpha: 1 });
+    g.fill({ color: 0xd02c2c, alpha: 1 });
     const inField = (gx, gy) => gx >= 0 && gy >= 0 && gx < GRID_W && gy < GRID_H;
     for (let gy = 0; gy < GRID_H; gy += step) {
       for (let gx = 0; gx < GRID_W; gx += step) {
@@ -354,6 +350,7 @@ export class PixiLayer {
         if (inField(gx + step, gy) && !okAt(gx + step, gy)) g.rect(px + s - 4.5, py, 3, s);
       }
     }
+    g.fill({ color: 0xffe082, alpha: 1 });
     g.alpha = 0.42 + 0.04 * Math.sin(this.riverT * 2.2);
   }
 
