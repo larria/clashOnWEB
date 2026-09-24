@@ -2,7 +2,7 @@
 // 战斗系统 - 寻路/索敌/攻击/伤害结算
 // 纯游戏逻辑:不直接操作 DOM,日志/特效通过 game.bus 事件发出
 // ===============================================
-import { T, RIVER_Y1, RIVER_Y2, dist, dist2 } from '../core/constants.js';
+import { T, RIVER_Y1, RIVER_Y2, dist, dist2, isBridge } from '../core/constants.js';
 import { afterAttack } from './abilities.js';
 
 // 判断单位能否攻击某目标类型
@@ -50,7 +50,7 @@ export function findTarget(unit, game) {
       // "range bug"修复(显示 5.5 实际不变)即此口径。若索敌不含
       // hitbox,目标恰好停在 range < d <= range+radius 区间时
       // (如塔下拉扯野蛮人)永远不会被还手
-      if (d <= sightR + e.radius && d < bestD) {
+      if (d <= unit.radius + sightR + e.radius && d < bestD) {
         bestD = d;
         best = { type: 'unit', ref: e, x: e.x, y: e.y, flying: e.flying, isBuilding: e.isBuilding };
       }
@@ -80,7 +80,7 @@ export function findTarget(unit, game) {
       // 含塔 hitbox(同攻击口径)。与已找到的敌方建筑单位比距离:
       // 只在塔更近时才改打塔——否则塔一进视野就会无条件覆盖已锁定的
       // 特斯拉/加农炮等牵引建筑(表现为"被建筑拉了一段又转头去打塔")
-      if (d <= sightR + preferred.radius && d < bestD) {
+      if (d <= unit.radius + sightR + preferred.radius && d < bestD) {
         best = { type: 'tower', ref: preferred, x: preferred.x, y: preferred.y, flying: false, isBuilding: true, lane: preferred.lane };
       }
     }
@@ -95,7 +95,7 @@ export function findTarget(unit, game) {
     if (!valid) continue;
     const d = dist(unit, tw);
     if (blindSpot > 0 && d < blindSpot) continue;     // 近身盲区(塔同样适用)
-    if (d <= sightR + tw.radius && d < bestD) {       // 含塔 hitbox(同攻击口径)
+    if (d <= unit.radius + sightR + tw.radius && d < bestD) {       // 含塔 hitbox(同攻击口径)
       bestD = d;
       best = { type: 'tower', ref: tw, x: tw.x, y: tw.y, flying: false, isBuilding: true, lane: tw.lane };
     }
@@ -116,7 +116,7 @@ export function findNearestEnemyUnit(unit, game) {
     if (onlyBuilding && !e.isBuilding) continue;
     if (!canTarget(unit, e.card, e.flying, e.isBuilding)) continue;
     const d = dist(unit, e);
-    if (d <= sightR + e.radius && d < bestD) { bestD = d; best = e; }  // 含 hitbox(同攻击口径)
+    if (d <= unit.radius + sightR + e.radius && d < bestD) { bestD = d; best = e; }  // 含 hitbox(同攻击口径)
   }
   return best;
 }
@@ -360,8 +360,9 @@ export function moveUnit(unit, game, dt) {
     unit.x += (dx / d) * spd;
     unit.y += (dy / d) * spd;
   }
-  // 跳河单位(野猪骑士)入河瞬间:起跳特效 + 跳跃动画计时
-  const nowInRiver = unit.y > RIVER_Y1 && unit.y < RIVER_Y2;
+  // 跳河单位(野猪骑士)入河瞬间:起跳特效 + 跳跃动画计时。
+  // 桥面不算河(isBridge)——走桥过河不触发跳跃动画
+  const nowInRiver = unit.y > RIVER_Y1 && unit.y < RIVER_Y2 && !isBridge(unit.x, unit.y);
   if (nowInRiver && !wasInRiver && unit.card.special && unit.card.special.canJumpRiver) {
     unit.jumpTimer = 0.55;               // 跳跃动画时长(渲染抛物线用)
     unit.jumpFrom = { x: unit.x, y: unit.y };

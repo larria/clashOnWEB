@@ -141,10 +141,22 @@ audio.js ←──────┴──────────────┘ (
 ## 回归验证
 
 headless 方式:浏览器 evaluate 直接驱动 `CR._dbg.game.update(dt)` + `ai.decide()`
-(`CR._dbg` 是 main.js 留的调试出口),跑完整一局确认无异常。发版前至少:
+(`CR._dbg` 是 main.js 留的调试出口),跑完整一局确认无异常。
+
+**场景回归测试(发版必跑)**:
+```bash
+node tools/scenarios/run.mjs            # 全部场景(应全绿)
+node tools/scenarios/run.mjs 射程 跳河   # 按关键词过滤
+node tools/scenarios/run.mjs --list     # 场景列表
+```
+覆盖历轮修过的寻路/射程/机制 bug(17+ 场景)。**新修 bug 时必须在
+run.mjs 固化对应场景**(搭建 Game + 固定 seed 推演 + 断言),
+防止未来改动回归。
+
+发版前至少:
+- **场景测试全绿**(tools/scenarios/run.mjs)
+- **AI 100 局**(tools/eval-ai.mjs)无报错、胜率无异常偏移
 - 3 局完整对战无 JS 错误
-- 机制抽查:万箭秒亡灵 / 野猪跳河 / 国王塔激活时序 / 推塔部署解锁 /
-  圣水收集器产费 / 墓碑死亡召唤
 - UI 链路:选牌→部署、卡组编辑器、设置页开关
 
 ## 运行与部署

@@ -361,15 +361,17 @@ export class Game {
 
         // 索敌(弃目标阈值与攻击范围衔接,缓冲 0.25 格——与单位侧一致,
         // 旧 +1 缓冲会让目标在"打不到也不换"区间卡住)
-        if (!tw.target || tw.target.ref.dead || dist(tw, tw.target.ref) > tw.range + tw.target.ref.radius + 0.25) {
+        if (!tw.target || tw.target.ref.dead || dist(tw, tw.target.ref) > tw.radius + tw.range + tw.target.ref.radius + 0.25) {
           tw.target = this.findTowerTarget(tw);
         }
         if (tw.target) {
           // 记录瞄准方向(用于渲染状态)
           const tRef = tw.target.ref;
           tw.aimAngle = Math.atan2(tRef.y - tw.y, tRef.x - tw.x);
+          // 攻击判定:边缘到边缘口径(d ≤ 双方半径+射程;原漏算攻击者
+          // 自身半径,导致火枪在国王塔射程外白嫖塔)
           const d = dist(tw, tw.target.ref);
-          if (d <= tw.range + tw.target.ref.radius) {
+          if (d <= tw.radius + tw.range + tw.target.ref.radius) {
             if (tw.atkCD <= 0) {
               const dmg = tw.dmg * (tw.rageTimer > 0 ? RAGE_MULT : 1);
               if (tw.target.type === 'unit') this.dealDamage(tw.target.ref, dmg, tw);
@@ -391,7 +393,7 @@ export class Game {
   }
 
   findTowerTarget(tw) {
-    let best = null, bd = tw.sightRange;
+    let best = null, bd = tw.radius + tw.sightRange;
     const enemies = this.units.filter(u => u.side !== tw.side && !u.dead);
     for (const e of enemies) {
       // 塔可打地面/空中(看塔 targets;建筑视为地面目标)
@@ -465,7 +467,7 @@ export class Game {
       // 失效阈值 = 攻击范围 + 0.25 格小缓冲:官方行为是锁定后贴身追击
       // 当前位置,只有真走远才弃目标重索(旧 +1 格缓冲让目标在
       // "攻击范围外一点点"时既打不到也不换目标,造成边界抖动)
-      if (u.target && (u.target.ref.dead || dist(u, u.target.ref) > (u.card.range + u.target.ref.radius + 0.25))) {
+      if (u.target && (u.target.ref.dead || dist(u, u.target.ref) > (u.radius + u.card.range + u.target.ref.radius + 0.25))) {
         u.target = null;
       }
       if (!u.target) {
@@ -474,7 +476,7 @@ export class Game {
         // 行军中(未进入攻击范围)重新索敌:
         // 若出现更近的敌方单位,转移目标(模拟 CR 中行军部队会攻击路过的新敌人)
         const dCur = dist(u, u.target.ref);
-        const effRange = u.card.range + u.target.ref.radius;
+        const effRange = u.radius + u.card.range + u.target.ref.radius;
         if (dCur > effRange) {
           const nearer = findNearestEnemyUnit(u, this);
           if (nearer && dist(u, nearer) < dCur) {
@@ -485,7 +487,9 @@ export class Game {
 
       if (u.target) {
         const d = dist(u, u.target.ref);
-        const effRange = u.card.range + u.target.ref.radius;
+        // 攻击判定:边缘到边缘口径(d ≤ 攻击者半径+射程+目标半径;
+        // 原漏算攻击者自身半径)
+        const effRange = u.radius + u.card.range + u.target.ref.radius;
         if (d <= effRange) {
           // 在攻击范围,攻击
           if (u.atkCD <= 0) {
