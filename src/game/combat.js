@@ -77,7 +77,10 @@ export function findTarget(unit, game) {
     }
     if (preferred) {
       const d = dist(unit, preferred);
-      if (d <= sightR + preferred.radius) {   // 含塔 hitbox(同攻击口径)
+      // 含塔 hitbox(同攻击口径)。与已找到的敌方建筑单位比距离:
+      // 只在塔更近时才改打塔——否则塔一进视野就会无条件覆盖已锁定的
+      // 特斯拉/加农炮等牵引建筑(表现为"被建筑拉了一段又转头去打塔")
+      if (d <= sightR + preferred.radius && d < bestD) {
         best = { type: 'tower', ref: preferred, x: preferred.x, y: preferred.y, flying: false, isBuilding: true, lane: preferred.lane };
       }
     }
