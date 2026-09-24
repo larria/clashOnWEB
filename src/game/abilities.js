@@ -108,8 +108,8 @@ export function applyDeathAbilities(unit, game) {
       // 延时炸弹(气球/骷髅巨人):掉落可见炸弹,数秒后爆炸
       dropDeathBomb(unit, game, dd);
     } else {
-      // 即时死亡伤害(戈仑/小戈仑)
-      game.applyAreaDamage(unit, dd.dmg, dd.splash, dd.targets);
+      // 即时死亡伤害(戈仑/小戈仑):中立爆炸,伤双方单位(含友军)
+      game.applyAreaDamage(unit, dd.dmg, dd.splash, dd.targets, true);
       game.bus.emit('unit:deathBomb', { unit });
     }
   }
@@ -137,8 +137,8 @@ function dropDeathBomb(unit, game, dd) {
   game.addEffect({ type: 'deathBomb', x, y, radius: dd.splash, life: delay, maxLife: delay, side: unit.side });
   game.bus.emit('unit:deathBombDrop', { unit }); // 落地音(轻微)
   game.schedule(delay, () => {
-    // 爆炸:范围伤害(骷髅巨人 towerMult 对塔加成)
-    game.applyAreaDamageAt(x, y, dd.dmg, dd.splash, dd.targets, unit.side, dd.towerMult || 1);
+    // 爆炸:范围伤害(骷髅巨人 towerMult 对塔加成);中立炸弹伤双方单位
+    game.applyAreaDamageAt(x, y, dd.dmg, dd.splash, dd.targets, unit.side, dd.towerMult || 1, null, true);
     game.addEffect({ type: 'spell', cardId: 'deathBomb', x, y, radius: dd.splash, life: 0.5, maxLife: 0.5, color: '#ff6f00' });
     game.bus.emit('unit:deathBomb', { unit });
   });

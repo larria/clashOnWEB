@@ -154,8 +154,10 @@ export class Game {
   }
 
   // 区域伤害(死亡伤害等;对双方单位生效 + 敌方塔)
-  applyAreaDamage(source, dmg, radius, targetsMask) {
-    this.applyAreaDamageAt(source.x, source.y, dmg, radius, targetsMask, source.side, 1, source);
+  // hurtAlly: 是否伤害同阵营单位。死亡炸弹(骷髅巨人/气球/戈仑)是中立
+  // 爆炸物,伤双方=true;冰法落地伤害等友军技能只伤敌方=false(默认)
+  applyAreaDamage(source, dmg, radius, targetsMask, hurtAlly = false) {
+    this.applyAreaDamageAt(source.x, source.y, dmg, radius, targetsMask, source.side, 1, source, hurtAlly);
   }
 
   // 区域减速(冰法师攻击/落地):范围内敌方单位移动+攻击减速
@@ -171,9 +173,11 @@ export class Game {
   }
 
   // 按坐标的区域伤害(延时炸弹爆炸;towerMult:对塔伤害倍率)
-  applyAreaDamageAt(cx, cy, dmg, radius, targetsMask, side, towerMult = 1, source) {
+  // hurtAlly: 同阵营单位是否受伤(死亡炸弹=true 中立爆炸;友军技能=false)
+  applyAreaDamageAt(cx, cy, dmg, radius, targetsMask, side, towerMult = 1, source, hurtAlly = false) {
     for (const e of this.units) {
       if (e.dead || e === source) continue;
+      if (!hurtAlly && e.side === side) continue;   // 友军技能不误伤同阵营
       let valid;
       if (e.isBuilding) valid = (targetsMask & (T.BUILDING | T.GROUND)) !== 0;
       else if (e.flying) valid = (targetsMask & T.AIR) !== 0;
