@@ -68,12 +68,27 @@ export function tickPeriodic(unit, game, dt) {
     if (unit.specialTimer >= due) {
       unit.specialTimer = 0;
       unit.summonedOnce = true;
-      // 召唤在女巫前方(行进方向)约 1.5 格,远离自身碰撞盒,
-      // 避免被碰撞分离挤到身后/侧面
-      const fwd = (unit.side === 0 ? -1 : 1);
-      for (let i = 0; i < sp.summon.count; i++) {
-        game.spawnUnit(sp.summon.card, unit.side,
-          unit.x + (i - (sp.summon.count - 1) / 2) * 0.7, unit.y + fwd * 1.5);
+      // 官方:召唤 4 个骷髅"surrounding"女巫(围绕四周),非全堆正前方。
+      // 围绕生成使骷髅从女巫四周分散出现,行进时自然排成纵队跟随,
+      // 不会形成横墙挡住女巫致其停止前进。
+      // 环形均匀分布(等角),半径 ~1.4(避开女巫自身碰撞盒)。
+      // 沉底国王塔放置时,环形有一只落在另一路——对齐官方
+      // "1 of the Skeletons spawn in the other lane"。
+      const count = sp.summon.count;
+      const ring = sp.summon.ring || 1.4;
+      const fwd = (unit.side === 0 ? -1 : 1); // 行进方向偏置:略偏前方
+      const rot = fwd === -1 ? -Math.PI / 2 : Math.PI / 2;
+      for (let i = 0; i < count; i++) {
+        const a = rot + (i * 2 * Math.PI) / count;
+        const sx = unit.x + Math.cos(a) * ring;
+        const sy = unit.y + Math.sin(a) * ring;
+        // stagger 依次落地(0.12s 间隔):骷髅一只接一只冒出,呈纵队感
+        if (i === 0) {
+          game.spawnUnit(sp.summon.card, unit.side, sx, sy);
+        } else {
+          const idx = i;
+          game.schedule(0.12 * i, () => game.spawnUnit(sp.summon.card, unit.side, sx, sy));
+        }
       }
       game.bus.emit('unit:summoned', { spawner: unit, card: sp.summon.card }); // 召唤音效
       produced = true;

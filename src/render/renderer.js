@@ -530,7 +530,7 @@ export class Renderer {
     const cy = y - (u.flying ? r*0.55 : 0) + bob - jumpLift;
     const sc = sideColors(u.side);
     const isBuilding = u.isBuilding;
-    const art = getCardImage(u.cardId);
+    const art = getCardImage(u.card.artCard || u.cardId);
     // 多体单位(骷髅/亡灵/哥布林等):单个单位以小圆形头像展示
     const isSwarm = (u.card.count || 1) > 1;
 
@@ -632,13 +632,39 @@ export class Renderer {
       ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(x, cy, fxR + 5*a, 0, Math.PI*2); ctx.stroke();
     }
-    // 冲锋状态(王子)
+    // 冲锋状态(王子/黑王子):身后速度拖影 + 发光冲刺环
+    // 冲锋是直线纵向冲刺,拖影方向 = 朝敌方(side 0 向上,side 1 向下)
     if (u.charged) {
-      ctx.strokeStyle = 'rgba(255,152,0,0.85)';
-      ctx.lineWidth = 2.5;
-      ctx.setLineDash([6, 4]);
+      const tt = this.animTime;
+      const dirY = u.side === 0 ? 1 : -1;          // 拖影在"身后"(远离敌方)
+      const hex = u.cardId === 'darkPrince' ? '#b388ff' : '#ff7043';
+      const cr = parseInt(hex.slice(1,3),16), cg = parseInt(hex.slice(3,5),16), cb = parseInt(hex.slice(5,7),16);
+      // 身后拖影:3 条递减的椭圆块,随时间脉动
+      for (let i = 0; i < 3; i++) {
+        const off = (i + 1) * fxR * 0.45;
+        const w = fxR * (1 - i * 0.22);
+        const a = Math.max(0, 0.42 - i * 0.12 + 0.1 * Math.sin(tt * 18 + i));
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${a})`;
+        ctx.beginPath();
+        ctx.ellipse(x, cy + dirY * off, w * 0.7, w * 1.1, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+      // 发光冲刺环(双层:外发光实线 + 内虚线,脉动)
+      const pulse = 0.7 + 0.3 * Math.sin(tt * 16);
+      ctx.save();
+      ctx.shadowColor = hex;
+      ctx.shadowBlur = 12 * pulse;
+      ctx.strokeStyle = hex;
+      ctx.globalAlpha = 0.9 * pulse;
+      ctx.lineWidth = 2.8;
       ctx.beginPath(); ctx.arc(x, cy, fxR + 4, 0, Math.PI*2); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.arc(x, cy, fxR + 7, 0, Math.PI*2); ctx.stroke();
       ctx.setLineDash([]);
+      ctx.restore();
     }
     // 眩晕(电击等):头顶黄色电弧环绕 + 星星打转
     if (u.stunned > 0) {
@@ -1527,7 +1553,7 @@ export class Renderer {
       // 预览卡图(半透明,按单位视觉尺寸;多体单位显示小圆头像示意)
       const isSwarm = (card.count || 1) > 1;
       const isBuildingCard = card.kind === KIND.BUILDING;
-      const art = getCardImage(p.cardId);
+      const art = getCardImage(card.artCard || p.cardId);
       // 建筑预览视觉半径 = 碰撞半径(与实际渲染/占位一致)
       const bvr = (card.radius || 0.4) * CELL;
       const fxR = art ? (isSwarm ? r*2.1 : (isBuildingCard ? bvr : r*2.6)) : r;

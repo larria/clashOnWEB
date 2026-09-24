@@ -156,7 +156,14 @@ export function getMarchTarget(unit, game) {
 // (单位常部署在公主塔正后方,不避让会顶在塔后反复挤压/穿模)
 // 绕行状态记在 unit._dodge 上(绕哪座塔/哪一侧/是否已过塔心),
 // 越过塔 y 区间后清除——防止"绕完又被重新捕获"死循环
+//
+// 己方国王塔特例:沉底中心放置的单位直线必穿国王塔。原版行为是
+// "先横走到一侧公主塔(=桥列 x=3.5/14.5)再纵向推进",而非沿国王塔
+// 侧面 x 纵走后再斜汇桥。故撞己方国王塔时,走廊 x 直接取最近桥 x,
+// 绕行即等价于"横到桥列",绕完沿桥列纵走——与过桥逻辑无缝衔接。
 function dodgeTower(unit, game, fromX, fromY, toX, toY) {
+  // 最近桥 x(桥与公主塔列对齐:3.5 / 14.5)
+  const bridgeX = (fromX <= 9) ? 3.5 : 14.5;
   for (const side of [0, 1]) {
     const ts = game.towers[side];
     for (const k of ['left', 'right', 'king']) {
@@ -165,19 +172,22 @@ function dodgeTower(unit, game, fromX, fromY, toX, toY) {
       const pad = tw.radius + unit.radius + 0.15;
       // 目标就在这座塔上(攻它)不绕
       if (Math.hypot(toX - tw.x, toY - tw.y) < pad) continue;
+      // 己方国王塔:走廊 x 取最近桥列(沉底中心绕国王塔→先横到桥列再前)
+      const isOwnKing = (tw.side === unit.side && tw.type === 'king');
+      const laneX = isOwnKing ? bridgeX : (null);  // 国王塔走廊=桥列;其余塔按侧算
       // 续行中的走廊:已越过塔 y 区间则清除,否则继续沿走廊走
       if (unit._dodge && unit._dodge.tw === tw) {
         const s = unit._dodge.side;
-        const laneX = tw.x + s * pad;
+        const lx = isOwnKing ? bridgeX : (tw.x + s * pad);
         if (Math.abs(fromY - tw.y) > pad + 0.3) {
           unit._dodge = null;   // 已通过,汇回正常路线
         } else {
           // 未到走廊 x:先横移(保持 y);到位后沿走廊纵向通过塔区
-          if (Math.abs(fromX - laneX) > 0.2) {
-            return { x: laneX, y: fromY };
+          if (Math.abs(fromX - lx) > 0.2) {
+            return { x: lx, y: fromY };
           }
           const dirY = toY >= tw.y ? 1 : -1;
-          return { x: laneX, y: tw.y + dirY * (pad + 0.5) };
+          return { x: lx, y: tw.y + dirY * (pad + 0.5) };
         }
       }
       // 单位到目标线段与塔圆的最近距离
@@ -188,16 +198,24 @@ function dodgeTower(unit, game, fromX, fromY, toX, toY) {
       t = Math.max(0, Math.min(1, t));
       const px = fromX + abx*t, py = fromY + aby*t;
       if (Math.hypot(px - tw.x, py - tw.y) < pad) {
-        // 会撞塔:进走廊模式(左/右侧取离单位近的一侧)
-        const s = fromX <= tw.x ? -1 : 1;
+        // 会撞塔:进走廊模式
+        // 己方国王塔:走廊=桥列(已定)
+        // 己方公主塔:沉底中心来的单位应绕"外侧"(远离中线),这样绕完
+        //   顺接桥列纵走,不会朝中线挤;左塔绕左、右塔绕右
+        // 其余塔(敌方塔/单位横向来):取离单位近的一侧
+        const isOwnPrincess = (tw.side === unit.side && tw.type === 'princess');
+        let s;
+        if (isOwnKing) s = (bridgeX < tw.x) ? -1 : 1;       // 国王塔:朝目标桥侧
+        else if (isOwnPrincess) s = (tw.lane === 'left') ? -1 : 1;  // 己方公主塔:外侧
+        else s = fromX <= tw.x ? -1 : 1;                     // 其余:近侧
         unit._dodge = { tw, side: s };
+        const lx = isOwnKing ? bridgeX : (tw.x + s * pad);
         // 先横移到走廊 x(保持当前 y),到达后再纵走——一步到位的
         // 斜线本身会穿过塔圆,拆两段才能保证全程在塔外
-        const laneX = tw.x + s * pad;
-        if (Math.abs(fromX - laneX) > 0.2) {
-          return { x: laneX, y: fromY };
+        if (Math.abs(fromX - lx) > 0.2) {
+          return { x: lx, y: fromY };
         }
-        return { x: laneX, y: tw.y };
+        return { x: lx, y: tw.y };
       }
     }
   }

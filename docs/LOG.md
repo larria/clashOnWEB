@@ -5,6 +5,59 @@
 
 ---
 
+## 2026-09-24 六项机制修正(v0.4.16)
+
+用户比对真实游戏指出 6 处偏差,逐项调研官方 wiki/社区后修正:
+
+**1. 冰法减速含攻速(查证后确认已正确)**
+- wiki 原文:"throws ice shards that slow down enemies' **movement and attack speed**"
+- 核查代码:unit.js/tower.js 的 hitSpeed getter 已 `if (slowTimer>0) hs /= slowFactor`,
+  与 speed 同口径。无需改码,仅查证确认。
+
+**2. 女巫召唤骷髅围绕女巫(非横排堵前)**
+- 旧实现:4 骷髅全在女巫正前方横排(前方 1.5 格、x 间距 0.7),
+  形成骷髅墙挡住女巫致其停止前进——违背官方"surrounding her"+用户体感
+- wiki:"passively summon a group of four Skeletons **surrounding** her";
+  沉底国王塔放置时"1 of the Skeletons spawn in the other lane"
+- 改:abilities.js summon 分支用环形布局(等角分布、半径 1.4)+ 0.12s
+  stagger 依次落地。骷髅从女巫四周分散出现,行进时自然纵队跟随,不挡女巫
+
+**3. 骷髅军团小骷髅图标用骷髅兵卡图**
+- 旧:骷髅军团 15 个单位都画 skeletonArmy 卡图(军团图标)
+- 改:cards.js 加 `artCard:'skeletons'` 字段;renderer 取图改
+  `getCardImage(u.card.artCard || u.cardId)`。预留 goblinGang 同处理
+- 架构:artCard 是通用"派生单位显示卡"机制,新卡只需填字段
+
+**4. 沉底中心部署路径改"先横到公主塔再前"**
+- 旧:dodgeTower 绕己方国王塔时走廊 x=国王塔侧面(9±pad),绕完沿该 x
+  纵走再斜汇桥——表现为"绕过国王塔就直接斜着冲"
+- 官方:沉底中心放置应先横走到一侧公主塔列(=桥列 x=3.5/14.5)再纵向推进
+- 改 combat.js dodgeTower:
+  - 己方国王塔走廊 x 改取最近桥 x(绕行即横到桥列,绕完沿桥列纵走)
+  - 己方公主塔绕行侧改取"外侧"(远离中线:左塔绕左、右塔绕右),
+    绕完顺接桥列,不朝中线挤
+- 轨迹验证:(9,31)→横到(1.9,31)左公主塔外侧→沿 1.77 纵走→汇 3.5 桥列过河
+
+**5. 黑王子移除跳河能力与特效**
+- 旧:darkPrince 有 canJumpRiver:true(2016-02-29 实装时误加),行走状态会跳河
+- 官方:黑王子/王子均不能跳河,必须走桥(冲锋中也走桥,原已由
+  combat `charge+charged→canJump=false` 保证)
+- 改:cards.js darkPrince 删 canJumpRiver。moveUnit 跳河特效由
+  canJumpRiver 触发,删后黑王子不再有跳河特效/动画。王子本就无此能力
+
+**6. 王子/黑王子冲锋视觉特效**
+- 旧:冲锋仅一个橙色虚线圈,朴素
+- 改 renderer.js:身后纵向速度拖影(3 层递减椭圆块,脉动)+
+  发光冲刺环(shadowBlur 双层,脉动)。王子橙红 #ff7043、黑王子紫 #b388ff
+
+**验证**
+- 13 项单元测试全过(黑王子不跳河/冲锋过桥不跳/女巫围绕召唤/
+  artCard/减速含攻速/沉底先横走)
+- AI 100 局回归正常(A 56% B 44%,镜像侧优势合理,无报错)
+- 浏览器实机:4 单位(骑士/女巫/黑王子/王子)部署后路径与状态全符合预期
+
+---
+
 ## 2026-09-24 三个火枪手实装(v0.4.15)
 
 **三个火枪手(9费·稀有·2016-02-29 批次第 4 张,批次完结)**

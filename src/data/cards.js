@@ -92,17 +92,19 @@ export const CARDS = {
   darkPrince: { id:'darkPrince', name:'黑王子', cost:4, rarity:'史诗', kind:KIND.TROOP,
     hp:600, dmg:133, hitSpeed:1.3, range:1.2, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:1.1, deployTime:1, color:'#37474f', radius:0.5,
-    special:{ shield:128, canJumpRiver:true,
+    special:{ shield:128,
       charge:{ distance:3, dmgMult:2.0, speedMult:2.0, splash:1.1 } } },
     // wiki 11级×0.5:hp1200/2=600 盾256/2=128 dmg266/2=133 冲锋532/2=266(=2×dmg)
     // 攻速1.3(wiki atk_speed) 射程1.2 溅射1.1 冲锋3格充能·速度极快(2×中速)
-    // 冲锋命中360°溅射(围杀无效);护盾先扣·溢出不穿透;可跳河(2016-02-29 实装)
+    // 冲锋命中360°溅射(围杀无效);护盾先扣·溢出不穿透
+    // 不跳河(原版:黑王子/王子均不能跳河,必须走桥;冲锋中也走桥)
   babyDragon: { id:'babyDragon', name:'飞龙宝宝', cost:4, rarity:'史诗', kind:KIND.TROOP,
     hp:576, dmg:84, hitSpeed:1.5, range:3.5, sightRange:5.5, speed:SPEED.FAST,
     targets:T.ALL, flying:true, count:1, splash:1.5, deployTime:1, color:'#ec407a', radius:0.45 },
   skeletonArmy: { id:'skeletonArmy', name:'骷髅军团', cost:3, rarity:'史诗', kind:KIND.TROOP,
     hp:40, dmg:40, hitSpeed:1.1, range:0.5, sightRange:5.0, speed:SPEED.FAST,
-    targets:T.GROUND, flying:false, count:15, splash:0, deployTime:1, color:'#fafafa', radius:0.26 },
+    targets:T.GROUND, flying:false, count:15, splash:0, deployTime:1, color:'#fafafa', radius:0.26,
+    artCard:'skeletons' },   // 场上单位用骷髅兵卡图(军团本体=一群骷髅,非"骷髅军团"图标)
   witch: { id:'witch', name:'女巫', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:420, dmg:68, hitSpeed:1.1, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#6a1b9a', radius:0.380,
