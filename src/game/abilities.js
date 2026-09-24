@@ -46,7 +46,9 @@ export function tickPeriodic(unit, game, dt) {
       unit.specialTimer = 0;
       unit.spawnedOnce = true;
       for (let i = 0; i < sp.spawn.count; i++) {
-        game.spawnUnit(sp.spawn.card, unit.side, unit.x, unit.y + (unit.side === 0 ? -0.8 : 0.8));
+        // 召唤物无部署硬直(官方:小屋产兵即出即行动)
+        const u0 = game.spawnUnit(sp.spawn.card, unit.side, unit.x, unit.y + (unit.side === 0 ? -0.8 : 0.8));
+        u0.deployTimer = 0;
       }
       game.bus.emit('unit:spawned', { spawner: unit, card: sp.spawn.card }); // 产兵音效
       produced = true;
@@ -83,11 +85,15 @@ export function tickPeriodic(unit, game, dt) {
         const sx = unit.x + Math.cos(a) * ring;
         const sy = unit.y + Math.sin(a) * ring;
         // stagger 依次落地(0.12s 间隔):骷髅一只接一只冒出,呈纵队感
+        // 召唤物无部署硬直(官方:女巫召唤的骷髅即出即行动,deployTimer=0)
         if (i === 0) {
-          game.spawnUnit(sp.summon.card, unit.side, sx, sy);
+          const u0 = game.spawnUnit(sp.summon.card, unit.side, sx, sy);
+          u0.deployTimer = 0;
         } else {
-          const idx = i;
-          game.schedule(0.12 * i, () => game.spawnUnit(sp.summon.card, unit.side, sx, sy));
+          game.schedule(0.12 * i, () => {
+            const us = game.spawnUnit(sp.summon.card, unit.side, sx, sy);
+            us.deployTimer = 0;
+          });
         }
       }
       game.bus.emit('unit:summoned', { spawner: unit, card: sp.summon.card }); // 召唤音效
@@ -117,13 +123,14 @@ export function applyDeathAbilities(unit, game) {
     for (let i = 0; i < (sp.summonOnDeath.count || 1); i++) {
       const u = game.spawnUnit(sp.summonOnDeath.card, unit.side,
         unit.x + (i - sp.summonOnDeath.count / 2) * 0.6, unit.y);
-      u.deployTimer = 0.3;
+      u.deployTimer = 0;   // 召唤物无部署硬直
     }
   }
   if (sp.deathSummon) {
     const positions = game.getDeployPositions(unit.x, unit.y, sp.deathSummon.count, 0.3);
     for (let i = 0; i < sp.deathSummon.count; i++) {
-      game.spawnUnit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
+      const u = game.spawnUnit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
+      u.deployTimer = 0;   // 召唤物无部署硬直
     }
   }
 }
@@ -150,7 +157,8 @@ export function applyExpireAbilities(unit, game) {
   if (sp && sp.deathSummon) {
     const positions = game.getDeployPositions(unit.x, unit.y, sp.deathSummon.count, 0.3);
     for (let i = 0; i < sp.deathSummon.count; i++) {
-      game.spawnUnit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
+      const u = game.spawnUnit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
+      u.deployTimer = 0;   // 召唤物无部署硬直
     }
   }
 }
