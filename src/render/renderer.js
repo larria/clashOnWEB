@@ -295,6 +295,7 @@ export class Renderer {
     this.drawBackWall(ctx, GRID_H - 1, true);   // 玩家侧(底)
 
     this.arenaCache = c;
+    return c;   // Pixi 层直接取用(烘焙纹理);本层 drawArena 仍走缓存字段
   }
 
   /** 底线石墙:填满该行除 KING_BACK 凸排外的格子(两侧各 6 格) */

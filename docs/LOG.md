@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-09-25 修复 Pixi 战场全黑(v0.6.1)
+
+**现象**:进入对局后战场几乎全黑(仅 fx 层特效/血条可见)。
+**根因**:`Renderer.buildArenaCache()` 只把离屏 canvas 存进
+`this.arenaCache`,没有 return;Pixi 层 `toTexture(undefined)` 烘出
+0×0 纹理,WebGL 输出全黑。验证脚本此前只看 PNG 字节量没查纹理
+尺寸,漏过该回归。
+**修复**:buildArenaCache 补 return;Pixi init 增加纹理自检(任何
+tex 宽高为 0 → console 告警并放弃接管,自动回退 canvas 2D 路径,
+战场照常显示)。
+**验证**:arena 纹理 684×1216;进对局像素采样草地(67,133,64)/
+河水(46,109,156)/石墙棕色均正确;场景回归 17/17。
+
+---
+
+
 ## 2026-09-25 渲染层迁移 PixiJS(v0.6.0)
 
 **背景**:v0.5.0 免换引擎优化后仍不满足(手机发热),按既定计划迁移

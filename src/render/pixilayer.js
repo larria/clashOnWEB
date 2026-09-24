@@ -71,6 +71,14 @@ export class PixiLayer {
 
     this.buildTextures();
     this.buildStatic();
+    // 自检:纹理必须非空(v0.6.0 曾因 buildArenaCache 无返回值烘焙出
+    // 0×0 纹理导致战场全黑)。空纹理时告警并放弃接管,回退 canvas 2D
+    const bad = Object.entries(this.tex).filter(([, t]) => !t || !t.width || !t.height);
+    if (bad.length) {
+      console.warn('[Pixi] 纹理烘焙异常(尺寸为空):', bad.map(([k]) => k).join(','), '— 回退 canvas 2D');
+      this.ready = false;
+      return;
+    }
     this.ready = true;
   }
 
