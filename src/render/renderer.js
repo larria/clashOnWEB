@@ -632,6 +632,32 @@ export class Renderer {
       ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(x, cy, fxR + 5*a, 0, Math.PI*2); ctx.stroke();
     }
+    // 护盾(黑王子):常驻护盾罩——半透明穹顶包住单位 + 青紫光晕边。
+    // 盾越满越实,受损后变弱(视觉反馈盾的余量);碎盾瞬间由 shieldBreak
+    // 特效表现。护盾罩画在本体外、冲锋/攻击特效之下
+    if (u.shield > 0 && u.maxShield > 0) {
+      const tt = this.animTime;
+      const sr = fxR + 3;                       // 护盾罩半径(略大于卡图)
+      const ratio = u.shield / u.maxShield;     // 盾余量 0~1
+      const pulse = 0.85 + 0.15 * Math.sin(tt * 4);
+      ctx.save();
+      // 穹顶填充:盾满时深青半透明,受损时变淡
+      const a = 0.22 + 0.18 * ratio;
+      ctx.fillStyle = `rgba(120,170,255,${a * pulse})`;
+      ctx.beginPath(); ctx.arc(x, cy, sr, 0, Math.PI*2); ctx.fill();
+      // 光晕边(双层:外发光 + 内实线)
+      ctx.shadowColor = '#7ab8ff';
+      ctx.shadowBlur = 8 * pulse;
+      ctx.strokeStyle = `rgba(159,216,255,${(0.55 + 0.35 * ratio) * pulse})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, cy, sr, 0, Math.PI*2); ctx.stroke();
+      ctx.shadowBlur = 0;
+      // 顶端高光弧(强化"罩"的立体感)
+      ctx.strokeStyle = `rgba(220,240,255,${0.5 * pulse})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x, cy, sr - 1, -Math.PI*0.8, -Math.PI*0.2); ctx.stroke();
+      ctx.restore();
+    }
     // 冲锋状态(王子/黑王子):身后速度拖影 + 发光冲刺环
     // 冲锋是直线纵向冲刺,拖影方向 = 朝敌方(side 0 向上,side 1 向下)
     if (u.charged) {
