@@ -554,9 +554,16 @@ export class Renderer {
 
     if (art) {
       // ===== 卡图渲染 =====
-      // 视觉尺寸:单位碰撞半径 × 放大系数,大单位(巨人 r=0.55)明显大于小的(火枪手 r=0.38)
-      // 多体小单位画得更小(它们以"群体"出现,单个是杂兵)
-      const artScale = isSwarm ? 2.1 : 2.8;          // 半径 → 卡图宽(像素)
+      // 视觉尺寸:单位碰撞半径 × 体型档放大系数。
+      // 分档放大让体型差距可视(否则黑王子 r=0.5 与巨人 r=0.55 仅差 10%,
+      // 视觉几乎一样大——官方巨人应明显大于黑王子)。
+      //   巨型(巨人/戈仑/皮卡 r≥0.55):3.3  大步(王子/黑王子/飞龙 0.45~0.54):2.8
+      //   中步(<0.45):2.7  群体杂兵:2.1
+      let artScale;
+      if (isSwarm) artScale = 2.1;
+      else if (r >= 0.55) artScale = 3.3;
+      else if (r >= 0.45) artScale = 2.8;
+      else artScale = 2.7;
       const artW = r * artScale * 2;                  // 卡图宽度
       if (isSwarm) {
         // 群体单位:小圆形头像(中央正方形裁剪 + 圆形 clip)
@@ -1582,7 +1589,10 @@ export class Renderer {
       const art = getCardImage(card.artCard || p.cardId);
       // 建筑预览视觉半径 = 碰撞半径(与实际渲染/占位一致)
       const bvr = (card.radius || 0.4) * CELL;
-      const fxR = art ? (isSwarm ? r*2.1 : (isBuildingCard ? bvr : r*2.6)) : r;
+      // 体型档放大系数(与实际渲染 drawUnit 一致,见上方分档注释)
+      const cr = card.radius || 0.4;
+      const artScaleP = isSwarm ? 2.1 : (cr >= 0.55 ? 3.3 : (cr >= 0.45 ? 2.8 : 2.7));
+      const fxR = art ? (isSwarm ? r*2.1 : (isBuildingCard ? bvr : r*artScaleP)) : r;
       if (art && !p.invalid) {
         ctx.globalAlpha = ok ? 0.65 : 0.3;
         if (isSwarm) {
