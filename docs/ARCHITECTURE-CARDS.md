@@ -45,6 +45,8 @@ src/game/combat.js       移动/攻击(查询式:canJumpRiver/charge)
 | `mirror` | 镜像复制 |
 | `chain` | 连锁(打血量最高 N 个) |
 | `hits` | 多段命中 |
+| `dot` | 区域持续伤害(每tick跳伤+减速,出圈免伤) | spells.applySpellEffect |
+| `spawnUnits` | 落地生成部队(ring=环形散开) | spells.applySpellEffect |
 | `stun` / `freeze` / `buff+duration` | 状态效果 |
 | `spawnUnits`(本版新增) | 落地生成部队(飞桶/墓园/哥布林钻机…) |
 

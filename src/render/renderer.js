@@ -867,6 +867,36 @@ export class Renderer {
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(x, y, e.r*CELL, 0, Math.PI*2); ctx.fill();
         ctx.restore();
+      } else if (e.type === 'poisonCloud') {
+        // 毒雾(毒药法术):全程紫绿雾罩 + 冒泡(生命末期渐隐)
+        const x = e.x*CELL, y = e.y*CELL, R = e.radius*CELL;
+        const tt = this.animTime;
+        const fade = t < 0.15 ? (1 - t/0.15) : 1;   // 末段 15% 渐隐
+        ctx.save();
+        ctx.globalAlpha = 0.30 * fade;
+        const g = ctx.createRadialGradient(x, y, R*0.2, x, y, R);
+        g.addColorStop(0, 'rgba(156,39,176,0.55)'); g.addColorStop(0.7, 'rgba(76,175,80,0.4)'); g.addColorStop(1, 'rgba(56,142,60,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+        // 边界圈(官方:队伍色环)
+        ctx.globalAlpha = 0.75 * fade;
+        ctx.strokeStyle = e.color || '#9c27b0';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([7, 5]); ctx.lineDashOffset = -tt*15;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+        // 毒泡(数个缓慢上升的气泡,相位随时间)
+        ctx.globalAlpha = 0.5 * fade;
+        ctx.strokeStyle = '#ce93d8';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < 5; i++) {
+          const ph = (tt * 0.4 + i * 0.37) % 1;      // 0→1 循环
+          const bx = x + Math.cos(i * 2.4 + tt * 0.6) * R * 0.55;
+          const by = y + R * 0.6 - ph * R * 1.1;
+          const br = 2 + (1 - Math.abs(ph - 0.5) * 2) * 3;
+          ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI*2); ctx.stroke();
+        }
+        ctx.restore();
       } else if (e.type === 'elixirPop') {
         // 圣水收集器产费:紫色圣水滴升腾 + 光晕闪现
         const x = e.x*CELL, y = e.y*CELL;

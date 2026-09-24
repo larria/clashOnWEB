@@ -34,7 +34,7 @@ const SFX_FILES = [
   'atk_tesla','atk_infernoTower','atk_bombTower','atk_xbow','atk_mortar',
   // 法术
   'spell_fireball','spell_arrows','spell_rocket','spell_lightning','spell_zap',
-  'spell_rage','spell_freeze','spell_mirror',
+  'spell_rage','spell_freeze','spell_mirror','spell_poison',
   // 塔
   'tower_fire','king_fire','king_activate','tower_destroyed','princess_destroyed',
   // 通用

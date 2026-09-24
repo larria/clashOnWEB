@@ -112,6 +112,43 @@ function applySpellEffect(card, side, x, y, game) {
       .slice(0, sp.chain);
   }
 
+  // 持续伤害法术(毒药):区域内每 tick 跳一次伤害 + 持续减速,
+  // 走出区域即不再受伤害(减速短暂残留);对塔伤害按 towerDmg 每跳结算。
+  // 首跳延迟 tick 间隔(原版:伤害不即时,1 秒后第一跳)
+  if (sp && sp.dot) {
+    const d = sp.dot;
+    for (let i = 1; i <= d.hits; i++) {
+      game.schedule(d.tick * i, () => {
+        if (game.gameOver) return;
+        let hits = 0;
+        for (const e of game.units) {
+          if (e.dead || e.side === side) continue;
+          if (dist2(x, y, e.x, e.y) > (radius + e.radius) * (radius + e.radius)) continue;
+          game.dealDamage(e, d.dmg, null, card);
+          hits++;
+          // 每跳刷新减速(出圈后 ~1 tick 残留,对齐"离开后短暂保持")
+          if (d.slow) {
+            if (e.slowTimer < d.slow.duration) { e.slowTimer = d.slow.duration; e.slowFactor = d.slow.factor; }
+          }
+        }
+        // 塔伤害(每跳独立结算,用专用对塔伤害而非倍率)
+        if (d.towerDmg) {
+          for (const tw of game.getEnemyTowers(side)) {
+            if (tw.dead) continue;
+            if (dist2(x, y, tw.x, tw.y) <= (radius + tw.radius) * (radius + tw.radius)) {
+              game.dealTowerDamage(tw, d.towerDmg);
+            }
+          }
+        }
+        if (hits > 0) game.bus.emit('spell:hit', { cardId: card.id, side, x, y, radius, hits, kills: [] });
+      });
+    }
+    // 视觉:毒雾区域(全程持续;渲染层按 life 渐隐)
+    game.addEffect({ type: 'poisonCloud', x, y, radius, life: d.tick * d.hits, maxLife: d.tick * d.hits, color: card.color });
+    game.lastPlayedCard[side] = card.id;
+    return;   // dot 法术不走下面的即时伤害逻辑
+  }
+
   for (const e of targets) {
     if (!(sp && sp.chain)) {
       const d = dist2(x, y, e.x, e.y);

@@ -108,6 +108,9 @@
   "file": null,
   "note": "wiki 无,本地竖版裁剪图"
  },
+ "poison": {
+  "file": "PoisonCard.png"
+ },
  "prince": {
   "file": "PrinceCard.png"
  },

@@ -184,6 +184,12 @@ export const CARDS = {
     // 哥布林落地后 1.1s 才可行动(可被预判法术反制的窗口);桶本体无伤害(2016-07 移除)
     // ring=1.6:落地哥布林围绕落点等边三角形散开(扔塔中心时三面包围塔,
     // 官方行为——塔先打靠国王塔一侧的,AOE 难一次全清)
+  poison: { id:'poison', name:'毒药', cost:4, rarity:'史诗', kind:KIND.SPELL,
+    radius:3.5, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere', castTime: 0.5,
+    special:{ dot:{ dmg:46, towerDmg:11, hits:8, tick:1.0, slow:{ duration:1.2, factor:0.85 } } } },
+    // wiki 11级×0.5:每跳 92/2=46·共8跳(每秒1跳·持续8s)·对塔 22/2=11/跳;
+    // 半径3.5;减速15%(factor0.85,2019回归的版本);伤害不即时(首跳延迟1s);
+    // 2016-02-29 实装;对空对地,出圈即不受伤(减速短暂残留)
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },
