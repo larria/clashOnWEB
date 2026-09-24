@@ -153,13 +153,15 @@ export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers, building
 }
 
 // 塔占面积判定:点是否落在某存活塔的格子上(公主 3×3 → 半宽 1.5;国王 4×4 → 半宽 2)
+// 塔占面积是格子系统:塔格为 [tw.y-hw, tw.y+hw),外边界(塔后第一行,
+// 如玩家国王塔后 y=31 行)不属于塔——沉底贴边放置(恰 y=31.0)不应被拒
 function blockByTower(towers, x, y) {
   if (!towers) return false;
   for (const k of ['left', 'right', 'king']) {
     const tw = towers[k];
     if (!tw || tw.dead) continue;
     const hw = tw.type === 'king' ? 2.0 : 1.5;
-    if (Math.abs(x - tw.x) <= hw && Math.abs(y - tw.y) <= hw) return true;
+    if (Math.abs(x - tw.x) <= hw && Math.abs(y - tw.y) < hw) return true;
   }
   return false;
 }
