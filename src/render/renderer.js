@@ -1550,6 +1550,23 @@ export class Renderer {
   }
 
   // ===== 部署预览 =====
+  /** 范围圈(乳白色半透明,对齐原版预览样式):细描边 + 淡填充 + 轻微脉冲 */
+  drawRangeCircle(x, y, R, t) {
+    const ctx = this.ctx;
+    ctx.save();
+    const pulse = 0.9 + 0.1 * Math.sin(t * 5);
+    // 淡填充
+    ctx.globalAlpha = 0.13 * pulse;
+    ctx.fillStyle = '#fffcf0';
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+    // 细描边
+    ctx.globalAlpha = 0.75;
+    ctx.strokeStyle = 'rgba(255,252,240,0.9)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+
   // 无幻影单位:仅光圈 + 多体数量;法术显示范围圈
   drawPreview(p) {
     const ctx = this.ctx;
@@ -1557,20 +1574,13 @@ export class Renderer {
     const x = p.x*CELL, y = p.y*CELL;
     const t = this.animTime;
     if (card.kind === KIND.SPELL) {
-      // 法术范围圈(脉冲)
+      // 法术作用范围圈(乳白色半透明,对齐原版预览样式;轻微脉冲)
       const R = card.radius*CELL;
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      ctx.strokeStyle = card.color; ctx.lineWidth = 2.5;
-      ctx.setLineDash([8, 5]); ctx.lineDashOffset = -t*20;
-      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.globalAlpha = 0.18 + 0.08*Math.sin(t*5);
-      ctx.fillStyle = card.color;
-      ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI*2); ctx.fill();
+      this.drawRangeCircle(x, y, R, t);
       // 中心十字
+      ctx.save();
       ctx.globalAlpha = 0.9;
-      ctx.strokeStyle = card.color; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255,252,240,0.95)'; ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(x-7, y); ctx.lineTo(x+7, y);
       ctx.moveTo(x, y-7); ctx.lineTo(x, y+7);
@@ -1620,24 +1630,24 @@ export class Renderer {
           drawCardImage(ctx, art, x, y, fxR*2);
         }
       }
-      // 光圈(多体按实际队形包围半径,单体按视觉半径)
-      let swarmR = r * 3.4;
-      if (isSwarm && art && !p.invalid) {
-        const positions = getDeployPositions(p.x, p.y, card.count, card.radius || 0.35);
-        let maxD2 = 0;
-        for (const pos of positions) {
-          const d2 = (pos.x - p.x) ** 2 + (pos.y - p.y) ** 2;
-          if (d2 > maxD2) maxD2 = d2;
-        }
-        swarmR = Math.sqrt(maxD2) * CELL + r * 2.1;
+      // ===== 范围预览(对齐原版) =====
+      // 常规部队:无范围圈(原版不显示)。特殊卡显示对应范围(乳白半透明):
+      //   - 落地伤害部队(冰法):spawnDamage 半径
+      //   - 攻击建筑(加农炮/连弩/电磁塔/迫击炮/地狱塔/炸弹塔):攻击范围
+      // 部署合法/非法仍由卡图透明度区分(非法更淡),不再画绿/红圈
+      const sp = card.special || {};
+      if (sp.spawnDamage) {
+        this.drawRangeCircle(x, y, sp.spawnDamage.radius*CELL, t);
+      } else if (isBuildingCard && (card.range || 0) > 1.5) {
+        // 建筑攻击范围:官方口径=中心到目标边缘,预览圈用 range+典型目标半径
+        // 视觉近似即可(原版画的就是攻击范围圈)
+        this.drawRangeCircle(x, y, (card.range + 0.4)*CELL, t);
       }
-      const ringR = (isSwarm ? swarmR : fxR) + 6;
-      ctx.globalAlpha = 0.9;
-      ctx.strokeStyle = ok ? '#7fff9e' : '#ff7b7b';
-      ctx.lineWidth = 2.5;
-      ctx.setLineDash([6, 4]); ctx.lineDashOffset = -t*20;
-      ctx.beginPath(); ctx.arc(x, y, ringR, 0, Math.PI*2); ctx.stroke();
-      ctx.setLineDash([]);
+      // 多体单位:无队形包围圈,仅保留小头像(小圆自带阵营描边)
+      // 指示物定位半径(×N 徽标/吸附标签):有范围圈用圈,否则用卡图尺寸
+      const ringR = sp.spawnDamage ? sp.spawnDamage.radius * CELL
+        : (isBuildingCard && (card.range || 0) > 1.5) ? (card.range + 0.4) * CELL
+        : fxR + 6;
       // 多体指示
       if (card.count > 1) {
         ctx.globalAlpha = 0.5;
