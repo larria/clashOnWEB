@@ -203,11 +203,11 @@ function dodgeTower(unit, game, fromX, fromY, toX, toY) {
         // 会撞塔:进走廊模式
         // 侧选择:
         //   己方国王塔:朝行进侧(离目标桥近的一侧=塔边缘出口)
-        //   己方公主塔:内侧(朝中线——官方路线沿公主塔内侧走)
-        //   其余塔(敌方塔/单位横向来):取离单位近的一侧
+        //   其余塔(含己方公主塔):取单位当前所在的一侧——天然区分
+        //     角落沉底(左下来在塔外侧→沿外侧走,过塔奔同侧桥)
+        //     与中心沉底(来路在两塔之间→沿内侧走,官方路线)
         let s;
         if (isOwnKing) s = (toX < tw.x) ? -1 : 1;
-        else if (isOwnPrincess) s = (tw.lane === 'left') ? 1 : -1;  // 左塔绕右(内侧)
         else s = fromX <= tw.x ? -1 : 1;
         unit._dodge = { tw, side: s };
         const lx = tw.x + s * pad;

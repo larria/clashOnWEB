@@ -146,6 +146,44 @@ const SCENARIOS = {
   const innerLane = mid.filter(p => Math.abs(p.x - 5.27) < 0.6);
   ok(innerLane.length > mid.length * 0.4, `中段应沿公主塔内侧走廊(x≈5.27,实际${innerLane.length}/${mid.length}帧)`);
 },
+'寻路-左下角沉底走塔外侧': () => {
+  // 2026-09-25 用户战报:左下角沉底被强制横穿到公主塔右侧(内侧)。
+  // 官方行为:角落沉底走外侧——斜线到公主塔左下角,沿左侧,过塔奔左桥
+  const g = newGame();
+  const u = g.spawnUnit('knight', 0, 0.3, 30.8);
+  u.deployTimer = 0;
+  const trace = [];
+  for (let i = 0; i < 160; i++) {
+    g.update(0.1);
+    trace.push({ x: u.x, y: u.y });
+  }
+  // 中段(4~10s)沿公主塔左外侧走廊(x≈1.7±0.6)纵走,绝不应越过塔心(3.5)
+  const mid = trace.slice(40, 100);
+  const outerLane = mid.filter(p => Math.abs(p.x - 1.73) < 0.6);
+  ok(outerLane.length > mid.length * 0.5, `中段应沿公主塔左外侧走廊(x≈1.7,实际${outerLane.length}/${mid.length}帧)`);
+  ok(mid.every(p => p.x < 3.4), `全程不应横穿到塔右侧(塔心 3.5,最大 x=${Math.max(...mid.map(p=>p.x)).toFixed(1)})`);
+  // 过塔后向左桥汇合(终点 x 趋近 3.5)
+  const tail = trace.slice(-20);
+  const avgX = tail.reduce((s,p)=>s+p.x,0) / tail.length;
+  ok(Math.abs(avgX - 3.5) < 0.8, `过塔后奔左桥(x→3.5,尾部均值 ${avgX.toFixed(1)})`);
+},
+'寻路-右下角沉底走塔外侧(镜像)': () => {
+  const g = newGame();
+  const u = g.spawnUnit('knight', 0, 17.7, 30.8);
+  u.deployTimer = 0;
+  const trace = [];
+  for (let i = 0; i < 160; i++) {
+    g.update(0.1);
+    trace.push({ x: u.x, y: u.y });
+  }
+  const mid = trace.slice(40, 100);
+  const outerLane = mid.filter(p => Math.abs(p.x - 16.27) < 0.6);
+  ok(outerLane.length > mid.length * 0.5, `中段应沿公主塔右外侧走廊(x≈16.3,实际${outerLane.length}/${mid.length}帧)`);
+  ok(mid.every(p => p.x > 14.6), `全程不应横穿到塔左侧(塔心 14.5,最小 x=${Math.min(...mid.map(p=>p.x)).toFixed(1)})`);
+  const tail = trace.slice(-20);
+  const avgX = tail.reduce((s,p)=>s+p.x,0) / tail.length;
+  ok(Math.abs(avgX - 14.5) < 0.8, `过塔后奔右桥(x→14.5,尾部均值 ${avgX.toFixed(1)})`);
+},
 '寻路-骷髅军团沉底分双路': () => {
   const g = newGame();
   const okd = deployCard('skeletonArmy', 0, 9, 31, g);
