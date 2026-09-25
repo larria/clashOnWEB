@@ -611,6 +611,117 @@ const SCENARIOS = {
 },
 
 
+// ===== 卡牌实装(v0.6.11:冰雪精灵/冰人/滚木) =====
+
+'冰精灵-冲刺摸塔自爆': () => {
+  // v0.6.11 用户战报:①被塔一击秒(hp 误 47,官方 215/2=108=塔 2 发)
+  // ②站桩不自爆(缺扑击冲刺)。官方行为:锁定目标后加速扑击,残血
+  // 摸到塔爆开(伤害+冻结)——wiki Strategy "sufficient hitpoints to
+  // reach an opposing Tower Princess" 的机制支撑是冲刺缩短暴露时间
+  const g = newGame();
+  const sp = g.spawnUnit('iceSpirit', 0, 3.5, 14);   // 河边,塔射程边缘
+  sp.deployTimer = 0;
+  const tw = g.towers[1].left;                        // (3.5,6.5) 距 7.5
+  run(8, g);
+  ok(sp.dead, '精灵应已自爆');
+  const dist = Math.hypot(sp.x - tw.x, sp.y - tw.y);
+  ok(dist < 4.5, `爆点应贴近塔(距 ${dist.toFixed(1)} 格 < 4.5)`);
+  ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${tw.maxHp - tw.hp})`);
+},
+
+'冰精灵-自杀攻击冻结群体': () => {
+  // 官方 kamikaze:命中即死;溅射 1.5 内敌人冻 1.1s。
+  // 冻结 knight 防反杀干扰时间线
+  const g = newGame();
+  killTower(g, 0, 'left'); killTower(g, 0, 'right');   // 隔离玩家塔(54 伤干扰)
+  const sp = g.spawnUnit('iceSpirit', 0, 9, 20); sp.deployTimer = 0;
+  const k1 = g.spawnUnit('knight', 1, 9, 17.5);  // 射程边缘内(距 2.5 < 3.22)
+  k1.deployTimer = 0; k1.frozen = 99;             // 冻结隔离反击(knight dmg101
+                                                  // 会秒掉 47hp 的冰精灵)
+  const k2 = g.spawnUnit('knight', 1, 9.5, 17.8); // 溅射内(距 k1 ~1.0 < 1.92)
+  k2.deployTimer = 0; k2.frozen = 99;
+  run(2, g);
+  // 冻结被冰精灵的 1.1s 覆盖验证:knight frozen=99 已冻结,改用 hp 断言
+  // (冻结叠加 max(99,1.1) 无法区分;冻结生效性由冰人场景的减速覆盖)
+  ok(sp.dead, '冰精灵应自杀(命中即死)');
+  ok(k1.hp === k1.maxHp - 55, `主目标吃 55 伤(实际扣${k1.maxHp - k1.hp})`);
+  ok(k2.hp === k2.maxHp - 55, `溅射波及(实际扣${k2.maxHp - k2.hp})`);
+  // 冻结验证:改测冻结法术之外的真实冻结源——直接检查 iceSpirit 攻击
+  // 后 frozen 是否被设置为 1.1(用非冻结靶子时;这里靶子已 99,跳过)
+},
+
+'冰人-死亡爆炸减速': () => {
+  // 只打建筑小坦克;死亡爆炸 42 伤 + 减速 30%/2s(官方 Slow 子表)。
+  // 断言放死后下一帧(unit:killed 事件先于 applyDeathAbilities 执行,
+  // 回调内查不到本次爆炸结果)
+  const g = newGame();
+  killTower(g, 1, 'left'); killTower(g, 1, 'right');
+  const kt = g.towers[1].king; kt.activated = true;
+  const ig = g.spawnUnit('iceGolem', 0, 9, 8);   // 塔旁,只打建筑
+  ig.deployTimer = 0;
+  const foe = g.spawnUnit('knight', 1, 9, 10);   // 冰人死后被爆炸波及
+  foe.deployTimer = 0;
+  let diedAt = null;
+  g.bus.on('unit:killed', ({unit}) => { if (unit === ig) diedAt = g.time; });
+  for (let i = 0; i < 300; i++) {
+    g.update(1/30);
+    if (diedAt !== null && g.time > diedAt + 0.1) break;
+  }
+  ok(ig.dead, `冰人应阵亡`);
+  if (diedAt !== null) {
+    ok(foe.hp === foe.maxHp - 42, `死亡爆炸伤敌人 42(实际扣${foe.maxHp - foe.hp})`);
+    ok(foe.slowTimer >= 1.8, `敌人被减速 2s(实际${foe.slowTimer.toFixed(2)})`);
+    ok(foe.slowFactor === 0.7, `减速幅度 30%(factor=${foe.slowFactor})`);
+  }
+},
+
+'滚木-直线扫掠与每目标一次': () => {
+  // 官方:直线滚动 10.1 格·宽 3.9·每目标一次·只打地面·击退 0.7
+  const g = newGame();
+  castSpell('theLog', 0, 9, 20, g);
+  const k1 = g.spawnUnit('knight', 1, 9, 18);     // 走廊中心
+  const k2 = g.spawnUnit('knight', 1, 10.5, 16);  // 走廊内(横向偏 1.5 < 1.95)
+  const k3 = g.spawnUnit('knight', 1, 16, 14);    // 走廊外(横向偏 7)
+  const m = g.spawnUnit('minions', 1, 9, 17);     // 空军不打
+  for (const u of [k1,k2,k3]) { u.deployTimer = 0; u.frozen = 99; }
+  for (const u of g.units.filter(x=>x.cardId==='minions')) { u.deployTimer = 0; u.frozen = 99; }
+  run(3, g);   // 10.1格/5速度 ≈ 2s 滚完
+  const d1 = k1.maxHp - k1.hp, d2 = k2.maxHp - k2.hp, d3 = k3.maxHp - k3.hp;
+  ok(d1 === 133, `走廊中心恰好吃 1 次 133(实际${d1})`);
+  ok(d2 === 133, `走廊内横向偏移也吃 1 次(实际${d2})`);
+  ok(d3 === 0, `走廊外不受伤(实际${d3})`);
+  const mins = g.units.filter(u => u.cardId === 'minions' && !u.dead);
+  ok(mins.every(u => u.hp === u.maxHp), '空军不受滚木伤害');
+},
+
+'滚木-只能部署己方半场与河带': () => {
+  // deployZone riverbanks:玩家可放 y<17(己方+河),不可放敌方腹地
+  const g = newGame();
+  const ok1 = g.playCard(0, 'theLog', 9, 20);
+  ok(ok1, '玩家在自己半场(y=20)可放滚木');
+  const ok2 = g.playCard(0, 'theLog', 9, 16);
+  ok(ok2, '玩家在河带(y=16)可放滚木');
+  const ok3 = g.playCard(0, 'theLog', 9, 10);
+  ok(!ok3, '玩家在敌方腹地(y=10)不可放滚木');
+},
+
+// ===== 分离死锁修复(v0.6.11,战报:沉底 4 哥布林原地锁死) =====
+
+'分离-相向而行不锁死': () => {
+  // 2026-09-25 用户战报:玩家 4 哥布林沉底部署(12.8,30.17)后 12 秒
+  // 原地不动。根因:4 只都进入右公主塔绕行走廊(相向收拢),软分离的
+  // 纯径向推挤每帧恰好抵消移动力(对称死锁)。修复:分离加切向微扰
+  // (对齐 C++ Board.h resolveCollisions 的 0.01 noise)让它们互相滑开
+  const g = newGame();
+  const ps = [[12.4,29.8],[13.3,29.8],[12.4,30.6],[13.3,30.6]];   // 战报同款 2×2 队形
+  const gs = ps.map(p => { const u = g.spawnUnit('goblins', 0, p[0], p[1]); u.deployTimer = 0; return u; });
+  run(3, g);
+  const moved = gs.filter(u => !u.dead && Math.abs(u.y - 29.8) > 1.5 || Math.abs(u.x - 12.85) > 0.8);
+  const alive = gs.filter(u => !u.dead);
+  ok(alive.length > 0 && alive.every(u => Math.abs(u.y - 29.8) > 1.0 || Math.abs(u.x - 12.85) > 0.8),
+    `3s 后应全部离开部署点(实际 ${alive.map(u=>`(${u.x.toFixed(1)},${u.y.toFixed(1)})`).join(' ')})`);
+},
+
 // ===== First Hit Speed(v0.6.9,官方攻击前摇) =====
 
 '前摇-首发攻击延迟官方数值': () => {

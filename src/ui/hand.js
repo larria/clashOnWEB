@@ -31,7 +31,10 @@ export class HandUI {
   update(state) {
     Object.assign(this.state, state);
     const s = this.state;
-    const sig = s.hand.join(',') + '|' + s.selectedIdx + '|' + s.elixir;
+    // sig 不含圣水:圣水变化由 _updateLockMasks/_updateElixirBar 增量处理,
+    // 若 sig 含 elixir,圣水每涨 1 格就整体重建手牌 DOM——悬浮态/过渡
+    // 全部重置,表现为"卡牌随圣水跳动"(v0.6.11 用户战报)
+    const sig = s.hand.join(',') + '|' + s.selectedIdx;
     if (sig !== this.lastSig) {
       // 拖拽进行中不重建 DOM(重建会销毁被 pointer-capture 的卡牌,中断拖拽);
       // 拖拽结束后 invalidate 会补上这次重建

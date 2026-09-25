@@ -8,7 +8,7 @@
 // ===============================================
 import {
   T, GRID_W, GRID_H, TOWERS, MAX_ELIXIR, ELIXIR_RATE, RAGE_MULT,
-  MATCH_TIME, DOUBLE_ELIXIR_AT, OVERTIME, TRIPLE_ELIXIR_AT, dist, isRiver, isBridge,
+  MATCH_TIME, DOUBLE_ELIXIR_AT, OVERTIME, TRIPLE_ELIXIR_AT, dist, isRiver, isBridge, canDeploy,
 } from '../core/constants.js';
 import { makeRng } from '../core/rng.js';
 import { CARDS, KIND } from '../data/cards.js';
@@ -19,7 +19,7 @@ import { tickPeriodic, applyDeathAbilities, tickTransform } from './abilities.js
 import { Projectile } from './projectile.js';
 import { getDeployPositions } from './formation.js';
 import { findTarget, findNearestEnemyUnit, getMarchTarget, moveUnit, attackTarget } from './combat.js';
-import { castSpell, deployCard } from './spells.js';
+import { castSpell, deployCard, updateRolls } from './spells.js';
 
 export class Game {
   constructor(opts = {}) {
@@ -322,6 +322,7 @@ export class Game {
     this.updateUnits(dt);
     this.updateProjectiles(dt);
     this.updateEffects(dt);
+    updateRolls(this, dt);   // 滚木扫掠推进(在单位更新后,与法术结算同步)
 
     // 清理死亡单位与失效投射物
     this.units = this.units.filter(u => !u.dead);
@@ -398,8 +399,12 @@ export class Game {
     return attacker.isTower ? attacker.range : attacker.card.range;
   }
   // 是否在攻击范围内(边缘到边缘口径:双方半径+射程)
+  // kamikaze 单位例外:用溅射半径作为触发距离(贴脸自爆——官方精灵
+  // 冲到敌人身前爆开,range 2.5 是锁定距离而非起爆距离)
   inAttackRange(attacker, target) {
-    return dist(attacker, target.ref) <= attacker.radius + this.attackRangeOf(attacker) + target.ref.radius;
+    const kami = !attacker.isTower && attacker.card && attacker.card.special && attacker.card.special.kamikaze;
+    const range = kami ? (attacker.card.splash || 1.5) : this.attackRangeOf(attacker);
+    return dist(attacker, target.ref) <= attacker.radius + range + target.ref.radius;
   }
 
   // ===== 投射物系统(规格 §6.1)=====
@@ -628,11 +633,15 @@ export class Game {
           const d = Math.sqrt(dx*dx + dy*dy);
           if (d < minD) {
             if (d > 0.001) {
-              // 沿连线各退一半
+              // 沿连线各退一半 + 切向微扰(规格 §4.2:C++ 同款 noise——
+              // 两只单位相向走进同一条走廊时,纯径向推挤会与移动力
+              // 每帧精确抵消,部队原地锁死(战报:4 哥布林沉底 12s 不动);
+              // 切向分量让它们沿彼此滑开绕行,恢复自然分流)
               const push = (minD - d) / 2;
               const nx = dx/d, ny = dy/d;
-              this.pushUnit(a, -nx*push, -ny*push);
-              this.pushUnit(b, nx*push, ny*push);
+              const noise = 0.01;
+              this.pushUnit(a, -nx*push + ny*noise, -ny*push - nx*noise);
+              this.pushUnit(b,  nx*push - ny*noise,  ny*push + nx*noise);
             } else {
               this.pushUnit(a, -0.1, 0);
               this.pushUnit(b, 0.1, 0);
@@ -680,8 +689,15 @@ export class Game {
     }
     if (this.elixir[side] < cost) return false;
 
-    // 法术可全场释放;部队/建筑按卡牌部署规则(canDeploy 解释 deployZone)
+    // 法术可全场释放;部队/建筑按卡牌部署规则(canDeploy 解释 deployZone)。
+    // 例外:滚木类 deployZone:'riverbanks' 法术——canDeploy 会判定其
+    // "己方半场+河带"限制(官方:滚木只能部署己方半场)
     if (card.kind === KIND.SPELL) {
+      if (card.deployZone && card.deployZone !== 'anywhere') {
+        // 非常规部署区法术(riverbanks):先做区域校验,失败不扣费
+        if (!canDeploy(side === 0 ? 'player' : 'ai', x, y, this.towers[1 - side],
+          { zone: card.deployZone })) return false;
+      }
       // 法术本体全场可放;但镜像复制的部队/建筑可能因部署位非法失败——
       // 失败不扣费(否则圣水蒸发无反馈)
       const spellOk = castSpell(cardId, side, x, y, this);

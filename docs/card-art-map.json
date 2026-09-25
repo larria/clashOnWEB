@@ -155,5 +155,14 @@
   },
   "princess": {
     "file": "PrincessCard.png"
+  },
+  "iceSpirit": {
+    "file": "IceSpiritCard.png"
+  },
+  "iceGolem": {
+    "file": "IceGolemCard.png"
+  },
+  "theLog": {
+    "file": "TheLogCard.png"
   }
 }

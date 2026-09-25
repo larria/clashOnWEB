@@ -9,7 +9,7 @@ import { getDeployPositions, getRingPositions } from './formation.js';
 // 法术对塔减伤倍率(单一权威来源;ai.js 补刀判定从这里 import)
 export const TOWER_MULT = {
   arrows: 0.20, rocket: 0.23, lightning: 0.15,
-  fireball: 0.25, zap: 0.25, freeze: 0.30,
+  fireball: 0.25, zap: 0.25, freeze: 0.30, theLog: 0.30,
 };
 
 // 施放法术(返回 false = 施放失败,如镜像复制的部署位非法;
@@ -36,6 +36,12 @@ export function castSpell(cardId, side, x, y, game) {
   if (card.dmg > 0 || card.special) {
     // 法术图标在释放位置快速显隐(无论是否延时,立即给玩家落点反馈)
     game.addEffect({ type: 'spellIcon', cardId: card.id, x, y, life: 0.6, maxLife: 0.6 });
+    // 滚木:直线滚动扫掠(规格 §6.2 滚动扫掷;即时起滚,无施法延时)
+    if (card.special && card.special.roll) {
+      startRoll(card, side, x, y, game);
+      game.lastPlayedCard[side] = cardId;
+      return true;
+    }
     // 投射/施法延时(原版:火球/万箭/火箭从释放方国王塔飞出,飞行时间与
     // 距离正相关;电击/冰冻有固定施法时间;雷电/狂暴即时)
     const delay = getSpellDelay(card, side, x, y);
@@ -288,4 +294,74 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
   }
   game.lastPlayedCard[side] = cardId;
   return true;
+}
+
+// ===== 滚木:直线滚动扫掠(规格 §6.2 对照 C++ AreaSpell 滚动扫掷)=====
+// 三条官方规则:
+//   1. 走廊判定含目标半径(表面命中):弹头碰到目标近缘即命中
+//   2. 每目标每滚至多一次(swept 记录)
+//   3. 横向甩飞方向由被卷入位置决定:中心沿滚向推、边缘横甩
+//      (movement.pushAlong;规格注释明言径向 pushAway 表达不了)
+// 滚木挂在 game._rolls(逻辑) + game.effects(视觉),game.update 每帧调
+// updateRolls 推进;对塔伤害走 TOWER_MULT 减伤(法术对塔统一规则)
+import { pushAlong } from './movement.js';
+
+function startRoll(card, side, x, y, game) {
+  const roll = card.special.roll;
+  const dirY = side === 0 ? -1 : 1;   // 玩家(下方)向上滚,AI 向下
+  const st = {
+    type: 'rollingLog', cardId: card.id, side,
+    x, y0: y, dirY, roll, dmg: card.dmg,
+    towerMult: TOWER_MULT[card.id] != null ? TOWER_MULT[card.id] : 0.3,
+    travelled: 0, swept: new Set(),
+    // 视觉生命 = 滚完全程的时间(effects 按此渐隐)
+    life: roll.range / roll.speed, maxLife: roll.range / roll.speed,
+  };
+  game.effects.push(st);       // 渲染层画滚木视觉(leading edge 位置)
+  if (!game._rolls) game._rolls = [];
+  game._rolls.push(st);
+  game.bus.emit('spell:hit', { cardId: card.id, side, x, y,
+    radius: roll.width / 2, hits: 0, kills: [] });   // 音效/日志
+}
+
+// 每帧推进所有在滚的滚木(由 game.update 调用)
+export function updateRolls(game, dt) {
+  if (!game._rolls) return;
+  for (const st of game._rolls) {
+    st.travelled += st.roll.speed * dt;
+    if (st.travelled > st.roll.range) st.travelled = st.roll.range;
+    st.y = st.y0 + st.dirY * st.travelled;   // leading edge(视觉+判定)
+    const half = st.roll.width / 2;
+    // 单位(只打地面)
+    for (const e of game.units) {
+      if (e.dead || e.side === st.side || st.swept.has(e.uid)) continue;
+      if (e.flying) continue;
+      const r = e.radius;
+      const dx = e.x - st.x;
+      const dy = (e.y - st.y0) * st.dirY;   // 沿滚向的偏移(正=前方)
+      if (Math.abs(dx) > half + r) continue;   // 走廊外
+      if (dy + r < 0) continue;                // 完全在起点后方
+      if (dy - r > st.travelled) continue;     // 弹头未触及近缘
+      st.swept.add(e.uid);
+      game.dealDamage(e, st.dmg, null);
+      // 横向甩飞:lateral ∈ [-1,1] 是被卷入的横向位置;中心前推边缘横甩
+      const lateral = half > 0 ? Math.max(-1, Math.min(1, dx / half)) : 0;
+      const forward = 1 - Math.abs(lateral);
+      pushAlong(game, e, lateral, forward * st.dirY, st.roll.knockback);
+      if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
+    }
+    // 塔(对塔减伤;塔不可位移——pushAlong 内建免疫)
+    for (const tw of game.getEnemyTowers(st.side)) {
+      if (tw.dead || st.swept.has(tw.uid)) continue;
+      const r = tw.radius;
+      const dx = tw.x - st.x;
+      const dy = (tw.y - st.y0) * st.dirY;
+      if (Math.abs(dx) > half + r) continue;
+      if (dy + r < 0) continue;
+      if (dy - r > st.travelled) continue;
+      st.swept.add(tw.uid);
+      game.dealTowerDamage(tw, st.dmg * st.towerMult);
+    }
+  }
+  game._rolls = game._rolls.filter(s => s.travelled < s.roll.range);
 }

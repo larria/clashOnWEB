@@ -75,6 +75,13 @@ export class Unit {
     if (this.charged && this.card.special && this.card.special.charge) {
       s *= this.card.special.charge.speedMult;
     }
+    // kamikaze 冲刺(冰雪精灵类):锁定目标后扑击加速 ×3——官方精灵
+    // 起跳扑向目标爆开;无此加速会被塔在途中点掉(wiki Strategy:
+    // "sufficient hitpoints to reach an opposing Tower Princess"的
+    // 机制支撑正是扑击缩短暴露时间,而非硬吃塔伤)
+    if (this.card.special && this.card.special.kamikaze && this.target) {
+      s *= 3;
+    }
     return s;
   }
   get hitSpeed() {

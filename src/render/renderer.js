@@ -1080,6 +1080,42 @@ export class Renderer {
         this.drawShotTrail(e, t);
       } else if (e.type === 'hitBurst') {
         this.drawHitBurst(e, t);
+      } else if (e.type === 'rollingLog') {
+        // 滚木:横向原木沿滚动方向推进(spells.startRoll 驱动 y 位置;
+        // x 是滚动轴线,width 全宽;按已滚进度画前沿原木+后方拖痕)
+        const cx = e.x * CELL, cy = e.y * CELL;
+        const halfW = (e.roll.width / 2) * CELL;
+        const len = Math.min(e.travelled, 1.4) * CELL;   // 原木可见长度
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(e.dirY < 0 ? 0 : Math.PI);   // 统一为"向上滚"
+        // 拖痕(已扫过的走廊淡痕)
+        ctx.globalAlpha = 0.18 * t;
+        ctx.fillStyle = '#8d6e63';
+        ctx.fillRect(-halfW, -len, halfW * 2, len);
+        // 原木主体:圆角矩形+木纹线
+        ctx.globalAlpha = 1;
+        const bodyH = 0.85 * CELL;
+        const grad = ctx.createLinearGradient(-halfW, 0, halfW, 0);
+        grad.addColorStop(0, '#5d4037'); grad.addColorStop(0.5, '#8d6e63'); grad.addColorStop(1, '#5d4037');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(-halfW, -bodyH / 2, halfW * 2, bodyH, bodyH / 2);
+        ctx.fill();
+        ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 2;
+        ctx.stroke();
+        // 尖刺(官方滚木带钉)
+        ctx.fillStyle = '#4e342e';
+        for (let i = -2; i <= 2; i++) {
+          const sx = i * (halfW / 2.5);
+          ctx.beginPath();
+          ctx.moveTo(sx - 3, -bodyH / 2);
+          ctx.lineTo(sx, -bodyH / 2 - 5);
+          ctx.lineTo(sx + 3, -bodyH / 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      } else if (e.type === 'spellIcon') {
       } else if (e.type === 'spellIcon') {
         this.drawSpellIcon(e, t);
       } else if (e.type === 'jumpDust' || e.type === 'jumpLand') {

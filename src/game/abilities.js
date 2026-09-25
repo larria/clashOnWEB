@@ -114,9 +114,12 @@ export function applyDeathAbilities(unit, game) {
       // 延时炸弹(气球/骷髅巨人):掉落可见炸弹,数秒后爆炸
       dropDeathBomb(unit, game, dd);
     } else {
-      // 即时死亡伤害(戈仑/小戈仑):只伤敌方单位(CR 无友军伤害机制——
-      // 法术/死亡炸弹都只伤敌方;此前误设 hurtAlly=true 会误伤友军)
+      // 即时死亡伤害(戈仑/小戈仑/冰人):只伤敌方单位(CR 无友军伤害
+      // 机制;冰人附带范围减速 30%/2s——官方 Ice Golem 死亡爆炸)
       game.applyAreaDamage(unit, dd.dmg, dd.splash, dd.targets, false);
+      if (dd.slow) {
+        game.applySlowAt(unit.x, unit.y, dd.splash, unit.side, dd.slow.duration, dd.slow.factor);
+      }
       game.bus.emit('unit:deathBomb', { unit });
     }
   }

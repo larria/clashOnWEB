@@ -461,6 +461,27 @@ export function attackTarget(attacker, target, game) {
     return;   // 充能重置/攻击事件由调用方(game.updateUnits)统一处理
   }
 
+  // kamikaze(冰雪精灵/火精灵类):攻击命中后自杀(官方"die as part
+  // of its attack"的 8 卡之一);冻结等附加效果在死亡伤害里表达
+  const kami = card.special && card.special.kamikaze;
+  if (kami && target.type === 'unit') {
+    const e = target.ref;
+    applySplash(game, attacker, e.x, e.y, card.splash || 1.5, dmg, card.targets);
+    if (kami.freeze) {
+      for (const en of game.units) {
+        if (en.dead || en.side === attacker.side) continue;
+        const dd = Math.hypot(en.x - e.x, en.y - e.y);
+        if (dd <= (card.splash || 1.5) + en.radius) en.frozen = Math.max(en.frozen, kami.freeze);
+      }
+    }
+    game.addEffect({ type: 'spell', cardId: attacker.cardId, x: e.x, y: e.y,
+      radius: card.splash || 1.5, life: 0.4, maxLife: 0.4, color: card.color });
+    // 自杀:走 dealDamage 死亡管线(死亡能力/事件/特效统一)
+    game.dealDamage(attacker, attacker.hp + 999, null);
+    attacker.atkAnim = 0.3;
+    return;
+  }
+
   if (target.type === 'unit') {
     const e = target.ref;
     if (card.splash && card.splash > 0) {

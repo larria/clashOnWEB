@@ -19,7 +19,7 @@ import { CARDS } from '../src/data/cards.js';
 // 预设卡组(与游戏内 DECKS 前 5 套保持一致——从 deckeditor 复制核心阵容)
 const PRESET_DECKS = {
   '巨人体系':   ['giant', 'musketeer', 'minions', 'fireball', 'arrows', 'knight', 'archers', 'skeletons'],
-  '野猪快攻':   ['hogRider', 'skeletons', 'cannon', 'musketeer', 'fireball', 'zap', 'goblins', 'iceSpirit_x'],
+  '速转猪':     ['hogRider', 'iceSpirit', 'iceGolem', 'theLog', 'skeletons', 'cannon', 'zap', 'fireball'],
   '戈仑重击':   ['golem', 'babyDragon', 'minionHorde', 'arrows', 'lightning', 'barbarianHut', 'tombstone', 'megaMinion_x'],
   '空军流':     ['balloon', 'babyDragon', 'minionHorde', 'minions', 'arrows', 'zap', 'valkyrie', 'musketeer'],
   '速转流':     ['hogRider', 'skeletons', 'cannon', 'iceSpirit_x', 'fireball', 'zap', 'goblins', 'spearGoblins'],

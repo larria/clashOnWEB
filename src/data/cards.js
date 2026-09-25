@@ -95,6 +95,23 @@ export const CARDS = {
     // 弹速 wiki 600(2019-05-06 从 450 上调)×0.025=15格/s:慢弹道实体化
     // (溅射弹走投射物,命中点为圆心 AOE);法术层同口径:fireball 600=15
     // 2016-02-29 与冰法师同批实装
+  iceSpirit: { id:'iceSpirit', name:'冰雪精灵', cost:1, rarity:'普通', kind:KIND.TROOP,
+    hp:108, dmg:55, hitSpeed:1, firstHit:0, range:2.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#81d4fa', radius:0.30,
+    special:{ kamikaze:{ freeze:1.1 } } },
+    // wiki 11级×0.5:hp 215/2≈108 dmg 110/2=55;溅射1.5·冻结1.1s·极快(2.0格/s)
+    // 官方 kamikaze 8 卡之一:命中即死(as part of its attack),对空对地
+    // (2016-05-03 批次);冻结=时间停止(frozen),非减速
+    // hp 口径:108 = 塔 dmg54×2 恰好吃满 2 发——官方同级数学(215 vs 109×2
+    // =218,Strategy 节"sufficient hitpoints to reach an opposing Tower Princess")
+  iceGolem: { id:'iceGolem', name:'冰人', cost:2, rarity:'稀有', kind:KIND.TROOP,
+    hp:658, dmg:42, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
+    targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#b3e5fc', radius:0.42,
+    special:{ deathDamage:{ dmg:42, splash:2.0, targets:T.ALL, slow:{ duration:2.0, factor:0.7 } } } },
+    // wiki 11级×0.5:hp1315/2≈658 dmg84/2=42 攻速2.5 前摇1.0 近战Short0.75 Slow
+    // 只打建筑(小坦克);死亡爆炸 84/2=42·半径2·减速30%/2s(wiki Slow子表:
+    // Duration 2sec / Slowdown -30%);死亡伤害+减速一体(deathDamage.slow)
+    // (2016-05-03 批次;"Ice Golem's Death Damage"是官方战术用语)
 
   // ===== 史诗 =====
   pekka: { id:'pekka', name:'皮卡超人', cost:7, rarity:'史诗', kind:KIND.TROOP,
@@ -217,6 +234,16 @@ export const CARDS = {
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },
+  theLog: { id:'theLog', name:'滚木', cost:2, rarity:'传奇', kind:KIND.SPELL,
+    radius:1.95, dmg:133, knockback:0, color:'#8d6e63', deployZone:'riverbanks',
+    special:{ roll:{ range:10.1, width:3.9, speed:5.0, knockback:0.7 }, groundOnly:true } },
+    // wiki 11级×0.5:dmg 266/2=133·射程10.1·宽3.9·击退0.7格(2023-02 从1.0降)
+    // 弹速 wiki 200(2016-08 提到)×0.025=5格/s(滚动约 2s 走完全程)
+    // 只打地面(groundOnly);对塔伤害走 TOWER_MULT(滚木官方对塔大幅减伤)
+    // 部署限制:只能己方半场+河带(deployZone:'riverbanks'——官方"can only
+    // be deployed on the player's own side");2016-05-03 批次
+    // roll 能力键:直线滚动扫掠,每目标只吃一次,按被卷入位置横向甩飞
+    // (movement.pushAlong;规格 §6.2 滚动扫掷三规则)
 
   // ===== 内部卡(不在选择列表)=====
   golemite: { id:'golemite', name:'小戈仑', cost:0, rarity:'史诗', kind:KIND.TROOP,

@@ -92,6 +92,14 @@ export const SIDE_AI = 1;
 export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers, buildingUnits) {
   // 卡牌级部署规则优先(打破常规部署区域的卡:法术/矿工/飞桶…)
   if (opts.zone === 'anywhere') return true;
+  // 河岸区(滚木):己方半场 + 河带(官方"can only be deployed on the
+  // player's own side";深入敌方半场会滚出棋盘——C++ isValidPlacement
+  // 的 rolling spell 特例,边界取河的近岸)
+  // 玩家(下方,y 大):合法 y ≥ RIVER_Y1(15);AI(上方):y < RIVER_Y2(17)
+  if (opts.zone === 'riverbanks') {
+    if (y < 0 || y > GRID_H || x < 0 || x > GRID_W) return false;
+    return side === 'player' ? y >= RIVER_Y1 : y < RIVER_Y2;
+  }
 
   // 塔占面积:不可部署在任何存活塔的格子上(公主 3×3,国王 4×4)
   // (已毁的塔为瓦砾,不阻挡部署)

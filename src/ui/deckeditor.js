@@ -14,9 +14,9 @@ export const DECK_COUNT = 10;
 const DECK_SIZE = 8;
 
 // 预填 5 套经典卡组(槽 0~4 的"恢复默认"基准);槽 5~9 无默认(空)
-// 槽 0 = 玩家默认卡组(野猪快攻)
+// 槽 0 = 玩家默认卡组(速转猪:2.8 平均费的 Hog Cycle 经典)
 const DEFAULT_DECKS = [
-  { name: '野猪快攻', cards: ['hogRider', 'musketeer', 'archers', 'skeletons', 'zap', 'fireball', 'cannon', 'goblins'] },
+  { name: '速转猪',   cards: ['hogRider', 'iceSpirit', 'iceGolem', 'theLog', 'skeletons', 'cannon', 'zap', 'fireball'] },
   { name: '巨人体系', cards: ['giant', 'darkPrince', 'threeMusketeers', 'wizard', 'skeletons', 'arrows', 'poison', 'minions'] },
   { name: '戈仑重击', cards: ['golem', 'babyDragon', 'miniPekka', 'iceWizard', 'minions', 'arrows', 'zap', 'barbarianHut'] },
   { name: '空军流',   cards: ['balloon', 'minionHorde', 'minions', 'babyDragon', 'musketeer', 'arrows', 'fireball', 'skeletons'] },

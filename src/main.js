@@ -138,7 +138,7 @@ function playerCycle(playedCardId, idx) {
 }
 
 // ===== URL 参数 =====
-// ?deck=slot1        玩家用指定卡组(slot0-9;也接受卡组名如"野猪快攻")
+// ?deck=slot1        玩家用指定卡组(slot0-9;也接受卡组名如"速转猪")
 // &aideck=slot2      AI 用指定卡组(同上;不传则随机)
 // &ai=3              AI 难度档位(1-4 = 普通/困难/挑战/噩梦;兼容旧值 1.3→2,1.6→3)
 // URL 参数优先级最高,但用户改过下拉后本局不再覆盖
