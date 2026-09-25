@@ -20,6 +20,7 @@ import { Projectile } from './projectile.js';
 import { getDeployPositions } from './formation.js';
 import { findTarget, findNearestEnemyUnit, getMarchTarget, moveUnit, attackTarget } from './combat.js';
 import { castSpell, deployCard, updateRolls } from './spells.js';
+import { tickKnockback as tickKnock } from './movement.js';
 
 export class Game {
   constructor(opts = {}) {
@@ -503,6 +504,14 @@ export class Game {
           this.bus.emit('unit:spawnDamage', { unit: u });
         }
       }
+      // ===== 击退补间(硬直):滑动推进,期间完全跳过下方一切行为
+      // (索敌/攻击/移动;攻击前摇被打断——atkCD 不再递减,落地重新计)=====
+      if (u._knock && !u.dead) {
+        tickKnock(u, dt);
+        continue;
+      }
+      if (u.knockUntil > this.time) continue;   // 补间已结束但硬直尾帧
+
       // ===== 状态计时器统一递减(规格 §5.6:集中一处,禁止散落)=====
       if (u.frozen > 0) u.frozen -= dt;
       if (u.stunned > 0) u.stunned -= dt;

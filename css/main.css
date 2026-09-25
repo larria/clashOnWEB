@@ -723,6 +723,7 @@ label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-s
 .deSub { font-size:11px; color:#9aa3c7; margin-bottom:12px; letter-spacing:0.5px; }
 #deSlots { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
 .deSlot {
+  position:relative;
   flex:1 1 100px; min-width:96px; padding:8px 6px; border-radius:10px; text-align:center;
   background:rgba(12,15,30,0.55); border:2px solid #3a4266; cursor:pointer;
   transition:border-color .12s, box-shadow .12s;
@@ -874,3 +875,22 @@ label { display:block; margin:7px 0 3px; font-size:11px; color:#9aa3c7; letter-s
   .cvSub { display:none; }
   .ovHint { display:none; }
 }
+
+/* ===== 卡组编辑器双轨制(v0.6.12)===== */
+.deSlotHead {
+  grid-column: 1 / -1;
+  font-size: 11px; color: #8b93b8; letter-spacing: 1px;
+  margin: 8px 0 4px; padding-bottom: 3px;
+  border-bottom: 1px dashed rgba(139,147,184,0.3);
+  display: flex; align-items: center; gap: 8px;
+}
+.deSlotHead .btn-sm { padding: 1px 8px; font-size: 10px; }
+.deSlot.classic { border-style: dashed; opacity: 0.92; }
+.deSlot.classic .deSlotName::before { content: '★ '; color: #ffd76e; }
+.deDel {
+  position: absolute; top: 2px; right: 4px;
+  font-size: 11px; opacity: 0; transition: opacity .15s;
+  cursor: pointer;
+}
+.deSlot:hover .deDel { opacity: 0.75; }
+.deDel:hover { opacity: 1; transform: scale(1.2); }

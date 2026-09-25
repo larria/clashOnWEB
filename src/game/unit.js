@@ -59,9 +59,9 @@ export class Unit {
     // 召唤/产出计时器
     this.specialTimer = 0;
 
-    // 击退位移(瞬时)
-    this.knockX = 0;
-    this.knockY = 0;
+    // 击退硬直(补间期间不可攻击/移动/索敌;game.time 戳,
+    // 由 movement.applyKnockback 设置)
+    this.knockUntil = 0;
 
     // 攻击动画
     this.atkAnim = 0;
@@ -103,6 +103,7 @@ export class Unit {
   }
 
   get canAct() {
-    return this.deployTimer <= 0 && this.frozen <= 0 && this.stunned <= 0 && !this.dead;
+    return this.deployTimer <= 0 && this.frozen <= 0 && this.stunned <= 0 &&
+      !this._knock && !this.dead;
   }
 }

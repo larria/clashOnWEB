@@ -55,6 +55,56 @@ export function mirrorToOppositeLane(game, entity) {
   clampUnit(game, entity, (GRID_W - 1) - entity.x, entity.y);
 }
 
+// ===== 击退/甩飞补间(官方击退是 0.4s 左右的滑动过程,非瞬移)=====
+// 发起:applyKnockback(game, unit, dirX, dirY, distance, duration)
+// 每帧推进由 game.updateUnits 调 tickKnockbacks;期间单位硬直
+// (不入 updateUnits 的攻击/移动——通过 knockUntil 时间戳表达)
+export function applyKnockback(game, unit, dirX, dirY, distance, duration = 0.4) {
+  if (immovable(unit)) return;
+  const len = Math.sqrt(dirX * dirX + dirY * dirY);
+  if (len <= 0.0001 || distance <= 0) return;
+  // 目标终点(钳制后);补间从当前位置到终点
+  const nx = unit.x + (dirX / len) * distance;
+  const ny = unit.y + (dirY / len) * distance;
+  const clamped = clampUnitTarget(unit, nx, ny);
+  unit._knock = {
+    fromX: unit.x, fromY: unit.y,
+    toX: clamped.x, toY: clamped.y,
+    t: 0, dur: duration,
+  };
+  unit.knockUntil = game.time + duration;   // 硬直(不可行动)
+  // 打断攻击前摇:冷却重置回 firstHit(官方击退打断出招,落地重新蓄力)
+  if (unit.card && unit.card.firstHit != null) unit.atkCD = unit.card.firstHit;
+  // 冲锋充能清零(官方:击退打断冲锋)
+  if (unit.charged) unit.charged = false;
+  if (unit.card && unit.card.special && unit.card.special.charge) unit.chargeTimer = 0;
+}
+
+// 推进单个单位的击退补间(由 game.updateUnits 逐单位调)
+export function tickKnockback(u, dt) {
+  const k = u._knock;
+  if (!k || u.dead) { u._knock = null; return; }
+  k.t += dt;
+  const p = Math.min(1, k.t / k.dur);
+  // easeOut:先快后慢(击退的物理感)
+  const e = 1 - (1 - p) * (1 - p);
+  u.x = k.fromX + (k.toX - k.fromX) * e;
+  u.y = k.fromY + (k.toY - k.fromY) * e;
+  if (p >= 1) u._knock = null;
+}
+
+// clampUnit 的目标点版本(返回合法终点而不直接移动)
+function clampUnitTarget(unit, nx, ny) {
+  nx = Math.max(unit.radius, Math.min(GRID_W - unit.radius, nx));
+  if (!unit.flying && isRiver(nx, ny) && !isBridge(nx, ny)) {
+    if (!isRiver(unit.x, ny) || isBridge(unit.x, ny)) ny = unit.y;
+    else if (!isRiver(nx, unit.y) || isBridge(nx, unit.y)) ny = unit.y;
+    else return { x: unit.x, y: unit.y };
+  }
+  ny = Math.max(unit.radius, Math.min(GRID_H - unit.radius, ny));
+  return { x: nx, y: ny };
+}
+
 // 统一边界钳制(内部):地面单位不进非桥河道、不出地图
 function clampUnit(game, entity, nx, ny) {
   nx = Math.max(entity.radius, Math.min(GRID_W - entity.radius, nx));

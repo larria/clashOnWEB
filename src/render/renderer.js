@@ -1811,9 +1811,37 @@ export class Renderer {
     const x = p.x*CELL, y = p.y*CELL;
     const t = this.animTime;
     if (card.kind === KIND.SPELL) {
+      // 滚木:预览为"向前矩形"——从落点向敌方延伸 roll.range、宽
+      // roll.width(官方落点预览即滚动走廊,非圆形)
+      if (card.special && card.special.roll) {
+        const roll = card.special.roll;
+        const dirY = -1;   // 玩家视角预览固定向上(部署方向)
+        const half = (roll.width / 2) * CELL;
+        const len = roll.range * CELL;
+        ctx.save();
+        ctx.globalAlpha = 0.35 + 0.08 * Math.sin(t * 5);
+        ctx.fillStyle = '#e8d29a';
+        ctx.fillRect(x - half, dirY < 0 ? y - len : y, half * 2, len);
+        ctx.globalAlpha = 0.9;
+        ctx.strokeStyle = '#f4e3b0'; ctx.lineWidth = 2;
+        ctx.setLineDash([10, 6]); ctx.lineDashOffset = -t * 30;
+        ctx.strokeRect(x - half, dirY < 0 ? y - len : y, half * 2, len);
+        ctx.setLineDash([]);
+        // 滚动方向箭头(走廊中央)
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#f4e3b0';
+        const ay = dirY < 0 ? y - len + 26 : y + len - 26;
+        ctx.beginPath();
+        ctx.moveTo(x, ay - 10);
+        ctx.lineTo(x - 8, ay + 6);
+        ctx.lineTo(x + 8, ay + 6);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      } else {
       // 法术作用范围圈(乳白色半透明,对齐原版预览样式;轻微脉冲)
       const R = card.radius*CELL;
       this.drawRangeCircle(x, y, R, t);
+      }
       // 中心十字
       ctx.save();
       ctx.globalAlpha = 0.9;

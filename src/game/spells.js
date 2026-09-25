@@ -167,27 +167,12 @@ function applySpellEffect(card, side, x, y, game) {
       game.dealDamage(e, totalDmg, null, card);
       if (e.hp <= 0 || e.dead) spellKills.push(e.card.name); // 记录击杀(日志用)
     }
-    // 击退(重型单位免疫:巨人等大块头岿然不动;clamp 地图边界防止推出界外;
-    // 地面单位不得被推进非桥河道——被推入则沿 y 退回最近岸边)
+    // 击退(重型单位免疫:巨人等大块头岿然不动)——补间动画 0.45s:
+    // 沿爆炸径向滑出,期间硬直(不可攻击/移动/索敌,前摇打断);
+    // 河/界钳制由 movement.applyKnockback 内建
     if (card.knockback && card.knockback > 0 && !e.isBuilding && !isHeavy(e)) {
       const dx = e.x - x, dy = e.y - y;
-      const dd = Math.sqrt(dx*dx+dy*dy) || 1;
-      let nx = e.x + (dx/dd) * card.knockback;
-      let ny = e.y + (dy/dd) * card.knockback;
-      nx = Math.max(e.radius, Math.min(GRID_W - e.radius, nx));
-      ny = Math.max(e.radius, Math.min(GRID_H - e.radius, ny));
-      if (!e.flying && isRiver(nx, ny) && !isBridge(nx, ny)) {
-        // 退回击退前的 y(岸边)或钳到桥 x
-        if (!isRiver(nx, e.y) || isBridge(nx, e.y)) {
-          ny = e.y;
-        } else {
-          const bx = nx < 9 ? 3.5 : 14.5;
-          nx = bx;
-          if (isRiver(nx, ny) && !isBridge(nx, ny)) ny = e.y;
-        }
-      }
-      e.x = nx;
-      e.y = ny;
+      applyKnockback(game, e, dx, dy, card.knockback, 0.45);
       // 击退同样重置冲锋充能(原版:滚木/雪球击退打断王子冲锋)
       if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
     }
@@ -304,7 +289,7 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
 //      (movement.pushAlong;规格注释明言径向 pushAway 表达不了)
 // 滚木挂在 game._rolls(逻辑) + game.effects(视觉),game.update 每帧调
 // updateRolls 推进;对塔伤害走 TOWER_MULT 减伤(法术对塔统一规则)
-import { pushAlong } from './movement.js';
+import { pushAlong, applyKnockback } from './movement.js';
 
 function startRoll(card, side, x, y, game) {
   const roll = card.special.roll;
@@ -347,7 +332,9 @@ export function updateRolls(game, dt) {
       // 横向甩飞:lateral ∈ [-1,1] 是被卷入的横向位置;中心前推边缘横甩
       const lateral = half > 0 ? Math.max(-1, Math.min(1, dx / half)) : 0;
       const forward = 1 - Math.abs(lateral);
-      pushAlong(game, e, lateral, forward * st.dirY, st.roll.knockback);
+      // 甩飞补间 0.5s(官方滚木把人整个推开+短暂硬直;pushAlong 是瞬移
+      // 语义,这里用 applyKnockback 表达滑动过程)
+      applyKnockback(game, e, lateral, forward * st.dirY, st.roll.knockback, 0.5);
       if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
     }
     // 塔(对塔减伤;塔不可位移——pushAlong 内建免疫)

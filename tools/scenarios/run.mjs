@@ -705,6 +705,48 @@ const SCENARIOS = {
   ok(!ok3, '玩家在敌方腹地(y=10)不可放滚木');
 },
 
+// ===== 击退补间与硬直(v0.6.12) =====
+
+'击退-补间滑动与全程硬直': () => {
+  // 火球击退 0.6 格:0.45s easeOut 滑动;期间单位完全不能行动
+  // (索敌/攻击/移动),攻击前摇被打断(atkCD 重置回 firstHit)
+  const g = newGame();
+  const k = g.spawnUnit('knight', 1, 12, 22);   // 开阔地(远离河/塔/精灵
+  k.deployTimer = 0;                            // sight 内无目标 → 站桩)
+  castSpell('fireball', 0, 12, 21.4, g);        // 打骑士下侧 → 向上击退
+  // 逐帧等命中(投射 ~16.6/15≈1.1s),命中瞬间检查补间
+  let hitAt = null;
+  const y0 = k.y;
+  for (let i = 0; i < 90 && hitAt === null; i++) {
+    g.update(1/30);
+    if (k.maxHp - k.hp >= 344) hitAt = g.time;   // 火球伤害到账
+  }
+  ok(hitAt !== null, `火球应命中(t=${hitAt})`);
+  if (hitAt !== null) {
+    ok(k._knock != null, '命中瞬间击退补间在飞');
+    ok(k.atkCD > 0.2, `前摇被打断重置(atkCD=${k.atkCD.toFixed(2)} ≈ firstHit 0.5)`);
+    // 硬直期间自主移动冻结:补间中段测瞬时位移——补间 0.45s 恰好
+    // 位移 0.6,任意 0.2s 窗口内位移 ≤ 0.6×(0.2/0.45)×峰值系数+余量
+    // (若期间还在自主行走,位移会明显超出)
+    const yMid0 = k.y;
+    for (let i = 0; i < 6; i++) g.update(1/30);   // 0.2s:补间进行中
+    const midMove = k.y - yMid0;
+    ok(midMove > 0 && midMove <= 0.45, `补间中段 0.2s 位移 ${midMove.toFixed(2)} ≤0.45(无自主移动叠加)`);
+  }
+},
+
+'击退-滚木甩飞硬直': () => {
+  // 滚木 0.7 格甩飞:0.5s 补间;目标期间不动
+  const g = newGame();
+  const k = g.spawnUnit('knight', 1, 9, 18);
+  k.deployTimer = 0; k.frozen = 0;
+  const y0 = k.y, x0 = k.x;
+  castSpell('theLog', 0, 9, 20, g);
+  run(0.6, g);   // 滚木速度 5,弹头 2 格外 ~0.4s 到骑士
+  ok(Math.hypot(k.x - x0, k.y - y0) > 0.2, `甩飞位移(${Math.hypot(k.x-x0, k.y-y0).toFixed(2)} 格)`);
+  ok(k.maxHp - k.hp === 133, `滚木伤害 133(实际${k.maxHp - k.hp})`);
+},
+
 // ===== 分离死锁修复(v0.6.11,战报:沉底 4 哥布林原地锁死) =====
 
 '分离-相向而行不锁死': () => {
