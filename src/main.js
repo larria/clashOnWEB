@@ -678,6 +678,14 @@ function syncLogScreen() {
 // 回退到 localStorage 里已落盘的上一场
 document.getElementById('copyRecBtn').addEventListener('click', async () => {
   const btn = document.getElementById('copyRecBtn');
+  // 按钮本体反馈:瞬时文字/状态变化,无论走哪条路径都能看到结果
+  const btnFeedback = (text, cls) => {
+    if (!btn) return;
+    const orig = btn.textContent;
+    btn.textContent = text;
+    btn.classList.add(cls);
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove(cls); }, 1600);
+  };
   let payload = null, label = '';
   if (recorder && recorder.plays && recorder.plays.length >= 0 && !game.gameOver) {
     payload = recorder.export(); label = '当前局';
@@ -687,19 +695,30 @@ document.getElementById('copyRecBtn').addEventListener('click', async () => {
     const last = Recorder.loadLocal();
     if (last) { payload = JSON.stringify(last); label = '上一场(本页会话)'; }
   }
-  if (!payload) { flashMsg('暂无可复制的对局记录'); return; }
+  if (!payload) {
+    flashMsg('暂无可复制的对局记录');
+    btnFeedback('⚠ 暂无记录', 'btnFail');
+    return;
+  }
   try {
     await navigator.clipboard.writeText(payload);
     flashMsg(`已复制${label}对局记录 JSON(${(payload.length / 1024).toFixed(1)}KB)`);
+    btnFeedback('✓ 已复制', 'btnOK');
   } catch (e) {
     // 剪贴板 API 不可用时退化为下载文件
-    const blob = new Blob([payload], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'clash-recording.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    flashMsg('已下载对局记录 JSON');
+    try {
+      const blob = new Blob([payload], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'clash-recording.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      flashMsg('复制失败,已改为下载对局记录 JSON');
+      btnFeedback('⬇ 已下载', 'btnOK');
+    } catch (e2) {
+      flashMsg('复制失败:剪贴板不可用且下载失败');
+      btnFeedback('✗ 失败', 'btnFail');
+    }
   }
 });
 

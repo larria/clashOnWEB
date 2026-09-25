@@ -229,6 +229,36 @@ const SCENARIOS = {
   ok(dp.shield === 0, '盾清零');
 },
 
+// ---- 连弩/迫击炮打部队(wiki:Target=Ground,非只索塔) ----
+'索敌-连弩还击戈仑': () => {
+  // 2026-09-25 用户战报:连弩放着不打走近的戈仑(此前误设 targetsTower
+  // 只索塔)。wiki X-Bow Target=Ground:部队进射程必须被攻击
+  const g = newGame();
+  const xbow = g.spawnUnit('xbow', 0, 8.5, 21);
+  const golem = g.spawnUnit('golem', 1, 8.5, 14);   // 正对面走来,远小于 sight 11
+  run(6, g);
+  ok(golem.hp < golem.maxHp, `连弩应对戈仑造成伤害(${Math.round(golem.hp)}/${golem.maxHp})`);
+},
+
+'索敌-迫击炮打部队但近身盲区': () => {
+  // unit:attack 事件不带 target,用索敌结果断言(冻结骑士隔离其行为)
+  // 远于盲区(距离7 > 4):迫击炮应锁定并攻击骑士
+  const g = newGame();
+  const mortar = g.spawnUnit('mortar', 0, 8.5, 21);
+  const knight = g.spawnUnit('knight', 1, 8.5, 14);
+  knight.frozen = 99;
+  run(8, g);
+  ok(mortar.target && mortar.target.ref === knight, `迫击炮应锁定远于盲区的骑士(实际=${mortar.target ? mortar.target.ref.cardId : '无'})`);
+  ok(knight.hp < knight.maxHp, `迫击炮应对其造成伤害(${Math.round(knight.hp)}/${knight.maxHp})`);
+  // 近身盲区(距离≈1.3 < 4):迫击炮不应锁定骑士
+  const g2 = newGame();
+  const mortar2 = g2.spawnUnit('mortar', 0, 8.5, 21);
+  const knight2 = g2.spawnUnit('knight', 1, 8.4, 22.2);
+  knight2.frozen = 99;
+  run(8, g2);
+  ok(!mortar2.target || mortar2.target.ref !== knight2, '盲区内骑士不应被迫击炮锁定');
+},
+
 // ---- 塔击杀哥布林发数(wiki 口径监控) ----
 '塔-公主塔击杀哥布林发数': () => {
   // wiki 11级:塔 dmg109(项目54), 哥布林 hp202(项目101)

@@ -216,13 +216,14 @@ class AudioSystem {
       'unit_die_big', 'crown_get', 'princess_destroyed', 'king_activate',
       'elixir_double', 'warn_60s', 'victory', 'defeat', 'battle_end_horn',
     ]);
-    // 出牌:玩家用卡牌专属部署音(缺失时回退通用落地音),AI 用敌方部署音
+    // 出牌:双方都用卡牌专属部署音(敌方低音量,对齐原版——重单位
+    // 如戈仑/皮卡的敌方落地声是重要战场信息;缺失时回退通用音)
     bus.on('card:played', ({ side, cardId, kind }) => {
+      if (kind === 'spell') return; // 法术音在 spell:hit 播(命中才有意义)
       if (side === 0) {
-        if (kind === 'spell') return; // 法术音在 spell:hit 播(命中才有意义)
         this.play('deploy_' + cardId, { throttle: 150, fallback: 'deploy_generic' });
       } else {
-        this.play('enemy_deploy', { throttle: 250 });
+        this.play('deploy_' + cardId, { throttle: 250, volume: 0.45, fallback: 'enemy_deploy' });
       }
     });
 

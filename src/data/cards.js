@@ -160,11 +160,12 @@ export const CARDS = {
   xbow: { id:'xbow', name:'X连弩', cost:6, rarity:'史诗', kind:KIND.BUILDING,
     hp:800, dmg:22, hitSpeed:0.3, range:11.5, sightRange:11.0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#5d4037', radius:1.35,
-    special:{ targetsTower:true } },  // wiki:寿命 30s
+    special:{} },  // wiki:寿命 30s。Target=Ground(打一切地面目标,含
+    // 部队——此前误设 targetsTower 只索塔,导致连弩被戈仑白打不还手)
   mortar: { id:'mortar', name:'迫击炮', cost:4, rarity:'普通', kind:KIND.BUILDING,
     hp:684, dmg:133, hitSpeed:5.0, range:12.08, sightRange:12.0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:2.0, deployTime:1, lifetime:30, color:'#6d4c41', radius:1.35,
-    special:{ blindSpot:4.0, targetsTower:true } },
+    special:{ blindSpot:4.0 } },  // wiki:近身盲区(过近打不着),其余地面目标均可打
 
   // ===== 法术 =====
   fireball: { id:'fireball', name:'火球', cost:4, rarity:'稀有', kind:KIND.SPELL,

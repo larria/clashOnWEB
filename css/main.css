@@ -677,6 +677,9 @@ canvas { display:block; }
 .btn:hover { filter:brightness(1.12); }
 .btn:active { transform:translateY(1px); }
 .btn-blue { background:linear-gradient(180deg, #4a6fb5 0%, #3a5a99 55%, #2e4879 100%); }
+/* 按钮瞬时结果反馈(复制对局记录等):成功绿/失败红 */
+.btn.btnOK { background:linear-gradient(180deg, #3f9e5f 0%, #2f7d49 55%, #256239 100%) !important; }
+.btn.btnFail { background:linear-gradient(180deg, #b5534a 0%, #99433c 55%, #7c352f 100%) !important; }
 select {
   background:linear-gradient(180deg, #2a2f52, #22264380);
   background-color:#262b4a; color:#eceef5; border:1px solid #4a5178; padding:6px 8px;
