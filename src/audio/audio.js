@@ -1,7 +1,7 @@
 // ===============================================
 // 音频系统 - WebAudio 实装
 //
-// 资源:assets/sfx/*.ogg(原版游戏提取,89 个)
+// 资源:assets/sfx/*.ogg(原版游戏提取,150+ 个)
 // 三层 API:
 //   audio.play('deploy_knight')     按名播放音效(未加载完自动忽略)
 //   audio.bindGame(bus)             订阅一局游戏的领域事件
@@ -9,12 +9,24 @@
 //
 // 节流:同类音效 80ms 内只播一次(群体攻击不炸耳);攻击音效全局每秒限次。
 // 音量:音乐 0.35 / 音效 0.55(可按需再接 settings)。
+//
+// 音效分层(v0.6.5):
+//   deploy_  部署   atk_  攻击动作   landhit_  攻击命中(NEW)
+//   step_    行走   hit_  受击(被打) die_      死亡
+// 命中音与受击音区分:landhit 由攻击者视角播("我打中了"),
+// hit 由受击者视角播("我挨打了")——两层叠加时限制总音量
 // ===============================================
 import { appBus } from '../core/events.js';
 import { settings } from '../core/settings.js';
 
 const SFX_VOLUME = 0.55;
 const MUSIC_VOLUME = 0.35;
+
+// 重单位增益组:戈仑/皮卡级的脚步/攻击/命中音需要足够存在感,
+// 原版这些音是低频轰鸣,0.55×0.32 组合几乎听不见
+const HEAVY_UNITS = new Set(['golem', 'pekka', 'giant', 'giantSkeleton', 'balloon']);
+// 攻击动作音与命中音的音量比(命中音略低,动作音是主音)
+const LANDHIT_VOLUME = 0.6;
 
 // 声明资源(加载懒触发:首次播放该名字时 fetch 解码)
 const SFX_FILES = [
@@ -32,6 +44,12 @@ const SFX_FILES = [
   'atk_hogRider','atk_wizard','atk_pekka','atk_prince','atk_darkPrince','atk_iceWizard','atk_threeMusketeers','atk_babyDragon','atk_skeletonArmy',
   'atk_witch','atk_balloon','atk_giantSkeleton','atk_golem','atk_minionHorde','atk_cannon',
   'atk_tesla','atk_infernoTower','atk_bombTower','atk_xbow','atk_mortar',
+  // 攻击命中(攻击者视角;素材库各卡的 atk_hit)
+  'landhit_golem','landhit_golemite','landhit_giant','landhit_knight','landhit_darkPrince',
+  'landhit_wizard','landhit_spearGoblins','landhit_pekka','landhit_miniPekka',
+  'landhit_musketeer','landhit_valkyrie','landhit_balloon','landhit_babyDragon',
+  'landhit_giantSkeleton','landhit_archers','landhit_threeMusketeers',
+  'landhit_goblins','landhit_skeletons','landhit_barbarians',
   // 法术
   'spell_fireball','spell_arrows','spell_rocket','spell_lightning','spell_zap',
   'spell_rage','spell_freeze','spell_mirror','spell_poison',
@@ -120,19 +138,24 @@ class AudioSystem {
     for (const n of names) this._load(n);
   }
 
-  /** 实际的播放执行(buffer 已就绪;失败静默) */
+  /** 实际的播放执行(buffer 已就绪;失败静默)。
+   *  opts.delay: 延迟毫秒(命中音与动作音错开,模拟命中延迟) */
   _start(name, opts) {
     const buf = this._buffers.get(name);
     if (!buf || !this.ctx) return;
-    try {
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf;
-      if (opts.playbackRate) src.playbackRate.value = opts.playbackRate;
-      const gain = this.ctx.createGain();
-      gain.gain.value = (opts.volume != null ? opts.volume : 1) * SFX_VOLUME;
-      src.connect(gain).connect(this.ctx.destination);
-      src.start();
-    } catch (e) { /* 播放失败静默 */ }
+    const fire = () => {
+      try {
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        if (opts.playbackRate) src.playbackRate.value = opts.playbackRate;
+        const gain = this.ctx.createGain();
+        gain.gain.value = (opts.volume != null ? opts.volume : 1) * SFX_VOLUME;
+        src.connect(gain).connect(this.ctx.destination);
+        src.start();
+      } catch (e) { /* 播放失败静默 */ }
+    };
+    if (opts.delay) setTimeout(fire, opts.delay);
+    else fire();
   }
 
   /** 播放音效。opts: { volume, throttle(ms,默认80), fallback(缺资源回退),
@@ -237,20 +260,36 @@ class AudioSystem {
       if (side === 0) this.play('elixir_collect', { throttle: 300, volume: 0.85 });
     });
 
-    // 单位攻击:attacker 为单位时播卡牌攻击音;塔攻击播塔音
-    bus.on('unit:attack', ({ attacker, isTower, isKing }) => {
+    // 单位攻击:attacker 为单位时播卡牌攻击动作音 + 命中音(landhit_);
+    // 塔攻击播塔音。重单位动作音加大(戈仑/皮卡的低频轰鸣要有存在感)
+    bus.on('unit:attack', ({ attacker, target, isTower, isKing }) => {
       if (isTower) {
         this.play(isKing ? 'king_fire' : 'tower_fire', { throttle: 150, volume: 0.7 });
       } else if (attacker && attacker.cardId) {
-        this.play('atk_' + attacker.cardId, { throttle: 120, volume: 0.8 });
+        const heavy = HEAVY_UNITS.has(attacker.cardId);
+        this.play('atk_' + attacker.cardId, { throttle: 120, volume: heavy ? 1.0 : 0.8 });
+        // 命中音:攻击者视角的"打中"声(与攻击动作音间隔 60ms 模拟
+        // 命中延迟;远程单位尤其需要——箭矢飞行后落点声)
+        this.play('landhit_' + attacker.cardId, {
+          throttle: 150,
+          volume: (heavy ? 0.9 : 0.75) * LANDHIT_VOLUME,
+          fallback: null,        // 无命中音素材的卡不播(不回退)
+          delay: 60,
+        });
       }
     });
 
-    // 行走脚步:大单位行进间播放(低音量;杂兵不播防嘈杂)
+    // 行走脚步:大单位行进间播放(杂兵不播防嘈杂)。
+    // 重单位(戈仑/皮卡)脚步是重要战场信息,音量提到可感知水平
     bus.on('unit:step', ({ unit }) => {
       if (!unit || !unit.card) return;
       if (unit.card.cost < 3) return; // 低费杂兵不播
-      this.play('step_' + unit.cardId, { throttle: 60, volume: 0.32, fallback: null });
+      const heavy = HEAVY_UNITS.has(unit.cardId);
+      this.play('step_' + unit.cardId, {
+        throttle: 60,
+        volume: heavy ? 0.62 : 0.32,   // 原重单位 0.32 太轻几乎听不见
+        fallback: null,
+      });
     });
 
     // 受击:大单位专属受击音(小单位不播,避免战斗音墙)
@@ -287,12 +326,14 @@ class AudioSystem {
     });
 
     // 单位死亡:对齐原版——只有 ≥7 费的非建筑单体(皮卡/戈仑/骷髅巨人等)
-    // 阵亡才有专属死亡音;其余单位死亡不发声(群体单位的碎裂声由攻击音覆盖)
+    // 阵亡才有专属死亡音;其余单位死亡不发声(群体单位的碎裂声由攻击音覆盖)。
+    // 小戈仑(golemite,母体分裂)沿用戈仑死亡音但音量小得多
     bus.on('unit:killed', ({ unit }) => {
       if (!unit || !unit.card) return;
       if (unit.isBuilding) return;               // 建筑消亡走 building_destroyed
-      if (unit.card.cost >= 7) {
-        // 戈仑有专属死亡音
+      if (unit.cardId === 'golemite') {
+        this.play('die_golem', { throttle: 150, volume: 0.3, playbackRate: 1.25 });
+      } else if (unit.card.cost >= 7) {
         this.play(unit.cardId === 'golem' ? 'die_golem' : 'unit_die_big', { throttle: 200 });
       }
     });
@@ -323,7 +364,7 @@ class AudioSystem {
   cardSelect(cardId) {
     this.play('card_select');
     if (cardId) {
-      this.preload(['deploy_' + cardId, 'atk_' + cardId, 'step_' + cardId, 'spell_' + cardId]);
+      this.preload(['deploy_' + cardId, 'atk_' + cardId, 'landhit_' + cardId, 'step_' + cardId, 'spell_' + cardId]);
     }
   }
   uiClick() { this.play('ui_click'); }

@@ -500,8 +500,8 @@ export class Game {
             // 不清进度,杀完敌立即快充导致二次冲锋间隔过短)
             if (u.charged) { u.charged = false; }
             if (u.card.special && u.card.special.charge) u.chargeTimer = 0;
-            // 攻击事件(音效订阅)
-            this.bus.emit('unit:attack', { attacker: u, isTower: false, isKing: false });
+            // 攻击事件(音效订阅;target 供命中音区分目标类型)
+            this.bus.emit('unit:attack', { attacker: u, target: u.target.ref, isTower: false, isKing: false });
           }
         } else {
           // 不在范围,移动接近(充能计时在 moveUnit 内累计)

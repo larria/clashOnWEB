@@ -5,6 +5,40 @@
 
 ---
 
+## 2026-09-25 戈仑全套音效+命中音系统+音频评估(v0.6.5)
+
+**戈仑音效排查结论**:文件/接线/触发链路全部完好(step_golem
+等一直在播)——用户"听不到"的根因是**音量链太弱**:重单位脚步
+0.55×0.32≈0.18 几乎不可闻,攻击音 0.8 也偏弱。修复:
+- 新增 HEAVY_UNITS 增益组(戈仑/皮卡/巨人/骷髅巨人/气球):
+  脚步 0.32→0.62,攻击动作音 0.8→1.0,命中音 0.9 档
+- 小戈仑(golemite)死亡音:沿用 die_golem 但 volume 0.3 +
+  playbackRate 1.25(小一号的闷响,对齐用户预期)
+
+**命中音(landhit_)系统**——此前只有受击音(hit_,被打方视角),
+没有攻击命中音:
+- 从素材库提取 19 个卡的 atk_hit_*.ogg(golem/giant/knight/
+  darkPrince/wizard/spearGoblins/pekka/miniPekka/musketeer/
+  valkyrie/balloon/babyDragon/giantSkeleton/archers/
+  threeMusketeers/goblins/skeletons/barbarians/golemite)
+- unit:attack 事件补 target 字段;攻击时播 atk_(动作)+
+  landhit_(命中,延迟 60ms 模拟命中时机,fallback:null 无
+  素材不播);选牌预载列表同步加 landhit_
+- assets-manifest 补 19 条(共 204)
+
+**音频系统评估结论:不重构,不引第三方库**
+- 性能:按名字节流封顶播放并发(≤卡种数),60 单位混战峰值
+  ~144 节点创建/秒,远低于 WebAudio 千级上限,不构成瓶颈
+- 内存:懒加载,实战驻留 ~4.4MB AudioBuffer(全量也仅 22MB)
+- 功能性:节流/排队补播/负缓存/回退链/暂停句柄管理齐全;
+  Howler 等库的核心收益(sprites/循环管理)本项目未用到,
+  引入反而破坏零依赖零构建原则
+- 已做的针对性强化即为本轮"重构":音量分层(动作/命中/受击
+  三视角)、重单位增益、命中延迟模拟
+
+---
+
+
 ## 2026-09-25 骷髅巨人炸弹误伤友军修复(v0.6.4)
 
 **bug: 友军骷髅巨人的死亡炸弹误伤己方冰法师**(用户战报+对局记录)
