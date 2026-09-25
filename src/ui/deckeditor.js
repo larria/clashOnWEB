@@ -21,6 +21,7 @@ const DEFAULT_DECKS = [
   { name: '戈仑重击', cards: ['golem', 'babyDragon', 'miniPekka', 'iceWizard', 'minions', 'arrows', 'zap', 'barbarianHut'] },
   { name: '空军流',   cards: ['balloon', 'minionHorde', 'minions', 'babyDragon', 'musketeer', 'arrows', 'fireball', 'skeletons'] },
   { name: '速转流',   cards: ['hogRider', 'skeletons', 'goblins', 'spearGoblins', 'zap', 'archers', 'fireball', 'musketeer'] },
+  { name: '公主控制', cards: ['princess', 'knight', 'musketeer', 'skeletonArmy', 'fireball', 'zap', 'cannon', 'goblins'] },
 ];
 
 // ===== 存取 =====

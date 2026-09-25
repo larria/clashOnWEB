@@ -1,156 +1,159 @@
 {
- "_meta": {
-  "desc": "cardId → wiki 卡图文件名权威映射。所有素材重取必须以此为准,禁止猜测文件名。",
-  "verified": "2026-09-21,通过 MediaWiki pageimages.original 逐一核验(wiki 页面主图即标准竖版卡图,比例≈0.84)",
-  "naming_rule": "绝大多数为驼峰无空格:<Name>Card.png(如 HogRiderCard.png,不是 Hog Rider Card.png)。首次下载事故根因:脚本用了下划线命名(Hog_RiderCard.png)在 wiki 不存在,兜底误抓横版渲染图。",
-  "special": {
-   "miniPekka": "wiki 无标准 Card.png,本地为竖版裁剪图;重取需手动处理",
-   "pekka": "wiki 无标准 Card.png(仅横版 card_render 1082x734),本地为竖版裁剪图;重取需手动处理",
-   "golemite": "内部卡(小戈仑),复用 golem 图;不在 wiki 独立存在"
+  "_meta": {
+    "desc": "cardId → wiki 卡图文件名权威映射。所有素材重取必须以此为准,禁止猜测文件名。",
+    "verified": "2026-09-21,通过 MediaWiki pageimages.original 逐一核验(wiki 页面主图即标准竖版卡图,比例≈0.84)",
+    "naming_rule": "绝大多数为驼峰无空格:<Name>Card.png(如 HogRiderCard.png,不是 Hog Rider Card.png)。首次下载事故根因:脚本用了下划线命名(Hog_RiderCard.png)在 wiki 不存在,兜底误抓横版渲染图。",
+    "special": {
+      "miniPekka": "wiki 无标准 Card.png,本地为竖版裁剪图;重取需手动处理",
+      "pekka": "wiki 无标准 Card.png(仅横版 card_render 1082x734),本地为竖版裁剪图;重取需手动处理",
+      "golemite": "内部卡(小戈仑),复用 golem 图;不在 wiki 独立存在"
+    }
+  },
+  "archers": {
+    "file": "ArchersCard.png"
+  },
+  "arrows": {
+    "file": "ArrowsCard.png"
+  },
+  "babyDragon": {
+    "file": "BabyDragonCard.png"
+  },
+  "balloon": {
+    "file": "BalloonCard.png"
+  },
+  "barbarianHut": {
+    "file": "BarbarianHutCard.png"
+  },
+  "barbarians": {
+    "file": "BarbariansCard.png"
+  },
+  "bombTower": {
+    "file": "BombTowerCard.png"
+  },
+  "bomber": {
+    "file": "BomberCard.png"
+  },
+  "cannon": {
+    "file": "CannonCard.png"
+  },
+  "darkPrince": {
+    "file": "DarkPrinceCard.png"
+  },
+  "elixirCollector": {
+    "file": "ElixirCollectorCard.png"
+  },
+  "fireball": {
+    "file": "FireballCard.png"
+  },
+  "freeze": {
+    "file": "FreezeCard.png"
+  },
+  "giant": {
+    "file": "GiantCard.png"
+  },
+  "giantSkeleton": {
+    "file": "GiantSkeletonCard.png"
+  },
+  "goblinBarrel": {
+    "file": "GoblinBarrelCard.png"
+  },
+  "goblinHut": {
+    "file": "GoblinHutCard.png"
+  },
+  "goblins": {
+    "file": "GoblinsCard.png"
+  },
+  "golem": {
+    "file": "GolemCard.png"
+  },
+  "golemite": {
+    "file": "GolemCard.png",
+    "note": "复用 golem"
+  },
+  "hogRider": {
+    "file": "HogRiderCard.png"
+  },
+  "iceWizard": {
+    "file": "IceWizardCard.png"
+  },
+  "infernoTower": {
+    "file": "InfernoTowerCard.png"
+  },
+  "knight": {
+    "file": "KnightCard.png"
+  },
+  "lightning": {
+    "file": "LightningCard.png"
+  },
+  "miniPekka": {
+    "file": null,
+    "note": "wiki 无,本地竖版裁剪图"
+  },
+  "minionHorde": {
+    "file": "MinionHordeCard.png"
+  },
+  "minions": {
+    "file": "MinionsCard.png"
+  },
+  "mirror": {
+    "file": "MirrorCard.png"
+  },
+  "mortar": {
+    "file": "MortarCard.png"
+  },
+  "musketeer": {
+    "file": "MusketeerCard.png"
+  },
+  "pekka": {
+    "file": null,
+    "note": "wiki 无,本地竖版裁剪图"
+  },
+  "poison": {
+    "file": "PoisonCard.png"
+  },
+  "prince": {
+    "file": "PrinceCard.png"
+  },
+  "rage": {
+    "file": "RageCard.png"
+  },
+  "rocket": {
+    "file": "RocketCard.png"
+  },
+  "skeletonArmy": {
+    "file": "SkeletonArmyCard.png"
+  },
+  "skeletons": {
+    "file": "SkeletonsCard.png"
+  },
+  "spearGoblins": {
+    "file": "SpearGoblinsCard.png"
+  },
+  "tesla": {
+    "file": "TeslaCard.png"
+  },
+  "threeMusketeers": {
+    "file": "ThreeMusketeersCard.png"
+  },
+  "tombstone": {
+    "file": "TombstoneCard.png"
+  },
+  "valkyrie": {
+    "file": "ValkyrieCard.png"
+  },
+  "witch": {
+    "file": "WitchCard.png"
+  },
+  "wizard": {
+    "file": "WizardCard.png"
+  },
+  "xbow": {
+    "file": "X-BowCard.png"
+  },
+  "zap": {
+    "file": "ZapCard.png"
+  },
+  "princess": {
+    "file": "PrincessCard.png"
   }
- },
- "archers": {
-  "file": "ArchersCard.png"
- },
- "arrows": {
-  "file": "ArrowsCard.png"
- },
- "babyDragon": {
-  "file": "BabyDragonCard.png"
- },
- "balloon": {
-  "file": "BalloonCard.png"
- },
- "barbarianHut": {
-  "file": "BarbarianHutCard.png"
- },
- "barbarians": {
-  "file": "BarbariansCard.png"
- },
- "bombTower": {
-  "file": "BombTowerCard.png"
- },
- "bomber": {
-  "file": "BomberCard.png"
- },
- "cannon": {
-  "file": "CannonCard.png"
- },
- "darkPrince": {
-  "file": "DarkPrinceCard.png"
- },
- "elixirCollector": {
-  "file": "ElixirCollectorCard.png"
- },
- "fireball": {
-  "file": "FireballCard.png"
- },
- "freeze": {
-  "file": "FreezeCard.png"
- },
- "giant": {
-  "file": "GiantCard.png"
- },
- "giantSkeleton": {
-  "file": "GiantSkeletonCard.png"
- },
- "goblinBarrel": {
-  "file": "GoblinBarrelCard.png"
- },
- "goblinHut": {
-  "file": "GoblinHutCard.png"
- },
- "goblins": {
-  "file": "GoblinsCard.png"
- },
- "golem": {
-  "file": "GolemCard.png"
- },
- "golemite": {
-  "file": "GolemCard.png",
-  "note": "复用 golem"
- },
- "hogRider": {
-  "file": "HogRiderCard.png"
- },
- "iceWizard": {
-  "file": "IceWizardCard.png"
- },
- "infernoTower": {
-  "file": "InfernoTowerCard.png"
- },
- "knight": {
-  "file": "KnightCard.png"
- },
- "lightning": {
-  "file": "LightningCard.png"
- },
- "miniPekka": {
-  "file": null,
-  "note": "wiki 无,本地竖版裁剪图"
- },
- "minionHorde": {
-  "file": "MinionHordeCard.png"
- },
- "minions": {
-  "file": "MinionsCard.png"
- },
- "mirror": {
-  "file": "MirrorCard.png"
- },
- "mortar": {
-  "file": "MortarCard.png"
- },
- "musketeer": {
-  "file": "MusketeerCard.png"
- },
- "pekka": {
-  "file": null,
-  "note": "wiki 无,本地竖版裁剪图"
- },
- "poison": {
-  "file": "PoisonCard.png"
- },
- "prince": {
-  "file": "PrinceCard.png"
- },
- "rage": {
-  "file": "RageCard.png"
- },
- "rocket": {
-  "file": "RocketCard.png"
- },
- "skeletonArmy": {
-  "file": "SkeletonArmyCard.png"
- },
- "skeletons": {
-  "file": "SkeletonsCard.png"
- },
- "spearGoblins": {
-  "file": "SpearGoblinsCard.png"
- },
- "tesla": {
-  "file": "TeslaCard.png"
- },
- "threeMusketeers": {
-  "file": "ThreeMusketeersCard.png"
- },
- "tombstone": {
-  "file": "TombstoneCard.png"
- },
- "valkyrie": {
-  "file": "ValkyrieCard.png"
- },
- "witch": {
-  "file": "WitchCard.png"
- },
- "wizard": {
-  "file": "WizardCard.png"
- },
- "xbow": {
-  "file": "X-BowCard.png"
- },
- "zap": {
-  "file": "ZapCard.png"
- }
 }

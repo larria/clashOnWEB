@@ -543,6 +543,53 @@ const SCENARIOS = {
   ok(skels.length === 3, `变形体应生成(骷髅卡 count=3,实际${skels.length})`);
 },
 
+// ===== 卡牌实装(v0.6.9:公主) =====
+
+'公主-桥上白嫖公主塔': () => {
+  // 射程 9 > 塔射程 7.5:公主站桥上打公主塔,塔够不着她(官方标志性行为)
+  const g = newGame();
+  const p = g.spawnUnit('princess', 0, 3.5, 17.5);   // 玩家侧桥头
+  p.deployTimer = 0;
+  const tw = g.towers[1].left;                        // AI 左公主塔 (3.5,6.5)
+  run(12, g);
+  ok(tw.hp < tw.maxHp, `公主应打到敌方公主塔(${Math.round(tw.hp)}/${tw.maxHp})`);
+  // 塔还手判定:塔攻击公主的距离 = |17.5-6.5|=11 > 1.2+7.5+0.38=9.08 → 打不着
+  ok(p.hp === p.maxHp, `塔不应还手(公主 hp=${p.hp}/${p.maxHp})`);
+},
+
+'公主-溅射箭清群体': () => {
+  // 溅射 2.0:一发箭波及聚拢的多个敌人(溅射远程走瞬发 AOE 路径,
+  // 落点在主目标位置;冻结哥布林防移动干扰)。
+  // 摆位注意:g3 必须同时处于①溅射半径外(>2.32)②公主射程外(>9.8,
+  // 否则 g1/g2 死后 g3 成为直射主目标——是正常索敌不是溅射泄漏)
+  // ③两座玩家公主塔射程外 → 用 x 远端+推掉玩家公主塔隔离
+  const g = newGame();
+  killTower(g, 0, 'left'); killTower(g, 0, 'right');
+  const p = g.spawnUnit('princess', 0, 3.5, 22);
+  p.deployTimer = 0;
+  const g1 = g.spawnUnit('goblins', 1, 3.5, 18);   // 主目标(射程内站定即打)
+  const g2 = g.spawnUnit('goblins', 1, 4.3, 18.2); // 距主目标~1.0 < 2.32 溅射内
+  const g3 = g.spawnUnit('goblins', 1, 15.5, 12);  // 距主目标>12(溅射外+射程外),
+                                                    // 距玩家王塔(9,29)=17(射程外)
+  for (const u of [g1,g2,g3]) { u.deployTimer = 0; u.frozen = 99; }
+  run(7, g);
+  ok(g1.hp < g1.maxHp || g1.dead, '主目标被攻击');
+  ok(g2.hp < g2.maxHp || g2.dead, `溅射波及邻近敌人(${Math.round(g2.hp)})`);
+  ok(g3.hp === g3.maxHp, `溅射/射程范围外不受伤(${Math.round(g3.hp)})`);
+},
+
+'公主-极慢攻速口径': () => {
+  // 攻速 3.0:站桩 9.5s = 首发即时 + 3 个周期 = 4 发 × 84 = 336
+  const g = newGame();
+  const p = g.spawnUnit('princess', 0, 9, 21);
+  p.deployTimer = 0;
+  const k = g.spawnUnit('knight', 1, 9, 15);
+  k.deployTimer = 0; k.frozen = 99;
+  run(9.5, g);
+  const dmg = k.maxHp - k.hp;
+  ok(dmg === 84 * 4, `9.5s 恰好 4 发×84=336(实际${dmg})`);
+},
+
 };
 
 // ===== 运行器 =====

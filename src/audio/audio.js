@@ -35,21 +35,21 @@ const SFX_FILES = [
   'deploy_minions','deploy_barbarians','deploy_bomber','deploy_giant','deploy_miniPekka',
   'deploy_musketeer','deploy_valkyrie','deploy_hogRider','deploy_wizard','deploy_pekka',
   'deploy_prince','deploy_darkPrince','deploy_iceWizard','deploy_threeMusketeers','deploy_babyDragon','deploy_skeletonArmy','deploy_witch','deploy_balloon',
-  'deploy_giantSkeleton','deploy_golem','deploy_minionHorde','deploy_cannon','deploy_tesla',
+  'deploy_giantSkeleton','deploy_golem','deploy_minionHorde','deploy_princess','deploy_cannon','deploy_tesla',
   'deploy_infernoTower','deploy_bombTower','deploy_goblinHut','deploy_barbarianHut',
   'deploy_tombstone','deploy_elixirCollector','deploy_xbow','deploy_mortar',
   // 攻击(卡牌专属)
   'atk_knight','atk_archers','atk_goblins','atk_spearGoblins','atk_skeletons','atk_minions',
   'atk_barbarians','atk_bomber','atk_giant','atk_miniPekka','atk_musketeer','atk_valkyrie',
   'atk_hogRider','atk_wizard','atk_pekka','atk_prince','atk_darkPrince','atk_iceWizard','atk_threeMusketeers','atk_babyDragon','atk_skeletonArmy',
-  'atk_witch','atk_balloon','atk_giantSkeleton','atk_golem','atk_minionHorde','atk_cannon',
+  'atk_witch','atk_balloon','atk_giantSkeleton','atk_golem','atk_minionHorde','atk_princess','atk_cannon',
   'atk_tesla','atk_infernoTower','atk_bombTower','atk_xbow','atk_mortar',
   // 攻击命中(攻击者视角;素材库各卡的 atk_hit)
   'landhit_golem','landhit_golemite','landhit_giant','landhit_knight','landhit_darkPrince',
   'landhit_wizard','landhit_spearGoblins','landhit_pekka','landhit_miniPekka',
   'landhit_musketeer','landhit_valkyrie','landhit_balloon','landhit_babyDragon',
   'landhit_giantSkeleton','landhit_archers','landhit_threeMusketeers',
-  'landhit_goblins','landhit_skeletons','landhit_barbarians',
+  'landhit_goblins','landhit_skeletons','landhit_barbarians','landhit_princess',
   // 法术
   'spell_fireball','spell_arrows','spell_rocket','spell_lightning','spell_zap',
   'spell_rage','spell_freeze','spell_mirror','spell_poison',
@@ -63,12 +63,12 @@ const SFX_FILES = [
   'step_knight','step_barbarians','step_giant','step_miniPekka','step_valkyrie',
   'step_hogRider','step_wizard','step_pekka','step_prince','step_babyDragon',
   'step_witch','step_golem','step_giantSkeleton','step_goblins','step_spearGoblins',
-  'step_musketeer','step_iceWizard',
+  'step_musketeer','step_iceWizard','step_princess',
   // 受击
   'hit_knight','hit_giant','hit_miniPekka','hit_valkyrie','hit_pekka','hit_prince',
   'hit_giantSkeleton',
   // 专属死亡/冲锋/召唤/建筑
-  'die_golem','charge_prince','charge_darkPrince','charge_hit_prince','charge_hit_darkPrince','building_destroyed','death_bomb',
+  'die_golem','die_princess','charge_prince','charge_darkPrince','charge_hit_prince','charge_hit_darkPrince','building_destroyed','death_bomb',
   'hut_spawn','summon_skeletons','tesla_open',
   // 音乐
   'music_battle',

@@ -39,6 +39,7 @@ const COUNTERS = {
   musketeer:     ['barbarians', 'goblins', 'miniPekka', 'fireball'],
   wizard:        ['miniPekka', 'musketeer', 'goblins', 'fireball'],
   witch:         ['miniPekka', 'valkyrie', 'fireball', 'musketeer'],
+  princess:      ['fireball', 'zap', 'goblins', 'skeletons', 'knight'],   // 脆皮远程:法术秒杀/小兵贴脸围杀(zap 96<131 需补刀)
   // 飞龙:用对空远程
   babyDragon:    ['musketeer', 'minions', 'archers', 'wizard'],
   knight:        ['minions', 'skeletonArmy', 'miniPekka', 'barbarians'],
@@ -51,7 +52,7 @@ const COUNTERS = {
 export const ROLE = {
   TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie'],
   WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka'],
-  SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber'],
+  SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess'],
   CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows'],
   SPELL: ['fireball', 'arrows', 'rocket', 'lightning', 'zap', 'freeze', 'rage'],
   DEFENSE_BUILDING: ['cannon', 'tesla', 'infernoTower', 'bombTower', 'tombstone'],

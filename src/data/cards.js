@@ -81,6 +81,14 @@ export const CARDS = {
     // wiki 11级×0.5:hp688/2=344 dmg89/2=44 攻速1.7 射程5.5 溅射1.5
     // 首张传奇(2016-02-29):攻击附带范围减速30%/2.5s(移速+攻速);
     // 落地伤害 84/2=42·半径3·落地减速30%/1s(可秒杀骷髅/蝙蝠)
+  princess: { id:'princess', name:'公主', cost:3, rarity:'传奇', kind:KIND.TROOP,
+    hp:131, dmg:84, hitSpeed:3.0, range:9.0, sightRange:9.0, speed:SPEED.SLOW,
+    targets:T.ALL, flying:false, count:1, splash:2.0, deployTime:1, color:'#f48fb1', radius:0.38 },
+    // wiki 11级×0.5:hp261/2≈131 dmg168/2=84 攻速3.0(极慢)
+    // 射程9(全游戏最远部队射程:站桥上可直接打公主塔,不被塔还手——
+    // 塔 range 7.5<9;wiki Miner.md 确认"attacking a tower from the bridge")
+    // 溅射2.0(箭矢落点 AOE);对空对地;速度 Slow
+    // 2016-02-29 与冰法师同批实装
 
   // ===== 史诗 =====
   pekka: { id:'pekka', name:'皮卡超人', cost:7, rarity:'史诗', kind:KIND.TROOP,
