@@ -114,8 +114,9 @@ export function applyDeathAbilities(unit, game) {
       // 延时炸弹(气球/骷髅巨人):掉落可见炸弹,数秒后爆炸
       dropDeathBomb(unit, game, dd);
     } else {
-      // 即时死亡伤害(戈仑/小戈仑):中立爆炸,伤双方单位(含友军)
-      game.applyAreaDamage(unit, dd.dmg, dd.splash, dd.targets, true);
+      // 即时死亡伤害(戈仑/小戈仑):只伤敌方单位(CR 无友军伤害机制——
+      // 法术/死亡炸弹都只伤敌方;此前误设 hurtAlly=true 会误伤友军)
+      game.applyAreaDamage(unit, dd.dmg, dd.splash, dd.targets, false);
       game.bus.emit('unit:deathBomb', { unit });
     }
   }
@@ -144,8 +145,9 @@ function dropDeathBomb(unit, game, dd) {
   game.addEffect({ type: 'deathBomb', x, y, radius: dd.splash, life: delay, maxLife: delay, side: unit.side });
   game.bus.emit('unit:deathBombDrop', { unit }); // 落地音(轻微)
   game.schedule(delay, () => {
-    // 爆炸:范围伤害(骷髅巨人 towerMult 对塔加成);中立炸弹伤双方单位
-    game.applyAreaDamageAt(x, y, dd.dmg, dd.splash, dd.targets, unit.side, dd.towerMult || 1, null, true);
+    // 爆炸:范围伤害(骷髅巨人 towerMult 对塔加成);只伤敌方单位——
+    // CR 无友军伤害机制(wiki 骷髅巨人+护卫推进战术成立的前提)
+    game.applyAreaDamageAt(x, y, dd.dmg, dd.splash, dd.targets, unit.side, dd.towerMult || 1, null, false);
     game.addEffect({ type: 'spell', cardId: 'deathBomb', x, y, radius: dd.splash, life: 0.5, maxLife: 0.5, color: '#ff6f00' });
     game.bus.emit('unit:deathBomb', { unit });
   });

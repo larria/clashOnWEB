@@ -185,7 +185,10 @@ const SCENARIOS = {
   ok(skels.length >= 4, `女巫召唤≥4骷髅(得${skels.length})`);
   ok(skels.every(s => s.deployTimer <= 0), '召唤骷髅无硬直');
 },
-'机制-死亡炸弹伤双方': () => {
+'机制-死亡炸弹只伤敌方': () => {
+  // 2026-09-25 用户战报:友军骷髅巨人炸弹误伤己方冰法。
+  // 复核官方机制:CR 无友军伤害(法术/死亡炸弹都只伤敌方)——
+  // wiki 骷髅巨人"配护卫推进"战术成立的前提就是炸弹不伤友军
   const g = newGame();
   const gs = g.spawnUnit('giantSkeleton', 0, 9, 28); gs.deployTimer = 0;
   const ally = g.spawnUnit('giant', 0, 9.4, 28); ally.deployTimer = 0;
@@ -194,7 +197,7 @@ const SCENARIOS = {
   ally.frozen = 99; foe.frozen = 99;
   gs.hp = 1; g.dealDamage(gs, 999);
   run(4, g);
-  ok(ally.hp < ally.maxHp, `死亡炸弹伤友军(中立爆炸,${ally.maxHp}→${ally.hp})`);
+  ok(ally.hp === ally.maxHp, `死亡炸弹不伤友军(${ally.maxHp}→${ally.hp})`);
   ok(foe.hp < foe.maxHp, `死亡炸弹伤敌方(${foe.maxHp}→${foe.hp})`);
 },
 '机制-毒药不伤友军': () => {
