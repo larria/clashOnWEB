@@ -71,12 +71,17 @@ src/game/combat.js       移动/攻击(查询式:canJumpRiver/charge)
 ## 新卡实装 SOP(检查单)
 
 1. [ ] 查 `docs/cards-wiki/<Card>.md` 抄 11 级数值(×0.5)
-2. [ ] cards.js 加一条数据(效果用能力键表达;全新机制 → 先在本文档登记键名再实现)
+2. [ ] cards.js 加一条数据(效果用能力键表达;**全新机制 → 先查
+       `docs/THIRD-PARTY-SPEC.md` 对应章节**(C++ 参考实现怎么建模),
+       再在本文档登记键名后实现)
 3. [ ] 卡图入 assets/cards/,音效入 assets/sfx/(可选,fallback 兜底)
 4. [ ] headless 冒烟:spawn → 移动/施放 → 效果断言(参考 tools/eval-ai.mjs 的裸 Game 驱动)
 5. [ ] `node tools/version-check.mjs` 全绿(重生成 manifest)
 6. [ ] AI 回归 `node tools/eval-ai.mjs 10` 无异常
 7. [ ] 版本 +1,LOG.md 记录,提交
+
+机制底盘缺口与偿债计划见 `docs/ARCHITECTURE-REVIEW.md`(每实装
+一个新机制前先看它的路线图,避免补丁化)。
 
 ## 新增键登记(增量日志)
 
