@@ -20,7 +20,10 @@ export class Unit {
     this.radius = this.card.radius || 0.4;
 
     // 计时器
-    this.atkCD = 0;          // 攻击冷却
+    // 攻击冷却:出生时种 firstHit(官方 First Hit Speed 攻击前摇——
+    // wiki 统计表逐卡数值;C++ 同概念 initialCooldownTicks/seedCooldown,
+    // 仅 spawn 时种一次,换目标不重罚)
+    this.atkCD = this.card.firstHit != null ? this.card.firstHit : 0;
     this.deployTimer = this.card.deployTime || 0; // 部署延迟
     this.lifetime = this.card.lifetime || 0; // 存活时间(建筑)
     this.isBuilding = this.card.kind === KIND.BUILDING;

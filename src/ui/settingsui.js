@@ -63,6 +63,40 @@ export class SettingsScreen {
       }
       box.appendChild(row);
     });
+
+    // ===== 维护区:清除缓存并重新载入 =====
+    // 排查缓存问题的终极手段:注销 SW → 清空全部 Cache Storage →
+    // 硬重载页面。SW 的 stale-while-revalidate 策略在版本号未换或
+    // 缓存损坏时可能一直回旧资源(本地调试踩过多次),给用户一个
+    // 不必进 DevTools 的出口。
+    const cacheRow = document.createElement('div');
+    cacheRow.className = 'setRow';
+    cacheRow.innerHTML = `
+      <span class="setLabel">清除缓存</span>
+      <button class="btn btn-sm btn-blue" id="clearCacheBtn">清除并重载</button>`;
+    cacheRow.querySelector('#clearCacheBtn').addEventListener('click', async (e) => {
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = '清除中…';
+      try {
+        // 1. 注销所有 Service Worker
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        // 2. 清空全部 Cache Storage
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        // 3. 硬重载(绕过 HTTP 缓存)
+        location.reload(true);
+      } catch (err) {
+        btn.textContent = '失败,请手动刷新';
+        console.error('[clearCache]', err);
+      }
+    });
+    box.appendChild(cacheRow);
   }
 
   open() {

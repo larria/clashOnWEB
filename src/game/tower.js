@@ -22,7 +22,9 @@ export class Tower {
     this.sightRange = st.sightRange;
     this.targets = st.targets;
     this.radius = st.radius;
-    this.atkCD = 0;
+    // 塔同样有首发前摇(wiki 塔页 First Hit:公主塔 0.5s/国王塔 ~1s;
+    // 开局种一次,塔的攻击节奏此后由 hitSpeed 驱动)
+    this.atkCD = st.firstHit != null ? st.firstHit : 0.5;
     this.target = null;
     this.frozen = 0;
     this.stunned = 0;

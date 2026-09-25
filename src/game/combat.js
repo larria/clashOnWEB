@@ -434,20 +434,26 @@ export function attackTarget(attacker, target, game) {
   const tx = target.ref.x;
   const ty = target.ref.y;
 
-  // 远程非溅射单位:发射投射物(规格 §6.1——伤害随弹飞行、命中才结算,
-  // 目标死亡弹落空;溅射远程保持瞬发,其"落点伤害"语义与投射物等价,
-  // 且 area 判定在出手瞬间锁定更符合原版 AOE 弹道的观感)
+  // 远程单位发射投射物(规格 §6.1——伤害随弹飞行、命中才结算,目标死亡
+  // 弹落空)。两类:
+  //   非溅射(range≥3.5):一律实体弹,速度 12 格/s(默认)
+  //   溅射:卡牌数据声明 projectileSpeed 才实体化(弹道慢到可见的卡,
+  //         如公主 wiki 600=15格/s;法师/炸弹兵等快弹短程保持瞬发,
+  //         落点 AOE 观感等价)——溅射弹命中点为圆心范围伤害
   const isRanged = card.range >= 3.5;
   const aslow = card.special && card.special.attackSlow;
-  if (isRanged && !(card.splash > 0)) {
+  const projSpeed = card.projectileSpeed || 12;
+  if (isRanged && (!(card.splash > 0) || card.projectileSpeed)) {
     game.fireProjectile(attacker, target, {
-      speed: 12, dmg, color: card.color,
+      speed: projSpeed, dmg, color: card.color,
+      splash: card.splash || 0, targets: card.targets,
       onHit: aslow ? { slow: aslow } : null,
     });
     game.addEffect({
       type: 'shotTrail', cardId: attacker.cardId, side: attacker.side,
-      x: attacker.x, y: attacker.y, tx, ty, splash: false,
-      life: 0.22, maxLife: 0.22,
+      x: attacker.x, y: attacker.y, tx, ty, splash: (card.splash || 0) > 0,
+      life: Math.min(0.3, 0.05 + dist(attacker, target.ref) / projSpeed),
+      maxLife: Math.min(0.3, 0.05 + dist(attacker, target.ref) / projSpeed),
     });
     // 出手时机的效果(地狱塔 ramp 按"每次开火"递增,不依赖命中)
     afterAttack(attacker);

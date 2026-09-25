@@ -458,10 +458,12 @@ const SCENARIOS = {
   const g = newGame();
   const m = g.spawnUnit('musketeer', 0, 9, 20); m.deployTimer = 0;
   const k = g.spawnUnit('knight', 1, 9, 16); k.deployTimer = 0; k.frozen = 99;
-  run(0.3, g);   // 一发弹射出但未到(射程4格/速度12 → ~0.33s)
-  const hpMid = Math.round(k.hp);
-  run(0.4, g);   // 弹到
-  ok(k.hp < k.maxHp || hpMid < k.maxHp, `火枪伤害应经投射物到达(${Math.round(k.hp)}/${k.maxHp})`);
+  // v0.6.9 前摇 0.7s:出手 t≈0.7,弹飞 4格/12≈0.33 → 命中 ≈1.03s;
+  // t=0.9s 时弹在飞,knight 不应已受伤;t=1.3s 首发已到
+  run(0.9, g);
+  ok(k.hp === k.maxHp, `前摇+弹飞期间不应受伤(${Math.round(k.hp)})`);
+  run(0.4, g);   // 累计 1.3s:首发命中
+  ok(k.hp < k.maxHp, `火枪伤害应经投射物到达(${Math.round(k.hp)}/${k.maxHp})`);
 },
 
 '位移-拉近推离与建筑免疫': () => {
@@ -585,9 +587,83 @@ const SCENARIOS = {
   p.deployTimer = 0;
   const k = g.spawnUnit('knight', 1, 9, 15);
   k.deployTimer = 0; k.frozen = 99;
+  // v0.6.9 前摇:首发 = firstHit 0.3 + 弹飞 ~0.37 = 0.67s 命中;
+  // 此后每 3s 一发 → 9.5s 内 3 发(第 4 发 9.77s 才到)
   run(9.5, g);
   const dmg = k.maxHp - k.hp;
-  ok(dmg === 84 * 4, `9.5s 恰好 4 发×84=336(实际${dmg})`);
+  ok(dmg === 84 * 3, `9.5s 恰好 3 发×84=252(前摇口径,实际${dmg})`);
+},
+
+'公主-弹道实体化与速度': () => {
+  // wiki 弹速 600×0.025=15格/s:伤害随弹到达(9.5s 内 4 发的口径不变,
+  // 但首发伤害要等弹飞 ~0.4s 才落)
+  const g = newGame();
+  const p = g.spawnUnit('princess', 0, 9, 21);
+  p.deployTimer = 0;
+  const k = g.spawnUnit('knight', 1, 9, 15);
+  k.deployTimer = 0; k.frozen = 99;
+  // v0.6.9 前摇 0.3s:出手在 t≈0.3,弹速15 距离6 → 命中 ≈0.67s;
+  // t=0.5s 时前摇未完/弹在飞,knight 不应已受伤
+  run(0.5, g);
+  ok(k.hp === k.maxHp, `前摇+弹飞期间不应提前结算伤害(${Math.round(k.hp)})`);
+  run(9.0, g);   // 累计 9.5s:3 发全到(第 4 发 9.77s)
+  ok(k.maxHp - k.hp === 84 * 3, `9.5s 恰好 3 发×84(前摇口径,实际${k.maxHp - k.hp})`);
+},
+
+
+// ===== First Hit Speed(v0.6.9,官方攻击前摇) =====
+
+'前摇-首发攻击延迟官方数值': () => {
+  // wiki First Hit Speed:女武神 0.1(最快)/公主 0.3/火枪手 0.7/戈仑 1.0(最慢)
+  // 攻击者与冻结骑士贴脸摆位(近战可达),首发命中时刻 ≥ firstHit
+  const cases = [
+    { card: 'valkyrie', firstHit: 0.1 },   // 近战 range1.2,贴脸
+    { card: 'knight', firstHit: 0.5 },
+    { card: 'musketeer', firstHit: 0.7 },  // 远程,距离 3(射程内)
+    { card: 'golem', firstHit: 1.0 },      // 只打建筑 → 目标用塔
+  ];
+  for (const { card, firstHit } of cases) {
+    const g = newGame();
+    const u = g.spawnUnit(card, 0, 9, 20); u.deployTimer = 0;
+    let t = 0, hitAt = null;
+    let target;
+    if (card === 'golem') {
+      // 戈仑只打建筑:推掉两侧塔,留国王塔并激活,摆塔前
+      killTower(g, 1, 'left'); killTower(g, 1, 'right');
+      const kt = g.towers[1].king; kt.activated = true;
+      u.y = 12;   // 距王塔 (9,3) 9 格,走过去要时间——改摆在塔边
+      u.y = 6;    // 塔旁 3 格内
+      target = kt;
+    } else {
+      const k = g.spawnUnit('knight', 1, 9, 19);  // 贴脸(距离1)
+      k.deployTimer = 0; k.frozen = 99;
+      target = k;
+    }
+    const orig = g.dealDamage.bind(g);
+    const origT = g.dealTowerDamage.bind(g);
+    const check = (x) => { if (x === target && hitAt === null) hitAt = t; };
+    g.dealDamage = (unit, d, a) => { check(unit); return orig(unit, d, a); };
+    g.dealTowerDamage = (tw, d) => { check(tw); return origT(tw, d); };
+    while (t < 6 && hitAt === null) { g.update(1/30); t += 1/30; }
+    ok(hitAt !== null && hitAt >= firstHit - 0.05,
+      `${card} 首发命中 t=${hitAt === null ? '无' : hitAt.toFixed(2)}s ≥ 前摇 ${firstHit}s`);
+  }
+},
+
+'前摇-换目标不重复施加': () => {
+  // 前摇只在出生时种一次(C++ seedCooldown 语义)。用骑士(firstHit 0.5,
+  // 攻速 1.2)打两只 40hp 骷髅:第一击秒杀 k1 转火 k2。若换目标重吃
+  // 0.5 前摇,k2 的死亡会被推迟——以"两只骷髅全部死亡时刻"断言:
+  // 正常 0.5(首发)+1.2(次发)=1.7s 内全灭;重吃前摇则 >2.2s
+  const g = newGame();
+  const kn = g.spawnUnit('knight', 0, 9, 20); kn.deployTimer = 0;
+  const k1 = g.spawnUnit('skeletons', 1, 9, 18.8);
+  const k2 = g.spawnUnit('skeletons', 1, 9, 17.6);
+  for (const u of [k1, k2]) { u.deployTimer = 0; u.frozen = 99; }
+  let t = 0;
+  while (t < 3 && !(k1.dead && k2.dead)) { g.update(1/30); t += 1/30; }
+  ok(k1.dead && k2.dead, `两只骷髅应被击杀(${k1.dead ? 'k1死' : 'k1活'}/${k2.dead ? 'k2死' : 'k2活'})`);
+  ok(t <= 1.8, `全灭于 t=${t.toFixed(2)}s ≤1.8s(换目标不重吃 0.5 前摇)`);
 },
 
 };
