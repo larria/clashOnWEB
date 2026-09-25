@@ -5,6 +5,44 @@
 
 ---
 
+## 2026-09-25 机制底盘三阶段实装(v0.6.8)
+
+**任务: 按 ARCHITECTURE-REVIEW.md 路线图完成全部三个阶段**
+
+### 阶段一:批次前偿债
+- **伤害管线定序化**(game.dealDamage):免疫帧→诅咒乘区→招架→护盾→
+  扣血五段管线,各段由 unit 可选字段驱动(invulnUntil/curseTimer/
+  parryReady/shield);新增 healUnit(带上限)治疗底盘
+- **状态计时器集中**:Unit 构造器状态字段集中声明(curse 等 3 个新
+  字段),updateUnits 顶部统一递减区(规格 §5.6 模式)
+- **Tower/Unit 双轨统一**:抽出 isTargetLost/inAttackRange/
+  attackRangeOf 共享判定,塔与单位索敌/攻击单一来源(消除历史
+  "每加状态机制改两遍"的分叉源)
+
+### 阶段二:投射物实体系统(新文件 game/projectile.js)
+- Projectile 类:弱引用追踪(目标死亡弹自灭不找替身)、命中吸附、
+  on-hit 效果随弹飞行(冰法减速命中才施加)、溅射弹落点范围伤害
+- 塔箭与远程非溅射单位(range≥3.5)全部走投射物,伤害随弹飞行
+- 途中修复两个真 bug:投射物路径漏调 afterAttack(地狱塔充能停摆)、
+  伤害归属丢失(音效/统计拿不到攻击者)——场景测试立刻抓到
+- 渲染层 drawProjectiles:发光弹头+渐隐拖尾
+- 溅射远程(法师/炸弹兵)保持瞬发:落点 AOE 语义与弹道观感等价
+
+### 阶段三:位移四件套+变形底盘(新文件 game/movement.js)
+- pullToward/pushAway/pushAlong/mirrorToOppositeLane,建筑/塔免疫
+  在函数内一次强制(规格 §4.4);统一河/界钳制;distance≤0 no-op
+- 变形底盘(abilities.tickTransform):special.transform atHp 阈值
+  触发原位换卡(killsSelf 变体支持爆破手类),每帧伤害结算后检查
+
+**验证**:新增 6 个底盘场景,33/33 全绿;AI 评测 100 局无报错;
+3 局完整对局正常(投射物全程活跃无泄漏)
+
+**解锁**:渔夫/龙卷风/滚木(位移)、处刑者/魔法弓箭手(投射物
+扩展点已留)、治疗法术/治疗精灵/凤凰(healUnit)、巫婆诅咒/
+加农炮车(transform)——下一批卡实装回归纯数据+既有键
+
+---
+
 ## 2026-09-25 架构评估:面向持续卡牌迭代(ARCHITECTURE-REVIEW.md)
 
 **任务: 评估现架构是否完全吻合游戏规格、是否适合 67 张卡持续迭代**

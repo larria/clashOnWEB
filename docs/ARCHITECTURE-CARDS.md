@@ -37,6 +37,16 @@ src/game/combat.js       移动/攻击(查询式:canJumpRiver/charge)
 | `charge.splash` | 冲锋命中360°溅射 | combat.attackTarget |
 | `attackSlow` | 攻击附带范围减速 | combat.attackTarget + game.applySlowAt |
 | `spawnDamage` | 落地范围伤害+减速 | game.updateUnits(部署完成时) |
+| `transform` | hp 阈值变形换卡(v0.6.8) | abilities.tickTransform |
+
+### 机制底盘(v0.6.8 起可用,新卡实装直接调用)
+
+| 底盘 | API | 服务卡牌 |
+|---|---|---|
+| 投射物 | `game.fireProjectile(from, target, {speed,dmg,splash,onHit,color})`(远程非溅射单位自动走投射) | 处刑者(回旋镖)/魔法弓箭手(穿透线)在 projectile.js 扩展 |
+| 位移 | `movement.pullToward/pushAway/pushAlong/mirrorToOppositeLane`(建筑免疫已内建) | 渔夫(钩拉)/龙卷风(聚拢)/滚木(横向甩飞)/强力矿工 |
+| 治疗 | `game.healUnit(unit, amount)`(带上限) | 治疗法术/治疗精灵/凤凰 |
+| 伤害管线 | unit 可选字段 `invulnUntil`(无敌帧)/`curseTimer+curseMult`(诅咒)/`parryReady`(招架) | 飞贼(冲刺无敌)/巫婆诅咒/武僧 |
 
 ### 法术 special 键(spells.js)
 

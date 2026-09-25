@@ -428,11 +428,32 @@ export function attackTarget(attacker, target, game) {
     attacker.rampMult = 1;
   }
   attacker._lastRampTarget = target.ref;
-  let dmg = attacker.currentDmg;
+  const dmg = attacker.currentDmg;
 
   // 目标位置(特效用)
   const tx = target.ref.x;
   const ty = target.ref.y;
+
+  // 远程非溅射单位:发射投射物(规格 §6.1——伤害随弹飞行、命中才结算,
+  // 目标死亡弹落空;溅射远程保持瞬发,其"落点伤害"语义与投射物等价,
+  // 且 area 判定在出手瞬间锁定更符合原版 AOE 弹道的观感)
+  const isRanged = card.range >= 3.5;
+  const aslow = card.special && card.special.attackSlow;
+  if (isRanged && !(card.splash > 0)) {
+    game.fireProjectile(attacker, target, {
+      speed: 12, dmg, color: card.color,
+      onHit: aslow ? { slow: aslow } : null,
+    });
+    game.addEffect({
+      type: 'shotTrail', cardId: attacker.cardId, side: attacker.side,
+      x: attacker.x, y: attacker.y, tx, ty, splash: false,
+      life: 0.22, maxLife: 0.22,
+    });
+    // 出手时机的效果(地狱塔 ramp 按"每次开火"递增,不依赖命中)
+    afterAttack(attacker);
+    attacker.atkAnim = 0.3;
+    return;   // 充能重置/攻击事件由调用方(game.updateUnits)统一处理
+  }
 
   if (target.type === 'unit') {
     const e = target.ref;
@@ -466,7 +487,6 @@ export function attackTarget(attacker, target, game) {
   afterAttack(attacker);
 
   // 攻击特效:按攻击类型分近战斩击/远程弹道(渲染层按 card.color 着色)
-  const isRanged = card.range >= 3.5;
   game.addEffect({
     type: isRanged ? 'shotTrail' : 'meleeSlash',
     cardId: attacker.cardId, side: attacker.side,

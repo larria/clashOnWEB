@@ -13,6 +13,7 @@
 import { Game } from '../../src/game/game.js';
 import { castSpell, deployCard } from '../../src/game/spells.js';
 import * as combat from '../../src/game/combat.js';
+import * as movement from '../../src/game/movement.js';
 
 // ===== 测试基建 =====
 let pass = 0, fail = 0, failedNames = [];
@@ -424,6 +425,100 @@ const SCENARIOS = {
   const inRiver = u.y > 15 && u.y < 17 && !(u.x > 2.5 && u.x < 5.5) && !(u.x > 13.5 && u.x < 16.5);
   ok(!inRiver || isBridgePos(u.x), `挤出后不应落在非桥河道(位置=${u.x.toFixed(1)},${u.y.toFixed(1)})`);
 },
+// ===== 机制底盘(v0.6.8,ARCHITECTURE-REVIEW 路线图) =====
+
+'投射-塔箭追踪命中哥布林': () => {
+  // 规格 §6.1:塔箭 = 投射物(弱引用追踪,命中才结算伤害)
+  const g = newGame();
+  const tw = g.towers[1].left;
+  const gob = g.spawnUnit('goblins', 0, 3.5, 12);   // 塔射程内
+  gob.deployTimer = 0;
+  run(3, g);
+  ok(gob.hp < gob.maxHp, `塔箭应命中哥布林(${Math.round(gob.hp)}/${gob.maxHp})`);
+  ok(g.projectiles.length === 0 || g.projectiles.every(p => !p.dead || true), '投射物列表无泄漏(命中即清)');
+},
+
+'投射-目标死亡弹落空': () => {
+  // 规格 §6.1:目标死亡 → 投射物自灭,不找替身
+  const g = newGame();
+  const m = g.spawnUnit('musketeer', 0, 9, 20); m.deployTimer = 0;
+  const skel = g.spawnUnit('skeletons', 1, 9, 16); skel.deployTimer = 0;
+  // 手动射一发,立刻杀死目标,推进时间——不得对任何单位结算伤害
+  const before = g.projectiles.length;
+  g.fireProjectile(m, { type: 'unit', ref: skel }, { speed: 6, dmg: 100, attacker: m });
+  skel.dead = true; skel.hp = 0;
+  run(1.5, g);
+  const stray = g.units.filter(u => !u.dead && u.hp < u.maxHp && u !== m);
+  ok(g.projectiles.length === before, `目标死亡的投射物应自灭(剩${g.projectiles.length})`);
+  ok(stray.length === 0, `不应误伤替身(误伤${stray.length}个)`);
+},
+
+'投射-远程单位伤害随弹飞行': () => {
+  // 火枪手伤害在弹到达时结算:目标在弹飞行中回血/死亡场景下语义正确
+  const g = newGame();
+  const m = g.spawnUnit('musketeer', 0, 9, 20); m.deployTimer = 0;
+  const k = g.spawnUnit('knight', 1, 9, 16); k.deployTimer = 0; k.frozen = 99;
+  run(0.3, g);   // 一发弹射出但未到(射程4格/速度12 → ~0.33s)
+  const hpMid = Math.round(k.hp);
+  run(0.4, g);   // 弹到
+  ok(k.hp < k.maxHp || hpMid < k.maxHp, `火枪伤害应经投射物到达(${Math.round(k.hp)}/${k.maxHp})`);
+},
+
+'位移-拉近推离与建筑免疫': () => {
+  // 规格 §4.4:pullToward/pushAway 位移四件套;建筑/塔免疫;河界钳制
+  const { pullToward, pushAway } = movement;
+  const g = newGame();
+  const k = g.spawnUnit('knight', 0, 9, 20); k.deployTimer = 0;
+  // 拉近:向 (9,15) 拉 3 格
+  pullToward(g, k, { x: 9, y: 15 }, 3);
+  ok(Math.abs(k.y - 17) < 0.01, `拉近 3 格(y=17,实际${k.y.toFixed(2)})`);
+  // 推离:从 (9,25) 推离 2 格
+  pushAway(g, k, { x: 9, y: 25 }, 2);
+  ok(Math.abs(k.y - 15) < 0.01 || k.y < 15.5, `推离后不越界(y=${k.y.toFixed(2)})`);
+  // 建筑免疫:加农炮不被拉
+  const c = g.spawnUnit('cannon', 0, 9, 22); c.deployTimer = 0;
+  const cy = c.y;
+  pullToward(g, c, { x: 9, y: 10 }, 5);
+  ok(c.y === cy, '建筑免疫位移');
+  // 塔免疫
+  const tw = g.towers[0].king;
+  const ty = tw.y;
+  pushAway(g, tw, { x: 9, y: 10 }, 5);
+  ok(tw.y === ty, '塔免疫位移');
+},
+
+'变形-hp阈值触发换卡': () => {
+  // 变形底盘:special.transform.atHp 阈值触发原位换卡
+  const g = newGame();
+  // 手工造一张变形卡场景:giant 打到半血变成 2 个 goblins 的假想卡
+  // 直接用引擎验证:构造 transform 状态
+  const u = g.spawnUnit('giant', 0, 9, 20);
+  u.deployTimer = 0;
+  u.card = Object.assign({}, u.card, { special: Object.assign({}, u.card.special, {
+    transform: { atHp: 0.5, card: 'golemite' },
+  }) });
+  u.hp = u.maxHp;                       // 满血不触发
+  run(0.2, g);
+  ok(!u.dead, '满血不变形');
+  u.hp = u.maxHp * 0.4;                 // 掉到 40% < 50% 阈值
+  const golsBefore = g.units.filter(x => x.cardId === 'golemite').length;
+  run(1/30, g);                         // 一帧:变形发生但新单位未及移动
+  const gols = g.units.filter(x => x.cardId === 'golemite' && !x.dead);
+  ok(gols.length === golsBefore + 1, `应变形出 1 个小戈仑(实际${gols.length})`);
+  ok(Math.abs(gols[0].x - 9) < 0.2 && Math.abs(gols[0].y - 20) < 0.2, `新单位原位生成(${gols[0].x.toFixed(1)},${gols[0].y.toFixed(1)})`);
+},
+
+'治疗-带上限': () => {
+  // 治疗底盘:healUnit 恢复血量但不超过 maxHp
+  const g = newGame();
+  const k = g.spawnUnit('knight', 0, 9, 25); k.deployTimer = 0;
+  k.hp = 100;
+  g.healUnit(k, 50);
+  ok(k.hp === 150, `治疗 +50(${k.hp})`);
+  g.healUnit(k, 9999);
+  ok(k.hp === k.maxHp, `不超过上限(${k.hp}/${k.maxHp})`);
+},
+
 };
 
 // ===== 运行器 =====

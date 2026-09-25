@@ -15,7 +15,8 @@ import { CARDS, KIND } from '../data/cards.js';
 import { EventBus } from '../core/events.js';
 import { Tower } from './tower.js';
 import { Unit } from './unit.js';
-import { tickPeriodic, applyDeathAbilities } from './abilities.js';
+import { tickPeriodic, applyDeathAbilities, tickTransform } from './abilities.js';
+import { Projectile } from './projectile.js';
 import { getDeployPositions } from './formation.js';
 import { findTarget, findNearestEnemyUnit, getMarchTarget, moveUnit, attackTarget } from './combat.js';
 import { castSpell, deployCard } from './spells.js';
@@ -24,6 +25,7 @@ export class Game {
   constructor(opts = {}) {
     this.bus = new EventBus();          // 本局事件总线
     this.units = [];
+    this.projectiles = [];              // 投射物(塔箭/远程弹道;规格 §6.1)
     this.effects = [];                  // 视觉特效队列(渲染层消费)
     this.towers = { 0: {}, 1: {} };
     this.elixir = { 0: 5, 1: 5 };
@@ -112,10 +114,30 @@ export class Game {
   }
 
   // ===== 伤害结算(唯一入口;死亡效果由 abilities 接管)=====
+  // 伤害管线定序(规格 §5.7,对齐 C++ CombatEntity::takeDamage):
+  //   1. 无敌帧(冲锋过半程等) → 完全免疫
+  //   2. 诅咒乘区(受击加深)
+  //   3. 招架(格挡本次攻击,不消耗护盾)
+  //   4. 护盾(先扣盾;溢出不穿透)
+  //   5. 扣血 + 受击触发器
+  // 各段位由 unit 上的可选字段驱动(未实装的机制字段不存在 = 跳过该段),
+  // 新状态机制加进这里,禁止在调用方预判。
   dealDamage(unit, dmg, attacker, sourceCard) {
-    if (unit.dead) return;
-    // 护盾(黑王子类):本次伤害全部由盾承担(最多吸到盾空),
-    // 溢出部分不穿透本体(官方:雷电1056打240盾,溢出816完全无效)
+    if (unit.dead || dmg <= 0) return;
+    // 1. 无敌帧(飞贼冲刺/弓箭女王隐身等;invulnUntil 为 game.time 戳)
+    if (unit.invulnUntil && this.time < unit.invulnUntil) return;
+    // 2. 诅咒乘区(巫婆诅咒类:受击伤害加深;curseMult 缺省 1)
+    if (unit.curseTimer > 0 && unit.curseMult > 1) {
+      dmg = dmg * unit.curseMult;
+    }
+    // 3. 招架(武僧类:间隔性完全格挡一次攻击,不消耗护盾)
+    if (unit.parryReady) {
+      unit.parryReady = false;
+      this.addEffect({ type: 'hitBurst', x: unit.x, y: unit.y, r: unit.radius + 0.2, life: 0.3, maxLife: 0.3 });
+      return;   // 完全格挡
+    }
+    // 4. 护盾(黑王子类):本次伤害全部由盾承担(最多吸到盾空),
+    //    溢出部分不穿透本体(官方:雷电1056打240盾,溢出816完全无效)
     if (unit.shield > 0) {
       const absorbed = Math.min(unit.shield, dmg);
       unit.shield -= absorbed;
@@ -125,6 +147,7 @@ export class Game {
       this.bus.emit('unit:damaged', { unit, dmg: absorbed, attacker });
       return;   // 盾在场时不掉本体血
     }
+    // 5. 扣血
     unit.hp -= dmg;
     this.bus.emit('unit:damaged', { unit, dmg, attacker }); // 受击音效
     // 受击迸发特效(同一单位 0.15s 内不重复,防止群攻刷屏)
@@ -146,6 +169,14 @@ export class Game {
       this.bus.emit('unit:killed', { unit, attacker, sourceCard });
       applyDeathAbilities(unit, this);
     }
+  }
+
+  // 治疗(带上限;规格 §2 P1 治疗系底盘——治疗法术/治疗精灵/凤凰复用)
+  healUnit(unit, amount) {
+    if (unit.dead || amount <= 0) return;
+    unit.hp = Math.min(unit.maxHp, unit.hp + amount);
+    this.addEffect({ type: 'hitBurst', x: unit.x, y: unit.y, r: unit.radius, life: 0.3, maxLife: 0.3 });
+    this.bus.emit('unit:healed', { unit, amount });
   }
 
   dealTowerDamage(tower, dmg) {
@@ -284,10 +315,12 @@ export class Game {
     // 更新实体
     this.updateTowers(dt);
     this.updateUnits(dt);
+    this.updateProjectiles(dt);
     this.updateEffects(dt);
 
-    // 清理死亡单位
+    // 清理死亡单位与失效投射物
     this.units = this.units.filter(u => !u.dead);
+    this.projectiles = this.projectiles.filter(p => !p.dead);
 
     // 常规时间结束:皇冠领先即胜;平皇冠进加时(sudden death)
     if (!this.overtime && this.time >= MATCH_TIME && !this.gameOver) {
@@ -344,6 +377,40 @@ export class Game {
     this.bus.emit('match:end', { winner: this.winner, reason: 'time' });
   }
 
+  // ===== 攻击判定共享(Unit/Tower 双轨统一;规格 §3.1 偿债)=====
+  // 单位与塔的攻击循环此前两份实现,每加一个状态机制要改两遍且会分叉
+  // (历史 bug:公主塔攻击不到刚过河单位)。现统一为一组判定函数,
+  // 塔与单位只保留各自的状态字段与渲染字段,判定逻辑单一来源。
+  //
+  // 目标是否失效(死亡/走远):缓冲 0.25 格,与攻击范围衔接
+  isTargetLost(attacker, target) {
+    if (!target || target.ref.dead) return true;
+    return dist(attacker, target.ref) > attacker.radius + this.attackRangeOf(attacker) + target.ref.radius + 0.25;
+  }
+  // 攻击者有效射程(塔用 range,单位用 card.range)
+  attackRangeOf(attacker) {
+    return attacker.isTower ? attacker.range : attacker.card.range;
+  }
+  // 是否在攻击范围内(边缘到边缘口径:双方半径+射程)
+  inAttackRange(attacker, target) {
+    return dist(attacker, target.ref) <= attacker.radius + this.attackRangeOf(attacker) + target.ref.radius;
+  }
+
+  // ===== 投射物系统(规格 §6.1)=====
+  // 塔与远程单位共用;发射即入列,命中由 Projectile 自身结算
+  fireProjectile(from, target, opts) {
+    const p = new Projectile(from.side, from.x, from.y, target,
+      Object.assign({ attacker: from }, opts));
+    this.projectiles.push(p);
+    return p;
+  }
+
+  updateProjectiles(dt) {
+    for (const p of this.projectiles) {
+      if (!p.dead) p.update(this, dt);
+    }
+  }
+
   updateTowers(dt) {
     for (const side of [0, 1]) {
       const ts = this.towers[side];
@@ -360,29 +427,22 @@ export class Game {
         if (tw.shotFlash > 0) tw.shotFlash -= dt;
         if (!tw.canAct) continue;
 
-        // 索敌(弃目标阈值与攻击范围衔接,缓冲 0.25 格——与单位侧一致,
-        // 旧 +1 缓冲会让目标在"打不到也不换"区间卡住)
-        if (!tw.target || tw.target.ref.dead || dist(tw, tw.target.ref) > tw.radius + tw.range + tw.target.ref.radius + 0.25) {
+        // 索敌(共享判定)
+        if (this.isTargetLost(tw, tw.target)) {
           tw.target = this.findTowerTarget(tw);
         }
         if (tw.target) {
-          // 记录瞄准方向(用于渲染状态)
           const tRef = tw.target.ref;
           tw.aimAngle = Math.atan2(tRef.y - tw.y, tRef.x - tw.x);
-          // 攻击判定:边缘到边缘口径(d ≤ 双方半径+射程;原漏算攻击者
-          // 自身半径,导致火枪在国王塔射程外白嫖塔)
-          const d = dist(tw, tw.target.ref);
-          if (d <= tw.radius + tw.range + tw.target.ref.radius) {
+          if (this.inAttackRange(tw, tw.target)) {
             if (tw.atkCD <= 0) {
               const dmg = tw.dmg * (tw.rageTimer > 0 ? RAGE_MULT : 1);
-              if (tw.target.type === 'unit') this.dealDamage(tw.target.ref, dmg, tw);
-              else this.dealTowerDamage(tw.target.ref, dmg);
+              // 塔箭 = 投射物(规格 §6.1:追踪+命中结算,不再瞬发)
+              this.fireProjectile(tw, tw.target, { speed: 12, dmg, color: '#ffe082' });
               tw.atkCD = tw.hitSpeed;
               tw.atkAnim = 0.25;
-              // 记录弹道(射击方向与目标位置,用于渲染)
               tw.shotFlash = 0.25;
               tw.shotTarget = { x: tRef.x, y: tRef.y };
-              // 攻击事件(音效订阅;isKing 区分国王塔)
               this.bus.emit('unit:attack', { attacker: tw, isTower: true, isKing: tw.type === 'king' });
             }
           }
@@ -432,10 +492,12 @@ export class Game {
           this.bus.emit('unit:spawnDamage', { unit: u });
         }
       }
+      // ===== 状态计时器统一递减(规格 §5.6:集中一处,禁止散落)=====
       if (u.frozen > 0) u.frozen -= dt;
       if (u.stunned > 0) u.stunned -= dt;
       if (u.rageTimer > 0) u.rageTimer -= dt;
       if (u.slowTimer > 0) u.slowTimer -= dt;
+      if (u.curseTimer > 0) u.curseTimer -= dt;
       // 攻击冷却:冻结/眩晕中暂停恢复(时间停止语义,对齐规格 §5.6
       // ——冻结期间 cd 按 freezeSlow=0 即不恢复;电击重置地狱塔充能
       // 的机制也依赖"控制期间攻击进度不走")
@@ -469,13 +531,14 @@ export class Game {
       // 原先不查 deployTimer,与 summon 路径规则不一致)
       if (u.canAct) tickPeriodic(u, this, dt);
 
+      // 变形检查(hp 阈值触发,伤害结算后每帧查;部署/冰冻中同样生效——
+      // 变形不是行动,是被动响应)
+      tickTransform(u, this);
+
       if (!u.canAct) continue;
 
-      // 索敌(如果当前目标失效)
-      // 失效阈值 = 攻击范围 + 0.25 格小缓冲:官方行为是锁定后贴身追击
-      // 当前位置,只有真走远才弃目标重索(旧 +1 格缓冲让目标在
-      // "攻击范围外一点点"时既打不到也不换目标,造成边界抖动)
-      if (u.target && (u.target.ref.dead || dist(u, u.target.ref) > (u.radius + u.card.range + u.target.ref.radius + 0.25))) {
+      // 索敌(共享判定:isTargetLost/inAttackRange,与塔同源)
+      if (this.isTargetLost(u, u.target)) {
         u.target = null;
       }
       if (!u.target) {
@@ -483,22 +546,16 @@ export class Game {
       } else {
         // 行军中(未进入攻击范围)重新索敌:
         // 若出现更近的敌方单位,转移目标(模拟 CR 中行军部队会攻击路过的新敌人)
-        const dCur = dist(u, u.target.ref);
-        const effRange = u.radius + u.card.range + u.target.ref.radius;
-        if (dCur > effRange) {
+        if (!this.inAttackRange(u, u.target)) {
           const nearer = findNearestEnemyUnit(u, this);
-          if (nearer && dist(u, nearer) < dCur) {
+          if (nearer && dist(u, nearer) < dist(u, u.target.ref)) {
             u.target = { type: 'unit', ref: nearer, x: nearer.x, y: nearer.y, flying: nearer.flying, isBuilding: nearer.isBuilding };
           }
         }
       }
 
       if (u.target) {
-        const d = dist(u, u.target.ref);
-        // 攻击判定:边缘到边缘口径(d ≤ 攻击者半径+射程+目标半径;
-        // 原漏算攻击者自身半径)
-        const effRange = u.radius + u.card.range + u.target.ref.radius;
-        if (d <= effRange) {
+        if (this.inAttackRange(u, u.target)) {
           // 在攻击范围,攻击
           if (u.atkCD <= 0) {
             attackTarget(u, u.target, this);

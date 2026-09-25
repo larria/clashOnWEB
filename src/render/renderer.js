@@ -130,6 +130,7 @@ export class Renderer {
       this.drawTowerStates();
       this.drawUnitStates();
     }
+    this.drawProjectiles();
     this.drawEffects();
     if (deployPreview) this.drawPreview(deployPreview);
     ctx.restore();
@@ -1009,6 +1010,37 @@ export class Renderer {
     if (ratio > 0) {
       ctx.fillStyle = color;
       roundRect(ctx, x-w/2, y, w*ratio, h, 1.5); ctx.fill();
+    }
+  }
+
+  // ===== 投射物(塔箭/远程弹道;规格 §6.1 实体化后的视觉)=====
+  drawProjectiles() {
+    const ctx = this.ctx;
+    const list = this.game.projectiles;
+    if (!list || list.length === 0) return;
+    for (const p of list) {
+      const x = p.x * CELL, y = p.y * CELL;
+      // 拖尾(最近 5 个位置渐隐)
+      ctx.save();
+      for (let i = 0; i < p.trail.length; i++) {
+        const tp = p.trail[i];
+        const a = (i + 1) / p.trail.length * 0.5;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = p.color;
+        const r = 2 + i * 0.8;
+        ctx.beginPath();
+        ctx.arc(tp.x * CELL, tp.y * CELL, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // 弹头(发光圆点)
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#fff8e1';
+      ctx.beginPath();
+      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
   }
 

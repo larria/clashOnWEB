@@ -29,12 +29,16 @@ export class Unit {
     // 目标
     this.target = null; // {type:'unit'|'tower', ref, x, y}
 
-    // 状态
-    this.frozen = 0;      // 冰冻剩余秒
-    this.stunned = 0;     // 眩晕剩余秒
-    this.rageTimer = 0;   // 狂暴剩余秒
+    // ===== 状态计时器(全部在 game.updateUnits 顶部统一递减;
+    // 新状态机制的字段加在这里,不要散到各系统)=====
+    this.frozen = 0;      // 冰冻剩余秒(时间停止:不动/不索敌/冷却暂停)
+    this.stunned = 0;     // 眩晕剩余秒(同冰冻,打断充能)
+    this.rageTimer = 0;   // 狂暴剩余秒(移速/攻速/伤害 ×RAGE_MULT)
     this.slowTimer = 0;   // 减速剩余秒(冰法师攻击/落地)
     this.slowFactor = 1;  // 减速系数(0.7 = -30%)
+    this.curseTimer = 0;  // 诅咒剩余秒(受击加深,伤害管线第2段)
+    this.curseMult = 1;   // 诅咒受击乘区
+    this.invulnUntil = 0; // 无敌帧截止 game.time(伤害管线第1段)
     this.dead = false;
 
     // 护盾(黑王子/皇家卫队):受击先扣盾,盾碎溢出伤害不穿透本体

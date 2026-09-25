@@ -153,6 +153,38 @@ function dropDeathBomb(unit, game, dd) {
   });
 }
 
+// ===== 变形底盘(规格 §2 P1:hp 阈值触发运行时换卡)=====
+// 卡牌数据:special: { transform: { atHp: 0.5, card: 'xxx', killsSelf: false } }
+//   atHp     触发阈值(占 maxHp 比例,≤ 即触发;一次性)
+//   card     变形成的目标卡(原单位死亡,新单位原位生成,继承 deployTimer=0)
+//   killsSelf(可选)到阈值直接死亡并触发 transform 的死亡效果(爆破手)
+// 每帧由 game.updateUnits 调用(在伤害结算后)
+// 参照:C++ CombatEntity::update 顶部的 transformAtHpFraction 段
+export function tickTransform(unit, game) {
+  const sp = unit.card.special;
+  const tf = sp && sp.transform;
+  if (!tf || unit.dead || unit._transformed) return false;
+  if (unit.hp > unit.maxHp * tf.atHp) return false;
+  unit._transformed = true;
+  if (tf.killsSelf) {
+    // 直接死亡路径(走 dealDamage 死亡管线,死亡效果正常触发)
+    unit.hp = 0;
+    unit.dead = true;
+    if (tf.card) {
+      game.spawnUnit(tf.card, unit.side, unit.x, unit.y).deployTimer = 0;
+    }
+    return true;
+  }
+  // 平滑变形:原单位消亡(无死亡效果),新单位原位顶替
+  unit.dead = true;
+  unit.hp = 0;
+  game.addEffect({ type: 'deathBreak', cardId: unit.cardId, side: unit.side,
+    x: unit.x, y: unit.y, r: unit.radius, color: unit.card.color,
+    big: false, isBuilding: unit.isBuilding, life: 0.5, maxLife: 0.5 });
+  game.spawnUnit(tf.card, unit.side, unit.x, unit.y).deployTimer = 0;
+  return true;
+}
+
 // 攻击后效果(rampDamage 递增):由 combat.attackTarget 调用
 export function afterAttack(unit) {
   const sp = unit.card.special;
