@@ -262,19 +262,21 @@ class AudioSystem {
 
     // 单位攻击:attacker 为单位时播卡牌攻击动作音 + 命中音(landhit_);
     // 塔攻击播塔音。重单位动作音加大(戈仑/皮卡的低频轰鸣要有存在感)
-    bus.on('unit:attack', ({ attacker, target, isTower, isKing }) => {
+    bus.on('unit:attack', ({ attacker, target, isTower, isKing, distance }) => {
       if (isTower) {
         this.play(isKing ? 'king_fire' : 'tower_fire', { throttle: 150, volume: 0.7 });
       } else if (attacker && attacker.cardId) {
         const heavy = HEAVY_UNITS.has(attacker.cardId);
         this.play('atk_' + attacker.cardId, { throttle: 120, volume: heavy ? 1.0 : 0.8 });
-        // 命中音:攻击者视角的"打中"声(与攻击动作音间隔 60ms 模拟
-        // 命中延迟;远程单位尤其需要——箭矢飞行后落点声)
+        // 命中音:与攻击动作音的间隔 = 弹飞行时间(远程实体化后伤害
+        // 随弹到达,音画同步;近战保持 60ms 最小间隔模拟打击感)
+        const flight = (attacker.card && attacker.card.range >= 3.5)
+          ? (distance || 0) / 12 * 1000 : 60;
         this.play('landhit_' + attacker.cardId, {
           throttle: 150,
           volume: (heavy ? 0.9 : 0.75) * LANDHIT_VOLUME,
           fallback: null,        // 无命中音素材的卡不播(不回退)
-          delay: 60,
+          delay: Math.max(60, Math.round(flight)),
         });
       }
     });

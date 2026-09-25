@@ -160,6 +160,21 @@ function dropDeathBomb(unit, game, dd) {
 //   killsSelf(可选)到阈值直接死亡并触发 transform 的死亡效果(爆破手)
 // 每帧由 game.updateUnits 调用(在伤害结算后)
 // 参照:C++ CombatEntity::update 顶部的 transformAtHpFraction 段
+// 变形体生成:展开目标卡完整编制(多体卡如骷髅 count=3 逐个落地),
+// 变形物无部署硬直。killsSelf 与平滑变形共用。
+function spawnTransformed(unit, game, cardId) {
+  const card = game.units ? CARDS_LOOKUP(cardId) : null;
+  const count = (card && card.count) || 1;
+  const positions = game.getDeployPositions(unit.x, unit.y, count, card ? card.radius : 0.35);
+  for (let i = 0; i < count; i++) {
+    game.spawnUnit(cardId, unit.side, positions[i].x, positions[i].y).deployTimer = 0;
+  }
+}
+
+// cards.js 延迟查表(避免 abilities→cards 循环依赖的顶层 import)
+import { CARDS } from '../data/cards.js';
+function CARDS_LOOKUP(id) { return CARDS[id]; }
+
 export function tickTransform(unit, game) {
   const sp = unit.card.special;
   const tf = sp && sp.transform;
@@ -167,12 +182,11 @@ export function tickTransform(unit, game) {
   if (unit.hp > unit.maxHp * tf.atHp) return false;
   unit._transformed = true;
   if (tf.killsSelf) {
-    // 直接死亡路径(走 dealDamage 死亡管线,死亡效果正常触发)
-    unit.hp = 0;
-    unit.dead = true;
-    if (tf.card) {
-      game.spawnUnit(tf.card, unit.side, unit.x, unit.y).deployTimer = 0;
-    }
+    // 直接死亡:走 dealDamage 完整死亡管线(事件/特效/死亡能力全触发),
+    // 再原位生成变形体(对齐 C++ transformKillsSelf 的语义:
+    // 阈值死亡用 transform 专属效果,与被动挨打死亡区分)
+    game.dealDamage(unit, unit.hp + 999, null);
+    if (tf.card && unit.dead) spawnTransformed(unit, game, tf.card);
     return true;
   }
   // 平滑变形:原单位消亡(无死亡效果),新单位原位顶替
@@ -181,7 +195,7 @@ export function tickTransform(unit, game) {
   game.addEffect({ type: 'deathBreak', cardId: unit.cardId, side: unit.side,
     x: unit.x, y: unit.y, r: unit.radius, color: unit.card.color,
     big: false, isBuilding: unit.isBuilding, life: 0.5, maxLife: 0.5 });
-  game.spawnUnit(tf.card, unit.side, unit.x, unit.y).deployTimer = 0;
+  spawnTransformed(unit, game, tf.card);
   return true;
 }
 

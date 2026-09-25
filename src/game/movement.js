@@ -14,6 +14,7 @@
 // 现有调用方迁移说明:spells.js 的法术击退目前手写径向位移 + clamp,
 // 保留其特化逻辑(击退打断冲锋等),后续渔夫/龙卷风实装时迁到此处。
 // ===============================================
+import { GRID_W, GRID_H, isRiver, isBridge } from '../core/constants.js';
 
 // 建筑免疫(塔是静态障碍,isBuilding 的建筑单位同样不可移动)
 function immovable(entity) {
@@ -51,11 +52,10 @@ export function pushAlong(game, entity, dirX, dirY, distance) {
 // 镜像换线:x 镜像到对侧车道(强力矿工逃生/巨人投掷)
 export function mirrorToOppositeLane(game, entity) {
   if (immovable(entity)) return;
-  clampUnit(game, entity, 17 - entity.x, entity.y);
+  clampUnit(game, entity, (GRID_W - 1) - entity.x, entity.y);
 }
 
 // 统一边界钳制(内部):地面单位不进非桥河道、不出地图
-import { GRID_W, GRID_H, isRiver, isBridge } from '../core/constants.js';
 function clampUnit(game, entity, nx, ny) {
   nx = Math.max(entity.radius, Math.min(GRID_W - entity.radius, nx));
   if (!entity.flying && isRiver(nx, ny) && !isBridge(nx, ny)) {

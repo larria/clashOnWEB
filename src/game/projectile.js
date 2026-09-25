@@ -15,9 +15,13 @@
 // 出于重放确定性:无随机,纯追踪运动
 // ===============================================
 
+// 目标位掩码全选(溅射弹 targets 缺省值;与 core/constants.js T.ALL 同值)
+const T_ALL = 7;
+
 export class Projectile {
   // target: { ref } 弱引用式目标对象(与单位/塔的 target 同构)
-  // opts: { speed, dmg, splash, targets, onHit: {slow:{duration,factor}}, color }
+  // opts: { speed, dmg, splash, targets, onHit: {slow:{duration,factor}}, color, attacker }
+  // targets 为目标位掩码(溅射弹用);T_ALL = 7 同 core/constants.js 的 T.ALL
   constructor(side, x, y, target, opts) {
     this.side = side;
     this.x = x;
@@ -58,7 +62,10 @@ export class Projectile {
   // 命中结算:伤害(单发/溅射)+ on-hit 效果
   _land(game, t) {
     if (this.splash > 0) {
-      game.applyAreaDamageAt(this.x, this.y, this.dmg, this.splash, this.targets, this.side, 1, null, false);
+      // 溅射弹:命中点范围伤害(attacker 传入保留伤害归属;
+      // targets 掩码缺省视为全目标,防 undefined & mask = 0 打不中人)
+      game.applyAreaDamageAt(this.x, this.y, this.dmg, this.splash,
+        this.targets || T_ALL, this.side, 1, this.attacker, false);
     } else if (this.target.type === 'unit') {
       game.dealDamage(t, this.dmg, this.attacker);
     } else {
@@ -69,8 +76,8 @@ export class Projectile {
       if (this.target.type === 'unit') {
         game.applySlowAt(this.x, this.y, this.splash || 0.5, this.side,
           this.onHit.slow.duration, this.onHit.slow.factor);
-      } else if (t.slowTimer !== undefined) {
-        // 塔被减速(攻速降低)
+      } else {
+        // 塔被减速(攻速降低;Tower 已初始化 slowTimer/slowFactor)
         if (t.slowTimer < this.onHit.slow.duration) { t.slowTimer = this.onHit.slow.duration; t.slowFactor = this.onHit.slow.factor; }
       }
     }

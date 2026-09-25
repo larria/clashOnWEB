@@ -464,7 +464,6 @@ export function attackTarget(attacker, target, game) {
       game.dealDamage(e, dmg, attacker);
     }
     // 攻击减速(冰法师):命中附带范围减速(溅射范围内敌人一起减速)
-    const aslow = card.special && card.special.attackSlow;
     if (aslow) {
       game.applySlowAt(e.x, e.y, card.splash || 0.5, attacker.side, aslow.duration, aslow.factor);
     }
@@ -475,11 +474,10 @@ export function attackTarget(attacker, target, game) {
     } else {
       game.dealTowerDamage(tw, dmg);
     }
-    // 塔同样被减速(攻速降低;塔攻击间隔由 tower.update 驱动)
-    const aslowT = card.special && card.special.attackSlow;
-    if (aslowT && !tw.dead) {
-      if (tw.slowTimer == null) { tw.slowTimer = 0; tw.slowFactor = 1; }
-      if (tw.slowTimer < aslowT.duration) { tw.slowTimer = aslowT.duration; tw.slowFactor = aslowT.factor; }
+    // 塔同样被减速(攻速降低;塔攻击间隔由 tower.update 驱动;
+    // Tower 构造器已初始化 slowTimer/slowFactor)
+    if (aslow && !tw.dead) {
+      if (tw.slowTimer < aslow.duration) { tw.slowTimer = aslow.duration; tw.slowFactor = aslow.factor; }
     }
   }
 

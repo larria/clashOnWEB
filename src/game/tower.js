@@ -27,6 +27,8 @@ export class Tower {
     this.frozen = 0;
     this.stunned = 0;
     this.rageTimer = 0;
+    this.slowTimer = 0;   // 与 Unit 状态字段同构(此前靠 undefined 比较侥幸工作)
+    this.slowFactor = 1;
     this.atkAnim = 0;
     // 攻击状态渲染
     this.aimAngle = null;   // 当前瞄准方向(有目标时)

@@ -1032,13 +1032,17 @@ export class Renderer {
         ctx.arc(tp.x * CELL, tp.y * CELL, r, 0, Math.PI * 2);
         ctx.fill();
       }
-      // 弹头(发光圆点)
+      // 弹头(双层圆点模拟发光;不用 shadowBlur——canvas 2D 最贵
+      // 操作,v0.5.x 已做过全局降级,不回退)
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 8;
       ctx.fillStyle = '#fff8e1';
       ctx.beginPath();
-      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

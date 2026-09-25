@@ -172,6 +172,7 @@ export class Game {
   }
 
   // 治疗(带上限;规格 §2 P1 治疗系底盘——治疗法术/治疗精灵/凤凰复用)
+  // 特效暂用受击 hitBurst 占位(视觉区分留给治疗系卡实装时做专属 greenPulse)
   healUnit(unit, amount) {
     if (unit.dead || amount <= 0) return;
     unit.hp = Math.min(unit.maxHp, unit.hp + amount);
@@ -278,7 +279,11 @@ export class Game {
     // 国王塔被摧毁即败
     if (this.towers[0].king.dead) { this.winner = 1; this.gameOver = true; }
     else if (this.towers[1].king.dead) { this.winner = 0; this.gameOver = true; }
-    if (this.gameOver) this.bus.emit('match:end', { winner: this.winner, reason: 'king' });
+    if (this.gameOver) {
+      // 终局清空在飞投射物(update 已停,不清会悬停在画面上)
+      this.projectiles.length = 0;
+      this.bus.emit('match:end', { winner: this.winner, reason: 'king' });
+    }
   }
 
   // ===== 主更新 =====
@@ -373,6 +378,7 @@ export class Game {
     else if (s1 > s0) { this.winner = 1; }
     else { this.winner = -1; } // 平局
     this.gameOver = true;
+    this.projectiles.length = 0;   // 终局清空在飞投射物
     this.bus.emit('log', { who: 'sys', msg: `⏰ 时间到!皇冠 ${crowns0} : ${crowns1},塔血 ${Math.round(s0)} : ${Math.round(s1)}` });
     this.bus.emit('match:end', { winner: this.winner, reason: 'time' });
   }
@@ -565,8 +571,10 @@ export class Game {
             // 不清进度,杀完敌立即快充导致二次冲锋间隔过短)
             if (u.charged) { u.charged = false; }
             if (u.card.special && u.card.special.charge) u.chargeTimer = 0;
-            // 攻击事件(音效订阅;target 供命中音区分目标类型)
-            this.bus.emit('unit:attack', { attacker: u, target: u.target.ref, isTower: false, isKing: false });
+            // 攻击事件(音效订阅;target/distance 供命中音区分目标类型
+            // 并按弹飞行时间延迟,音画同步)
+            this.bus.emit('unit:attack', { attacker: u, target: u.target.ref,
+              isTower: false, isKing: false, distance: dist(u, u.target.ref) });
           }
         } else {
           // 不在范围,移动接近(充能计时在 moveUnit 内累计)

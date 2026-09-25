@@ -519,6 +519,30 @@ const SCENARIOS = {
   ok(k.hp === k.maxHp, `不超过上限(${k.hp}/${k.maxHp})`);
 },
 
+'变形-killsSelf走完整死亡管线': () => {
+  // v0.6.8 review 修复:killsSelf 分支此前不发 killed 事件/无特效/无死亡能力
+  const g = newGame();
+  let killedEmitted = 0;
+  g.bus.on('unit:killed', () => killedEmitted++);
+  const u = g.spawnUnit('giant', 0, 9, 20);
+  u.deployTimer = 0;
+  // 炸墙桶式:半血自爆并生成 2 骷髅
+  u.card = Object.assign({}, u.card, { special: Object.assign({}, u.card.special, {
+    transform: { atHp: 0.5, card: 'skeletons', killsSelf: true },
+    deathDamage: { dmg: 80, splash: 2.0, targets: 7 },
+  }) });
+  const foe = g.spawnUnit('knight', 1, 9, 21);   // 附近敌人吃死亡爆炸
+  foe.deployTimer = 0; foe.frozen = 99;
+  const foeHp = foe.hp;
+  u.hp = u.maxHp * 0.4;
+  run(1/30, g);
+  ok(u.dead, 'killsSelf 应致原单位死亡');
+  ok(killedEmitted >= 1, `应发出 unit:killed 事件(${killedEmitted})`);
+  ok(foe.hp < foeHp, `死亡爆炸应波及敌人(${Math.round(foe.hp)}/${foeHp})`);
+  const skels = g.units.filter(x => x.cardId === 'skeletons' && !x.dead);
+  ok(skels.length === 3, `变形体应生成(骷髅卡 count=3,实际${skels.length})`);
+},
+
 };
 
 // ===== 运行器 =====
