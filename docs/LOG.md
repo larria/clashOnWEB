@@ -5,6 +5,59 @@
 
 ---
 
+## 2026-09-25 规格对齐 review:7 处修复(v0.6.7)
+
+**任务: 以 THIRD-PARTY-SPEC.md 为基准逐项对照本项目实现,修复全部不一致**
+
+修复(7 处):
+1. **塔索敌口径**(game.js findTowerTarget):旧版不含目标 hitbox 且
+   无视野 floor → 改为 tw.radius + max(sight,range) + e.radius,
+   与攻击判定同口径(规格 §5.2)。大体积单位在视野边缘不再漏索
+2. **视野 floor 规则**(combat.js effectiveSight):单位索敌视野
+   sightRange 不低于攻击范围 range——连弩(11<11.5)/迫击炮
+   (12<12.08)目标停在"打得着却看不见"间隙里僵持的问题消除
+3. **建筑到期死亡能力**(game.js):到期统一走 applyDeathAbilities
+   (炸弹塔到期现在会爆炸;墓碑到期仍召唤)。删除已无人调用的
+   applyExpireAbilities(职能被统一路径覆盖)
+4. **挤出后 re-clamp**(game.js separateUnits):单位 vs 建筑/塔
+   挤出改走 pushUnit(含河/界约束)——挤出不再把单位推进非桥河道
+   (规格 §4.2 碰撞分离后统一钳制)
+5. **冻结/眩晕中攻击冷却暂停**(game.js 单位+塔):时间停止语义,
+   对齐规格 §5.6(freezeSlow=0 时 cd 不恢复)
+6. **电系/冰冻重置地狱塔充能**(spells.js):zap/雷电(stun)与
+   冰冻(freeze)命中重置 rampMult/rampTimer——官方 zap 重置
+   充能是知名机制
+7. **普通单位盲行车道制**(combat.js getMarchTarget):盲行目标 =
+   自己车道的敌方公主塔,该塔倒后直进国王塔——不再因"最近塔"
+   在一侧公主塔倒后斜切另一路(规格 §3.3 laneObjective;攻城单位
+   原本就有此逻辑,普通单位补齐)
+
+验证:
+- 新增 6 个规格对齐场景(27/27 全绿)
+- AI 评测 100 局无报错,胜率 49:51 无异常偏移
+- 3 局完整对局正常结束无异常
+
+---
+
+## 2026-09-25 第三方实现规格文档(THIRD-PARTY-SPEC.md)
+
+**任务: 从留存的两个第三方项目提炼寻路/战斗规格,沉淀为参考手册**
+- 通读 ClashRoyaleAi(C++17)核心源码:ArenaLayout/Board/LanePath/
+  CombatEntity/Troop/Tower/Projectile/AreaSpell/MatchRules/GameManager/
+  HeuristicOpponent;Crash-Loyal(Unity)相关脚本:Unit/Tower/TowerManager/
+  AirMeleeUnit/MeleeUnit
+- 产出 `docs/THIRD-PARTY-SPEC.md`:12 章规格——场地几何、寻路体系
+  (桥选择/车道目标/国王塔三段路点/防冻结容差)、碰撞位移(半径三口径/
+  分离/建筑推离/强制位移四件套)、索敌攻击(视野与射程分层/锁定模型/
+  伤害管线)、投射物法术、塔规则、比赛圣水、启发式 AI、Crash-Loyal
+  可取规则点、与本项目对照结论(6 项一致 + 9 项可参考改进点)
+- 关键沉淀:视野 floor 规则(视野不低于攻击触及,防"打不着站桩")、
+  河带内路点不回给岸线(EPS 冻结)、碰撞后统一 re-clamp、伤害乘区
+  单一出口、法术对塔乘区走数据字段、多段法术逐跳重查半径
+- 文档只描述规格与设计依据(含源码行号),不含代码改动
+
+---
+
 ## 2026-09-25 角落沉底路线走塔外侧(v0.6.6)
 
 **bug: 左下角沉底被强制横穿到公主塔右侧**(用户战报+对局记录)

@@ -35,6 +35,10 @@ function killTower(g, side, lane) {
   tw.hp = 1; g.dealTowerDamage(tw, 999);
   return tw;
 }
+function isBridgePos(x) {
+  const ix = Math.floor(x);
+  return [3, 4, 14, 15].includes(ix);
+}
 
 // ===== 场景集 =====
 const SCENARIOS = {
@@ -322,6 +326,104 @@ const SCENARIOS = {
   ok(counts.every(c => c >= 2), `每只哥布林至少被击2发(${counts.join(',')})`);
 },
 
+
+// ===== 规格对齐(v0.6.7,对照 docs/THIRD-PARTY-SPEC.md) =====
+
+'规格-塔索敌含目标hitbox且视野不低于射程': () => {
+  // 规格 §5.2 视野 floor:塔索敌判定 = tw.radius + max(sight,range) + e.radius
+  // 大体积单位(戈仑 r=0.6)停在"中心距恰在旧口径外"处也必须被索敌
+  const g = newGame();
+  const tw = g.towers[1].king;
+  tw.activated = true;
+  // 公主塔在场上会先索敌干扰,推掉隔离
+  killTower(g, 1, 'left'); killTower(g, 1, 'right');
+  const golem = g.spawnUnit('golem', 0, 9, tw.y + 7.0 + 0.2);  // 恰在射程边缘外一点
+  golem.deployTimer = 0;
+  run(1, g);
+  const t = tw.target;
+  ok(t && t.ref === golem, `国王塔应索敌视野边缘的戈仑(实际=${t ? t.ref.cardId : '无'})`);
+  // 走近后必须被打(攻击判定同口径)
+  run(4, g);
+  ok(golem.hp < golem.maxHp, `国王塔应对其造成伤害(${Math.round(golem.hp)}/${golem.maxHp})`);
+},
+
+'规格-建筑到期触发死亡爆炸(炸弹塔)': () => {
+  // 规格 §6.3:到期=完整死亡,死亡能力全部触发。炸弹塔到期应爆炸
+  const g = newGame();
+  const bt = g.spawnUnit('bombTower', 0, 4, 25);
+  bt.deployTimer = 0;
+  const enemy = g.spawnUnit('knight', 1, 4, 26.5);   // 贴近炸弹塔,到期爆炸波及
+  enemy.deployTimer = 0; enemy.frozen = 99;
+  bt.lifetime = 0.5; bt.hp = bt.maxHp;               // 加速到期
+  const kHp = enemy.hp;
+  run(2, g);
+  ok(bt.dead, '炸弹塔应到期消亡');
+  ok(enemy.hp < kHp, `到期爆炸应伤害贴近敌人(${Math.round(enemy.hp)}/${kHp})`);
+},
+
+'规格-冻结期间攻击冷却暂停': () => {
+  // 规格 §5.6:冻结=时间停止,冷却不走。电击(castTime 0.5s 后结算,
+  // 眩晕 0.5s)——眩晕剩余时间内地狱塔冷却不应恢复
+  const g = newGame();
+  const it = g.spawnUnit('infernoTower', 0, 8.5, 21);
+  it.deployTimer = 0;
+  const knight = g.spawnUnit('knight', 1, 8.5, 17);
+  knight.deployTimer = 0; knight.frozen = 99;
+  run(3, g);                        // 地狱塔开火数次,cd 处于循环中
+  ok(knight.hp < knight.maxHp, '地狱塔应已攻击');
+  castSpell('zap', 1, 8.5, 21, g);  // 电击(0.5s 后结算:眩晕 + 重置充能)
+  // 显式步进到结算后(castTime 0.5;浮点累积误差下 run(0.51) 可能恰欠一步)
+  for (let i = 0; i < 18; i++) g.update(1/30);   // 0.6s:结算完成,眩晕剩 ~0.4s
+  ok(it.stunned > 0, `电击结算后应眩晕地狱塔(实际=${it.stunned})`);
+  const cdAtStun = it.atkCD;
+  for (let i = 0; i < 9; i++) g.update(1/30);    // 0.3s:仍在眩晕窗口内
+  ok(it.atkCD >= cdAtStun - 0.01, `眩晕中冷却应暂停(${it.atkCD.toFixed(2)} vs ${cdAtStun.toFixed(2)})`);
+},
+
+'规格-电系法术重置地狱塔充能': () => {
+  // 规格 §5.6:zap 重置充能是官方机制。烧到高倍率后吃电击应回落 1 倍
+  const g = newGame();
+  const it = g.spawnUnit('infernoTower', 0, 8.5, 21);
+  it.deployTimer = 0;
+  const giant = g.spawnUnit('giant', 1, 8.5, 20);
+  giant.deployTimer = 0; giant.frozen = 99;
+  run(2.5, g);
+  ok(it.rampMult > 1.5, `持续烧巨人应叠起倍率(${it.rampMult.toFixed(2)})`);
+  castSpell('zap', 1, 8.5, 21, g);
+  run(0.55, g);                     // 等 castTime 结算
+  ok(it.rampMult === 1, `电击后倍率应重置(实际=${it.rampMult})`);
+},
+
+'规格-盲行车道制(公主塔倒后不斜切)': () => {
+  // 规格 §3.3 laneObjective:盲行单位沿自己车道走,己车道公主塔倒后
+  // 直进国王塔,不斜切另一路的公主塔
+  const g = newGame();
+  // 玩家推掉 AI 左公主塔
+  killTower(g, 1, 'left');
+  // 骑士在左侧盲行(无视野内敌人)
+  const k = g.spawnUnit('knight', 0, 3, 14);
+  k.deployTimer = 0;
+  const t = combat.getMarchTarget(k, g);
+  ok(t && t.type === 'king', `左路盲行目标应为国王塔(实际=${t ? t.type + '/' + t.lane : '无'})`);
+  // 右路公主塔存活:右路盲行骑士应打右公主塔(不因左侧更近的塔倒下改道)
+  const k2 = g.spawnUnit('knight', 0, 15, 14);
+  k2.deployTimer = 0;
+  const t2 = combat.getMarchTarget(k2, g);
+  ok(t2 && t2.lane === 'right', `右路盲行目标应为右公主塔(实际=${t2 ? t2.type + '/' + t2.lane : '无'})`);
+},
+
+'规格-挤出后不落河道': () => {
+  // 规格 §4.2:碰撞分离后统一 re-clamp——挤出不得把单位推进非桥河道
+  const g = newGame();
+  // 单位夹在河边两座"建筑"之间:取 cannon(敌方)贴岸放,单位被推挤
+  const c1 = g.spawnUnit('cannon', 1, 8.5, 18); c1.deployTimer = 0;  // 敌方建筑,占位
+  const c2 = g.spawnUnit('cannon', 1, 6.8, 18); c2.deployTimer = 0;
+  const u = g.spawnUnit('knight', 0, 7.6, 17.2);  // 恰在河边缝隙
+  u.deployTimer = 0;
+  run(0.1, g);
+  const inRiver = u.y > 15 && u.y < 17 && !(u.x > 2.5 && u.x < 5.5) && !(u.x > 13.5 && u.x < 16.5);
+  ok(!inRiver || isBridgePos(u.x), `挤出后不应落在非桥河道(位置=${u.x.toFixed(1)},${u.y.toFixed(1)})`);
+},
 };
 
 // ===== 运行器 =====

@@ -185,15 +185,19 @@ function applySpellEffect(card, side, x, y, game) {
       // 击退同样重置冲锋充能(原版:滚木/雪球击退打断王子冲锋)
       if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
     }
-    // 眩晕(重置王子等单位的冲锋充能——原版电系打断充能)
+    // 眩晕(重置王子等单位的冲锋充能——原版电系打断充能;
+    // 同时重置地狱塔递增伤害——官方 zap/雷电重置充能是知名机制,
+    // C++ 版冻结同样重置 ramp)
     if (sp && sp.stun) {
       e.stunned = Math.max(e.stunned, sp.stun);
       if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
+      if (e.card.special && e.card.special.rampDamage) { e.rampMult = 1; e.rampTimer = 0; e._lastRampTarget = null; }
     }
-    // 冰冻(同样打断充能)
+    // 冰冻(同样打断充能;重置地狱塔递增——冻结=控制状态)
     if (sp && sp.freeze) {
       e.frozen = Math.max(e.frozen, sp.freeze);
       if (e.card.special && e.card.special.charge) { e.charged = false; e.chargeTimer = 0; }
+      if (e.card.special && e.card.special.rampDamage) { e.rampMult = 1; e.rampTimer = 0; e._lastRampTarget = null; }
     }
   }
 

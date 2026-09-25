@@ -197,3 +197,9 @@ cd clash && python3 -m http.server 8000   # 本地
 - 改玩法规则/卡牌/界面功能 → PRODUCT.md
 - 完成一个阶段的工作 → LOG.md 追加一条
 - 开发与产品文档只对当前版本负责,不写历史(历史只进 LOG.md)
+
+**外部参考:**
+- `THIRD-PARTY-SPEC.md`——留存的两个第三方实现
+  (ClashRoyaleAi C++ / Crash-Loyal Unity)的寻路/战斗规格提炼,
+  实装新卡、修寻路/索敌类 bug、判断"官方行为应该是什么"时对照
+

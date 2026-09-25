@@ -15,7 +15,7 @@ import { CARDS, KIND } from '../data/cards.js';
 import { EventBus } from '../core/events.js';
 import { Tower } from './tower.js';
 import { Unit } from './unit.js';
-import { tickPeriodic, applyDeathAbilities, applyExpireAbilities } from './abilities.js';
+import { tickPeriodic, applyDeathAbilities } from './abilities.js';
 import { getDeployPositions } from './formation.js';
 import { findTarget, findNearestEnemyUnit, getMarchTarget, moveUnit, attackTarget } from './combat.js';
 import { castSpell, deployCard } from './spells.js';
@@ -354,7 +354,8 @@ export class Game {
         if (tw.stunned > 0) tw.stunned -= dt;
         if (tw.slowTimer > 0) tw.slowTimer -= dt;
         if (tw.rageTimer > 0) tw.rageTimer -= dt;
-        if (tw.atkCD > 0) tw.atkCD -= dt;
+        // 同单位:冻结/眩晕中攻击冷却暂停
+        if (tw.atkCD > 0 && tw.frozen <= 0 && tw.stunned <= 0) tw.atkCD -= dt;
         if (tw.atkAnim > 0) tw.atkAnim -= dt;
         if (tw.shotFlash > 0) tw.shotFlash -= dt;
         if (!tw.canAct) continue;
@@ -393,8 +394,12 @@ export class Game {
   }
 
   findTowerTarget(tw) {
-    let best = null, bd = tw.radius + tw.sightRange;
+    let best = null, bd = Infinity;
     const enemies = this.units.filter(u => u.side !== tw.side && !u.dead);
+    // 有效视野 = max(sight, range),判定含双方半径(与攻击判定同口径):
+    // 索敌绝不低于攻击触及,否则"打得着却看不见"(单位侧 findTarget
+    // 同规则;塔侧原先不含目标半径,大体积单位在视野边缘不被索敌)
+    const sight = Math.max(tw.sightRange, tw.range);
     for (const e of enemies) {
       // 塔可打地面/空中(看塔 targets;建筑视为地面目标)
       let valid;
@@ -403,7 +408,7 @@ export class Game {
       else valid = (tw.targets & T.GROUND) !== 0;
       if (!valid) continue;
       const d = dist(tw, e);
-      if (d <= bd) { bd = d; best = { type:'unit', ref:e }; }
+      if (d <= tw.radius + sight + e.radius && d < bd) { bd = d; best = { type:'unit', ref:e }; }
     }
     return best;
   }
@@ -431,7 +436,10 @@ export class Game {
       if (u.stunned > 0) u.stunned -= dt;
       if (u.rageTimer > 0) u.rageTimer -= dt;
       if (u.slowTimer > 0) u.slowTimer -= dt;
-      if (u.atkCD > 0) u.atkCD -= dt;
+      // 攻击冷却:冻结/眩晕中暂停恢复(时间停止语义,对齐规格 §5.6
+      // ——冻结期间 cd 按 freezeSlow=0 即不恢复;电击重置地狱塔充能
+      // 的机制也依赖"控制期间攻击进度不走")
+      if (u.atkCD > 0 && u.frozen <= 0 && u.stunned <= 0) u.atkCD -= dt;
       if (u.atkAnim > 0) u.atkAnim -= dt;
 
       // 建筑存活时间:血量随剩余时间线性衰减(CR 建筑机制)
@@ -450,8 +458,8 @@ export class Game {
             big: false, isBuilding: true, life: 0.5, maxLife: 0.5,
           });
           this.bus.emit('unit:killed', { unit: u, attacker: null });
-          // 到期自然消亡同样触发死亡召唤
-          applyExpireAbilities(u, this);
+          // 到期自然消亡同样触发全部死亡能力(炸弹塔到期爆炸/墓碑召唤)
+          applyDeathAbilities(u, this);
           continue;
         }
       }
@@ -537,10 +545,11 @@ export class Game {
         const dx = m.x - b.x, dy = m.y - b.y;
         const d = Math.sqrt(dx*dx + dy*dy);
         if (d < minD && d > 0.001) {
-          m.x = b.x + (dx/d) * minD;
-          m.y = b.y + (dy/d) * minD;
+          // 径向推出 + re-clamp(挤出可能把单位推进河/出界——
+          // 分离不守边界,钳制统一兜底;pushUnit 内含河/界约束)
+          this.pushUnit(m, (dx/d) * minD - dx, (dy/d) * minD - dy);
         } else if (d <= 0.001) {
-          m.y += minD; // 完全重合,向下弹出
+          this.pushUnit(m, 0, minD); // 完全重合,向下弹出
         }
       }
     }

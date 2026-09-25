@@ -21,11 +21,19 @@ function unitLane(unit) {
   return 'mid';
 }
 
+// 有效索敌视野:sightRange 不低于攻击范围(视野 floor 规则,规格 §5.2)
+// ——射程口径是边缘到边缘(含双方半径),若视野(哪怕含半径)低于攻击
+// 触及,目标停在"打得着却看不见"的间隙里会僵持不动(连弩 11 < 11.5、
+// 迫击炮 12 < 12.08 都命中此例)。塔侧 findTowerTarget 同规则。
+function effectiveSight(unit) {
+  return Math.max(unit.card.sightRange || 0, unit.card.range || 0);
+}
+
 // 寻找最佳目标(最近的有效敌方单位/塔)
 export function findTarget(unit, game) {
   const card = unit.card;
   const sp = card.special || {};
-  const sightR = card.sightRange || 0;
+  const sightR = effectiveSight(unit);
   let best = null;
   let bestD = Infinity;
 
@@ -107,7 +115,7 @@ export function findTarget(unit, game) {
 // 视野内最近的敌方单位(不含塔) - 用于行军中转移目标
 export function findNearestEnemyUnit(unit, game) {
   const card = unit.card;
-  const sightR = card.sightRange || 0;
+  const sightR = effectiveSight(unit);
   let best = null, bestD = Infinity;
   const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
   // 只打建筑的单位(巨人/野猪/气球):只对敌方建筑感兴趣(被牵引)
@@ -145,7 +153,20 @@ export function getMarchTarget(unit, game) {
     return towers[0];
   }
 
-  // 普通单位:最近的存活塔
+  // 普通单位:车道制盲行(规格 §3.3 laneObjective)——
+  // 盲行目标 = 自己车道(x<9 左 / x>9 右)的敌方公主塔;该塔已倒
+  // → 敌国王塔。不能用"最近塔":一侧公主塔倒下后,最近塔规则会把
+  // 盲行单位斜着引向另一路(C++ 注释明言此为与真实游戏的偏差)。
+  // 中间车道(x∈[8,10])或车道塔判断不可靠时退回最近塔。
+  const left = allTowers.find(t => t.lane === 'left');
+  const right = allTowers.find(t => t.lane === 'right');
+  const king = allTowers.find(t => t.type === 'king');
+  let laneTower = null;
+  if (unit.x < 8) laneTower = left;
+  else if (unit.x > 10) laneTower = right;
+  if (laneTower && !laneTower.dead) return laneTower;
+  if (king && !king.dead) return king;
+  // 国王塔也倒了(残局):最近存活塔
   let best = towers[0], bd = dist(unit, best);
   for (const t of towers) {
     const d = dist(unit, t);

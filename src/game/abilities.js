@@ -153,18 +153,6 @@ function dropDeathBomb(unit, game, dd) {
   });
 }
 
-// 建筑到期自然消亡也触发死亡召唤(墓碑/野蛮人小屋机制)
-export function applyExpireAbilities(unit, game) {
-  const sp = unit.card.special;
-  if (sp && sp.deathSummon) {
-    const positions = game.getDeployPositions(unit.x, unit.y, sp.deathSummon.count, 0.3);
-    for (let i = 0; i < sp.deathSummon.count; i++) {
-      const u = game.spawnUnit(sp.deathSummon.card, unit.side, positions[i].x, positions[i].y);
-      u.deployTimer = 0;   // 召唤物无部署硬直
-    }
-  }
-}
-
 // 攻击后效果(rampDamage 递增):由 combat.attackTarget 调用
 export function afterAttack(unit) {
   const sp = unit.card.special;
