@@ -280,11 +280,15 @@ export function nextWaypoint(unit, game, finalTarget) {
     { x: 3.5, y: (RIVER_Y1+RIVER_Y2)/2 },
     { x: 14.5, y: (RIVER_Y1+RIVER_Y2)/2 },
   ];
-  // 选离单位最近的桥
+  // 选离单位最近的桥。tie-break 与 unitLane 同规则:x 恰在中线
+  // (两桥等距)时归右桥(unitLane(x<GRID_W/2)=false → 'right'),
+  // 否则 marchTarget(右塔)与过河路径(左桥)会分叉——
+  // 规格 §3.3:车道判定与桥选择必须同源。
+  // <=:平局时后遍历的右桥胜
   let bridge = bridges[0], bd = Infinity;
   for (const b of bridges) {
     const d = dist2(ux, uy, b.x, b.y);
-    if (d < bd) { bd = d; bridge = b; }
+    if (d <= bd) { bd = d; bridge = b; }
   }
 
 
@@ -360,7 +364,7 @@ export function moveUnit(unit, game, dt) {
   const dx = wp.x - unit.x;
   const dy = wp.y - unit.y;
   const d = Math.sqrt(dx*dx + dy*dy);
-  if (d < 0.05) return;
+  if (d < 0.05) { unit._moveDir = null; return; }
 
   // 但如果已在攻击范围内,不移动(由攻击逻辑处理)
   // 移动
@@ -373,6 +377,10 @@ export function moveUnit(unit, game, dt) {
     unit.x += (dx / d) * spd;
     unit.y += (dy / d) * spd;
   }
+  // 行进方向与本帧实际位移(追尾推挤用:后单位把前单位沿其行进方向
+  // 推着走,推挤量受本帧位移限制——见 game.separateUnits)
+  unit._moveDir = { x: dx / d, y: dy / d };
+  unit._moveStep = Math.min(spd, d);
   // 跳河单位(野猪骑士)入河瞬间:起跳特效 + 跳跃动画计时。
   // 桥面不算河(isBridge)——走桥过河不触发跳跃动画
   const nowInRiver = unit.y > RIVER_Y1 && unit.y < RIVER_Y2 && !isBridge(unit.x, unit.y);

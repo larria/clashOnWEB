@@ -133,6 +133,9 @@ const SCENARIOS = {
 
 // ---- 寻路(v0.4.21/22) ----
 '寻路-沉底中心四阶段路线': () => {
+  // v0.6.15:x=9 恰在车道分界(二值:x<9 左/≥9 右,与桥选择同源)。
+  // 旧行为(mid 车道→最近塔)把 (9,31) 归左塔;规格 §3.3 二值制下
+  // x=9 → 右塔。场景断言镜像为右侧走廊(x≈12.73)
   const g = newGame();
   const u = g.spawnUnit('knight', 0, 9, 31);
   u.deployTimer = 0;
@@ -141,15 +144,15 @@ const SCENARIOS = {
     g.update(0.1);
     trace.push({ x: u.x, y: u.y });
   }
-  // 阶段1: 前 2.5 秒沿国王塔底横走(y 基本不变,x 从 9 → ~7)
+  // 阶段1: 前 2.5 秒沿国王塔底横走(y 基本不变,x 从 9 → ~11)
   const phase1 = trace.slice(0, 25);
   const yRange = Math.max(...phase1.map(p=>p.y)) - Math.min(...phase1.map(p=>p.y));
   const xRange = Math.max(...phase1.map(p=>p.x)) - Math.min(...phase1.map(p=>p.x));
   ok(xRange > 1.5 && yRange < 1.2, `先横走(x变${xRange.toFixed(1)})再前(y变${yRange.toFixed(1)})`);
-  // 阶段3: 中段(5~11s)沿公主塔内侧(x≈5.27±0.5)纵走
+  // 阶段3: 中段(5~11s)沿右公主塔内侧(x≈12.73±0.5)纵走
   const mid = trace.slice(50, 110);
-  const innerLane = mid.filter(p => Math.abs(p.x - 5.27) < 0.6);
-  ok(innerLane.length > mid.length * 0.4, `中段应沿公主塔内侧走廊(x≈5.27,实际${innerLane.length}/${mid.length}帧)`);
+  const innerLane = mid.filter(p => Math.abs(p.x - 12.73) < 0.6);
+  ok(innerLane.length > mid.length * 0.4, `中段应沿公主塔内侧走廊(x≈12.73,实际${innerLane.length}/${mid.length}帧)`);
 },
 '寻路-左下角沉底走塔外侧': () => {
   // 2026-09-25 用户战报:左下角沉底被强制横穿到公主塔右侧(内侧)。
@@ -846,6 +849,45 @@ const SCENARIOS = {
   const alive = gs.filter(u => !u.dead);
   ok(alive.length > 0 && alive.every(u => Math.abs(u.y - 29.8) > 1.0 || Math.abs(u.x - 12.85) > 0.8),
     `3s 后应全部离开部署点(实际 ${alive.map(u=>`(${u.x.toFixed(1)},${u.y.toFixed(1)})`).join(' ')})`);
+},
+
+'分离-追尾推着走不挤歪': () => {
+  // v0.6.15 用户战报:mini皮卡放在戈仑正后方,把戈仑推到一边。
+  // 官方行为(pig push):后方快单位沿前方单位的行进方向把它推着走,
+  // 两者速度趋同(前方加速/后方减速);前方单位不得被挤向侧向。
+  // 规格 §4.2 补充:同阵营追尾 → 沿行进方向推;敌对仍对称推挤
+  const g = newGame();
+  const golem = g.spawnUnit('golem', 0, 14.5, 20);      // 桥上纵队(纯纵向行进)
+  golem.deployTimer = 0;
+  const mp = g.spawnUnit('miniPekka', 0, 14.5, 21.2);   // 正后方
+  mp.deployTimer = 0;
+  run(2, g);
+  // 戈仑不被挤歪:x 始终在桥线上(±0.3)
+  ok(Math.abs(golem.x - 14.5) < 0.3, `戈仑不被挤歪(x=${golem.x.toFixed(2)},桥线 14.5)`);
+  // 速度趋同:戈仑被推着加速(慢速 0.6/s,2s 单独走 1.2;被推应明显更快)
+  const golemDist = 20 - golem.y;
+  ok(golemDist > 1.6, `戈仑被推着加速(2s 走 ${golemDist.toFixed(2)} 格 > 单独 1.2)`);
+  // 皮卡被顶减速(1.5/s,2s 单独走 3.0;推着戈仑应更慢)
+  const mpDist = 21.2 - mp.y;
+  ok(mpDist < 2.8, `皮卡被顶减速(2s 走 ${mpDist.toFixed(2)} 格 < 单独 3.0)`);
+  // 间距稳定(推挤动态平衡,不会穿模也不会弹开)
+  const gap = Math.hypot(mp.x - golem.x, mp.y - golem.y);
+  ok(gap < 1.6, `推挤中保持接触(间距 ${gap.toFixed(2)} < 1.6)`);
+},
+
+'分离-野猪推雪人加速前进': () => {
+  // 用户举例:正后方的野猪骑士把雪人(冰人)推着往前加速走。
+  // 冰人慢速 0.6/s,野猪极快 2.0/s → 共同速度应显著快于冰人单独速度
+  const g = newGame();
+  const ig = g.spawnUnit('iceGolem', 0, 14.5, 20);
+  ig.deployTimer = 0;
+  const hog = g.spawnUnit('hogRider', 0, 14.5, 21.3);
+  hog.deployTimer = 0;
+  run(3, g);
+  const igDist = 20 - ig.y;
+  // 冰人单独 3s 走 1.8 格;被野猪推应 ≥2.6(≈1.43/2.0 的中间速度)
+  ok(igDist >= 2.6, `雪人被推着加速(3s 走 ${igDist.toFixed(2)} 格 ≥2.6,单独仅 1.8)`);
+  ok(Math.abs(ig.x - 14.5) < 0.3, `雪人不被挤歪(x=${ig.x.toFixed(2)})`);
 },
 
 // ===== First Hit Speed(v0.6.9,官方攻击前摇) =====

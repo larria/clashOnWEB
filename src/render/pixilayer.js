@@ -441,8 +441,9 @@ export class PixiLayer {
         s.scale.set(scale);
       } else {
         // 单体:完整卡图等比,宽 = r × artScale × 2
+        // v0.6.15:巨型档 3.3 → 2.9(与 fx 层同步,戈仑卡图比例下调)
         let artScale;
-        if (r >= 0.55*CELL) artScale = 3.3;
+        if (r >= 0.55*CELL) artScale = 2.9;
         else if (r >= 0.45*CELL) artScale = 2.8;
         else artScale = 2.7;
         const artW = r * artScale * 2;

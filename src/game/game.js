@@ -647,6 +647,17 @@ export class Game {
           const d = Math.sqrt(dx*dx + dy*dy);
           if (d < minD) {
             if (d > 0.001) {
+              // ===== 追尾推挤(规格 §4.2 补充:同阵营后推前)=====
+              // 后方更快的单位撞上前方单位的背面:径向推挤会把前方单位
+              // 挤向侧向(戈仑被皮卡推歪),官方行为是沿前方单位的行进
+              // 方向把它"推着走"(pig push:野猪把雪人顶着加速)。
+              // 判定:推挤方向(作用于前方单位)= 连线方向,与该单位
+              // 行进方向点积 > 0.6(从背面被推)且推方本帧在移动 →
+              // 前方单位沿自己的行进方向被推,推挤量 ≤ 推方本帧位移
+              // (移动力传递,不凭空产生速度);后方单位相应回退
+              const tail = this._resolveTailPush(a, b, dx, dy, d, minD) ||
+                           this._resolveTailPush(b, a, -dx, -dy, d, minD);
+              if (tail) continue;
               // 沿连线各退一半 + 切向微扰(规格 §4.2:C++ 同款 noise——
               // 两只单位相向走进同一条走廊时,纯径向推挤会与移动力
               // 每帧精确抵消,部队原地锁死(战报:4 哥布林沉底 12s 不动);
@@ -664,6 +675,33 @@ export class Game {
         }
       }
     }
+  }
+
+  // 追尾推挤判定与执行(规格 §4.2 补充)。返回 true = 已按"推着走"处理。
+  // rear 是在后方的推动者,front 是在前方被推者;dirX/dirY = front 的
+  // 推挤方向(从 rear 指向 front 的连线方向)。敌对双方不适用(走对称
+  // 径向推挤互绕);front 静止(不在移动)也不适用(顶住不走是阻挡,
+  // 由对称推挤表达侧向挤开)
+  _resolveTailPush(rear, front, dirX, dirY, d, minD) {
+    if (rear.side !== front.side) return false;
+    const mv = front._moveDir;
+    if (!mv || !rear._moveDir) return false;   // 有一方静止/未在移动
+    // 推挤方向与 front 行进方向一致(从背面被推):dot > 0.6
+    const dot = (dirX / d) * mv.x + (dirY / d) * mv.y;
+    if (dot < 0.6) return false;
+    // rear 也在沿大致相同方向前进(真追尾,非擦肩)
+    const rDot = (dirX / d) * rear._moveDir.x + (dirY / d) * rear._moveDir.y;
+    if (rDot < 0.6) return false;
+    // 推着走:front 沿自己的行进方向被推出(消除重叠的前进分量),
+    // 推挤量 ≤ rear 本帧位移(移动力传递);rear 沿连线退回重叠的一半。
+    // 侧向分量留给对称推挤分支?不——追尾构型下径向=前进方向,
+    // 直接把 front 推到刚好消除重叠,rear 原地消化剩余
+    const overlap = minD - d;
+    const rearStep = rear._moveStep || 0;
+    const pushFront = Math.min(overlap, rearStep);
+    this.pushUnit(front, mv.x * pushFront, mv.y * pushFront);
+    this.pushUnit(rear, -(dirX / d) * (overlap - pushFront * 0.5), -(dirY / d) * (overlap - pushFront * 0.5));
+    return true;
   }
 
   // 推动单位但不得进入河道(非桥)或出地图
