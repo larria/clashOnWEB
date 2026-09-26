@@ -454,9 +454,11 @@ export function attackTarget(attacker, target, game) {
   }
 
   // kamikaze(冰雪精灵/火精灵类):攻击命中后自杀(官方"die as part
-  // of its attack"的 8 卡之一);冻结等附加效果在死亡伤害里表达
+  // of its attack"的 8 卡之一);冻结等附加效果在死亡伤害里表达。
+  // 单位与塔同路径:官方精灵冲到塔边同样爆开(伤害+冻塔)——曾只写
+  // unit 分支,精灵打塔一下后站桩被塔打死,场景"摸塔自爆"伪通过
   const kami = card.special && card.special.kamikaze;
-  if (kami && target.type === 'unit') {
+  if (kami) {
     const e = target.ref;
     applySplash(game, attacker, e.x, e.y, card.splash || 1.5, dmg, card.targets);
     if (kami.freeze) {
@@ -464,6 +466,11 @@ export function attackTarget(attacker, target, game) {
         if (en.dead || en.side === attacker.side) continue;
         const dd = Math.hypot(en.x - e.x, en.y - e.y);
         if (dd <= (card.splash || 1.5) + en.radius) en.frozen = Math.max(en.frozen, kami.freeze);
+      }
+      // 冻结塔(塔是 isTower 实体不在 units 里;仅 target 为塔时炸点在
+      // 塔边,溅射圈内塔同样吃冻结)
+      if (target.type === 'tower' && !e.dead) {
+        e.frozen = Math.max(e.frozen, kami.freeze);
       }
     }
     game.addEffect({ type: 'spell', cardId: attacker.cardId, x: e.x, y: e.y,

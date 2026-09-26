@@ -5,6 +5,44 @@
 
 ---
 
+## 2026-09-26 全面 review:正确性/可维护性/性能(v0.6.14)
+
+**全模块通读(combat/game/spells/abilities/ai/unit/projectile/movement/formation/
+constants/recorder/rng/main/hand/renderer 摘要/audio)+ 35 项疑点逐项可执行验证。**
+
+### 修复 2 个正确性硬伤
+
+1. **kamikaze 攻塔不自爆**(combat.js attackTarget):分支条件曾写
+   `target.type === 'unit'`——冰雪精灵冲到塔边只打一下(55 伤)就站桩被塔
+   打死,官方是爆开(伤害+**冻结塔**)。现有场景"冰精灵-冲刺摸塔自爆"
+   是伪通过(断言恰好被错误路径满足)。修复:unit/tower 同路径自爆,
+   freeze 同时施加给塔(塔是 isTower 实体不在 units 里,单独处理)。
+   场景加严:新增"自爆冻塔"+"t<1.3s(塔第 2 箭前)"两条硬断言,防伪通过复归。
+2. **冻结单位被击退时 frozen 停止倒数**(game.js updateUnits):击退补间
+   `continue` 在状态计时器递减之前,frozen=1.0 的单位被火球击退 0.45s 后
+   1s 时刻实测仍剩 0.47s——冻结被净延长近半个补间时长。修复:补间分支
+   顶部照常递减 frozen/stunned/curseTimer(击退是位移硬直,不是时间停止)。
+   场景固化:击退-冻结单位击退期间冻结不延长。
+
+### 交叉验证通过(不修,记录结论)
+
+- 伤害管线五段序/圣水 floor 语义/加时 sudden death 快照/slowFactor 攻速
+  移速方向/snapToDeployZone 参数序/gameOver 后 schedule 不产兵/全卡
+  firstHit 覆盖/经典卡组数据完整
+- 攻城单位行军中被敌方建筑牵引:findNearestEnemyUnit 含 isBuilding,验证
+  野猪会被加农炮拉走 ✓(与 C++ BuildingTargeter 一致)
+- 性能实测:180 单位满场 update 0.07ms/帧、separateUnits 0.08ms/次
+  (预算 33ms,余量 400×)——O(n²) 分离在现实规模下无需空间索引
+- 低危记录:deckeditor 卡组名 innerHTML 未转义 `<`(自我注入面,无攻击
+  者);audio landhit setTimeout 延迟在暂停时仍播(小瑕疵)
+
+### 验证
+
+51/51 场景全绿(50→51:新增冻结击退场景);AI 评测 400 局
+(镜像 100 + vs 基线 300)无行为异常。
+
+---
+
 ## 2026-09-26 修复攻城单位终点被公主塔拉走(v0.6.13)
 
 **战报 seed 776687102:AI 气球本应直进摧毁玩家国王塔,最后 3 格被右公主塔拉走目标,死在右塔下。**

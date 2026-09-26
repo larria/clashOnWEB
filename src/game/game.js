@@ -505,8 +505,13 @@ export class Game {
         }
       }
       // ===== 击退补间(硬直):滑动推进,期间完全跳过下方一切行为
-      // (索敌/攻击/移动;攻击前摇被打断——atkCD 不再递减,落地重新计)=====
+      // (索敌/攻击/移动;攻击前摇被打断——atkCD 不再递减,落地重新计)。
+      // 状态计时器在补间前照常递减:被击退的冰冻单位若在补间期间暂停
+      // frozen 倒数,冻结会被净延长整个补间时长(0.45-0.5s)=====
       if (u._knock && !u.dead) {
+        if (u.frozen > 0) u.frozen -= dt;
+        if (u.stunned > 0) u.stunned -= dt;
+        if (u.curseTimer > 0) u.curseTimer -= dt;
         tickKnock(u, dt);
         continue;
       }

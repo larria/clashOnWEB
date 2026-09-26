@@ -679,15 +679,24 @@ const SCENARIOS = {
   // ②站桩不自爆(缺扑击冲刺)。官方行为:锁定目标后加速扑击,残血
   // 摸到塔爆开(伤害+冻结)——wiki Strategy "sufficient hitpoints to
   // reach an opposing Tower Princess" 的机制支撑是冲刺缩短暴露时间
+  // v0.6.13 加严:此前"打了塔一下→被塔打死"的错误路径也满足旧断言
+  // (伪通过);kamikaze 分支曾只写 target.type==='unit',攻塔不自爆。
+  // 加"死亡即自爆(时间 < 塔射出第 2 箭)"+"冻结塔"两条硬断言
   const g = newGame();
   const sp = g.spawnUnit('iceSpirit', 0, 3.5, 14);   // 河边,塔射程边缘
   sp.deployTimer = 0;
   const tw = g.towers[1].left;                        // (3.5,6.5) 距 7.5
-  run(8, g);
+  let t = 0;
+  while (!sp.dead && t < 8) { g.update(1/30); t += 1/30; }
   ok(sp.dead, '精灵应已自爆');
   const dist = Math.hypot(sp.x - tw.x, sp.y - tw.y);
   ok(dist < 4.5, `爆点应贴近塔(距 ${dist.toFixed(1)} 格 < 4.5)`);
   ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${tw.maxHp - tw.hp})`);
+  // 自爆 vs 被塔打死:自爆发生在接触瞬间(冲刺 ×3,全程 < 1.3s);
+  // 被塔打死需吃塔 2 发(0.5 前摇 + 0.8 间隔 ≈ 1.3s+)。爆点冻结塔
+  // 是自爆路径的铁证(kamikaze freeze 对塔同样生效)
+  ok(tw.frozen > 0, `自爆应冻结塔(frozen=${tw.frozen.toFixed(2)}s>0)`);
+  ok(t < 1.3, `自爆应发生在塔第 2 箭前(t=${t.toFixed(2)}s < 1.3s)`);
 },
 
 '冰精灵-自杀攻击冻结群体': () => {
@@ -794,6 +803,20 @@ const SCENARIOS = {
     const midMove = k.y - yMid0;
     ok(midMove > 0 && midMove <= 0.45, `补间中段 0.2s 位移 ${midMove.toFixed(2)} ≤0.45(无自主移动叠加)`);
   }
+},
+
+'击退-冻结单位击退期间冻结不延长': () => {
+  // v0.6.13 review:击退补间分支曾 continue 在状态计时器递减之前,
+  // 冰冻单位被火球击退时 frozen 暂停倒数 → 冻结被净延长整个补间时长
+  // (实测 frozen=1.0 击退 0.45s 后 1s 时刻仍剩 0.47s)
+  const g = newGame();
+  const k = g.spawnUnit('knight', 1, 12, 22);
+  k.deployTimer = 0;
+  k.frozen = 1.0;                          // 冻结 1s
+  castSpell('fireball', 0, 12, 21.4, g);   // 命中后击退 0.45s
+  // 跑满 1.05s:冻结应恰好耗尽(击退期间照常倒数)
+  for (let i = 0; i < 32; i++) g.update(1/30);
+  ok(k.frozen <= 0, `1.05s 后冻结应耗尽(实际剩 ${k.frozen.toFixed(2)}s;>0 即被击退延长)`);
 },
 
 '击退-滚木甩飞硬直': () => {
