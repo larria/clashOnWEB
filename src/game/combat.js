@@ -2,7 +2,7 @@
 // 战斗系统 - 寻路/索敌/攻击/伤害结算
 // 纯游戏逻辑:不直接操作 DOM,日志/特效通过 game.bus 事件发出
 // ===============================================
-import { T, RIVER_Y1, RIVER_Y2, dist, dist2, isBridge } from '../core/constants.js';
+import { T, RIVER_Y1, RIVER_Y2, GRID_W, dist, dist2, isBridge } from '../core/constants.js';
 import { afterAttack } from './abilities.js';
 
 // 判断单位能否攻击某目标类型
@@ -14,11 +14,12 @@ export function canTarget(attacker, targetCard, targetIsFlying, targetIsBuilding
   return (t & T.GROUND) !== 0;
 }
 
-// 判断单位所在侧路:'left' | 'right' | 'mid'
+// 判断单位所在侧路:'left' | 'right'
+// 规格 §3.3:ArenaLayout.isLeftLane(x) = x < CENTER_X——车道是二值的
+// (最近桥一侧),与桥选择同一规则,没有"mid"车道。视野内目标必须按
+// 距离平等竞争(§5.4/§5.5),车道只是视野外盲行的兜底
 function unitLane(unit) {
-  if (unit.x < 8) return 'left';
-  if (unit.x > 10) return 'right';
-  return 'mid';
+  return unit.x < GRID_W / 2 ? 'left' : 'right';
 }
 
 // 有效索敌视野:sightRange 不低于攻击范围(视野 floor 规则,规格 §5.2)
@@ -67,32 +68,32 @@ export function findTarget(unit, game) {
 
   // 敌方塔
   const towers = game.getEnemyTowers(unit.side);
-  // 攻城单位(只打建筑)的塔优先级:首选同侧公主塔,该塔被毁后才转国王塔/另一侧
+  // 攻城单位(只打建筑):塔与建筑单位在视野内平等竞争(规格 §5.5
+  // BuildingTargeter——"towers compete on equal terms, as in the real
+  // game"),都按距离最近者胜。车道不参与视野内决策:曾按"首选同侧
+  // 公主塔"实现,导致飞向国王塔的单位在己侧公主塔倒下后、靠近国王塔
+  // 时仍被更远的对侧公主塔拉走(战报:气球被拉去右公主塔而未打国王塔)
   if (onlyBuilding) {
-    const lane = unitLane(unit);
-    const sidePrincess = towers.filter(t => !t.dead && t.type === 'princess');
-    let preferred = null;
-    if (lane === 'left' && !towers.find(t => t.lane === 'left').dead) preferred = towers.find(t => t.lane === 'left');
-    else if (lane === 'right' && !towers.find(t => t.lane === 'right').dead) preferred = towers.find(t => t.lane === 'right');
-    else if (lane === 'mid') {
-      // 中路:选最近的存活公主塔;都毁则国王塔
-      preferred = sidePrincess.length > 0 ? sidePrincess.reduce((a,b) => dist(unit,a) < dist(unit,b) ? a : b) : towers.find(t => t.type === 'king' && !t.dead);
-    }
-    // 同侧公主塔已被推:打国王塔(若活着),否则打另一侧
-    if (!preferred) {
-      const king = towers.find(t => t.type === 'king' && !t.dead);
-      preferred = king || sidePrincess[0] || null;
-    }
-    if (preferred) {
-      const d = dist(unit, preferred);
-      // 含塔 hitbox(同攻击口径)。与已找到的敌方建筑单位比距离:
-      // 只在塔更近时才改打塔——否则塔一进视野就会无条件覆盖已锁定的
-      // 特斯拉/加农炮等牵引建筑(表现为"被建筑拉了一段又转头去打塔")
-      if (d <= unit.radius + sightR + preferred.radius && d < bestD) {
-        best = { type: 'tower', ref: preferred, x: preferred.x, y: preferred.y, flying: false, isBuilding: true, lane: preferred.lane };
+    for (const tw of towers) {
+      if (tw.dead) continue;
+      const d = dist(unit, tw);
+      // 含塔 hitbox(同攻击口径);与建筑单位/其他塔统一比距离
+      if (d <= unit.radius + sightR + tw.radius && d < bestD) {
+        bestD = d;
+        best = { type: 'tower', ref: tw, x: tw.x, y: tw.y, flying: false, isBuilding: true, lane: tw.lane };
       }
     }
-    return best; // 攻城单位不做通用塔比较,直接返回
+    if (best) return best;   // 视野内有目标(塔或建筑单位):距离竞争结果
+    // 视野外盲行兜底(规格 §3.3 laneObjective):本车道公主塔存活→
+    // 该塔;已倒→国王塔(不斜切另一路)
+    const lane = unitLane(unit);
+    const laneTower = towers.find(t => t.lane === lane);
+    const king = towers.find(t => t.type === 'king' && !t.dead);
+    const preferred = (laneTower && !laneTower.dead) ? laneTower : (king || null);
+    if (preferred) {
+      best = { type: 'tower', ref: preferred, x: preferred.x, y: preferred.y, flying: false, isBuilding: true, lane: preferred.lane };
+    }
+    return best;
   }
 
   // 普通单位:所有塔按最近优先(targetsTower 单位同样走此分支,
@@ -135,35 +136,26 @@ export function getMarchTarget(unit, game) {
   const towers = allTowers.filter(t => !t.dead);
   if (towers.length === 0) return null;
 
-  // 攻城单位(只打建筑):首选同侧公主塔,该塔被毁后转国王塔
+  // 攻城单位(只打建筑):车道制盲行(规格 §3.3 laneObjective)——
+  // 本车道公主塔存活→该塔;已倒→国王塔(不斜切另一路)。车道二值
+  // (最近桥一侧,unitLane),与 findTarget 的视野内竞争互不干扰
   if (unit.card.targets === T.BUILDING) {
     const lane = unitLane(unit);
-    const left = allTowers.find(t => t.lane === 'left');
-    const right = allTowers.find(t => t.lane === 'right');
+    const laneTower = allTowers.find(t => t.lane === lane);
     const king = allTowers.find(t => t.type === 'king');
-    if (lane === 'left' && !left.dead) return left;
-    if (lane === 'right' && !right.dead) return right;
-    if (lane === 'mid') {
-      // 中路:最近的存活公主塔
-      const princess = towers.filter(t => t.type === 'princess');
-      if (princess.length > 0) return princess.reduce((a,b) => dist(unit,a) < dist(unit,b) ? a : b);
-    }
-    // 同侧公主塔已毁(或无公主塔):国王塔优先
+    if (laneTower && !laneTower.dead) return laneTower;
     if (king && !king.dead) return king;
     return towers[0];
   }
 
   // 普通单位:车道制盲行(规格 §3.3 laneObjective)——
-  // 盲行目标 = 自己车道(x<9 左 / x>9 右)的敌方公主塔;该塔已倒
-  // → 敌国王塔。不能用"最近塔":一侧公主塔倒下后,最近塔规则会把
-  // 盲行单位斜着引向另一路(C++ 注释明言此为与真实游戏的偏差)。
-  // 中间车道(x∈[8,10])或车道塔判断不可靠时退回最近塔。
-  const left = allTowers.find(t => t.lane === 'left');
-  const right = allTowers.find(t => t.lane === 'right');
+  // 盲行目标 = 自己车道(unitLane,二值:最近桥一侧)的敌方公主塔;
+  // 该塔已倒 → 敌国王塔。不能用"最近塔":一侧公主塔倒下后,最近塔
+  // 规则会把盲行单位斜着引向另一路(C++ 注释明言此为与真实游戏的
+  // 偏差)。车道塔判断不可靠时退回最近塔。
+  const lane = unitLane(unit);
+  const laneTower = allTowers.find(t => t.lane === lane);
   const king = allTowers.find(t => t.type === 'king');
-  let laneTower = null;
-  if (unit.x < 8) laneTower = left;
-  else if (unit.x > 10) laneTower = right;
   if (laneTower && !laneTower.dead) return laneTower;
   if (king && !king.dead) return king;
   // 国王塔也倒了(残局):最近存活塔

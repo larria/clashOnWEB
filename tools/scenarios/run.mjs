@@ -413,6 +413,67 @@ const SCENARIOS = {
   ok(t2 && t2.lane === 'right', `右路盲行目标应为右公主塔(实际=${t2 ? t2.type + '/' + t2.lane : '无'})`);
 },
 
+'索敌-攻城单位终点不被公主塔拉走': () => {
+  // 战报 seed 776687102:玩家左公主塔已毁,AI 气球从左路飞向国王塔,
+  // 逼近国王塔途中(距其 ~3 格)目标被更远的右公主塔(距 ~6.5 格)
+  // 拉走,最终死在右塔下未完成进攻。规格 §5.5(BuildingTargeter):
+  // 视野内塔与建筑平等按距离竞争——最近者胜,车道只是视野外盲行
+  // 兜底。根因是 unitLane 的 mid 车道(x∈[8,10] 选最近公主塔)把
+  // 逼近国王塔的单位判成"中路"覆盖了更近的国王塔
+  const g = newGame();
+  // 复刻战报局面:玩家左公主塔已毁,国王塔已激活
+  killTower(g, 0, 'left');
+  // 气球(AI 侧)放在国王塔附近、右公主塔视野边缘内:
+  // 距国王塔 ~3.1 格,距右公主塔 ~6.5 格(战报 45.77s 位置 (8.04,26.02))
+  const b = g.spawnUnit('balloon', 1, 8.04, 26.02);
+  b.deployTimer = 0;
+  b.target = null;
+  const tgt = combat.findTarget(b, g);
+  ok(tgt && tgt.type === 'tower' && tgt.ref.lane === 'king',
+    `视野内更近的国王塔应胜出(实际=${tgt ? tgt.type + '/' + tgt.ref.lane : '无'})`);
+  // 中线附近同侧另一站位(x 越过 8 但仍近国王塔)也不得改道
+  const b2 = g.spawnUnit('balloon', 1, 7.5, 27.5);
+  b2.deployTimer = 0;
+  b2.target = null;
+  const tgt2 = combat.findTarget(b2, g);
+  ok(tgt2 && tgt2.type === 'tower' && tgt2.ref.lane === 'king',
+    `中线附近近国王塔站位应锁国王塔(实际=${tgt2 ? tgt2.type + '/' + tgt2.ref.lane : '无'})`);
+  // 反向:视野外远端(刚部署在本方半场),盲行走本车道(左)→
+  // 左公主塔已倒 → 国王塔,不得被右公主塔斜切
+  const b3 = g.spawnUnit('balloon', 1, 4.01, 14);
+  b3.deployTimer = 0;
+  b3.target = null;
+  const t3 = combat.getMarchTarget(b3, g);
+  ok(t3 && t3.type === 'king', `左路盲行攻城单位目标应为国王塔(实际=${t3 ? t3.type + '/' + t3.lane : '无'})`);
+  // 全程推演:气球从 (8.04,26.02) 出发,直到死亡/超时,目标塔
+  // 始终是国王塔(允许短暂 target=null,但不允许锁右公主塔)
+  let lockedWrong = false;
+  for (let i = 0; i < 30 * 8 && !b.dead; i++) {
+    g.update(1/30);
+    if (b.target && b.target.type === 'tower' && b.target.ref.lane === 'right') { lockedWrong = true; break; }
+  }
+  ok(!lockedWrong, '全程不得锁定右公主塔');
+  ok(g.towers[0].king.hp < g.towers[0].king.maxHp, `气球应对国王塔造成伤害(${Math.round(g.towers[0].king.hp)}/${g.towers[0].king.maxHp})`);
+},
+
+'索敌-攻城单位在两公主塔间选更近者': () => {
+  // 平等竞争的反向保护:两座公主塔都在视野内时,攻城单位按距离
+  // 选近的(不过度偏向车道)——车道只在视野外兜底
+  const g = newGame();
+  // 气球放在右公主塔附近(距右塔 ~1.2 格,距左塔 ~11 格),两塔都活着
+  const b = g.spawnUnit('balloon', 1, 13.8, 25.2);
+  b.deployTimer = 0;
+  b.target = null;
+  const tgt = combat.findTarget(b, g);
+  ok(tgt && tgt.ref.lane === 'right', `应锁更近的右公主塔(实际=${tgt ? tgt.type + '/' + tgt.ref.lane : '无'})`);
+  // 左塔更近的对称站位
+  const b2 = g.spawnUnit('balloon', 1, 4.2, 25.2);
+  b2.deployTimer = 0;
+  b2.target = null;
+  const tgt2 = combat.findTarget(b2, g);
+  ok(tgt2 && tgt2.ref.lane === 'left', `应锁更近的左公主塔(实际=${tgt2 ? tgt2.type + '/' + tgt2.ref.lane : '无'})`);
+},
+
 '规格-挤出后不落河道': () => {
   // 规格 §4.2:碰撞分离后统一 re-clamp——挤出不得把单位推进非桥河道
   const g = newGame();
