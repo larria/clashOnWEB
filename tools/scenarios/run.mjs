@@ -725,6 +725,37 @@ const SCENARIOS = {
   ok(t < 3.0, `桥口出发应在 3s 内贴塔(t=${t.toFixed(2)}s;被塔打死则 >2.4s 且无塔伤)`);
 },
 
+'皇家巨人-远程攻城与不打单位': () => {
+  // 2016-02-29 批次(与公主同日,索引曾漏登)。6 费普通远程攻城:
+  // 射程 5(2018 从 6.5 下调)只打建筑,实弹炮弹(弹速 1000×0.025=25);
+  // C++ RangedBuildingTargeter sight 7.5。对塔全额伤害(部队无 towerMult)
+  const g = newGame();
+  // 隔离塔(防测试单位被塔打死干扰断言——首版测试骷髅被玩家塔打死误判)
+  for (const s of [0, 1]) for (const k of ['left','right','king']) {
+    const tw = g.towers[s][k]; tw.frozen = 9999; tw.activated = false;
+  }
+  const rg = g.spawnUnit('royalGiant', 0, 14.5, 18); rg.deployTimer = 0;
+  const sk = g.spawnUnit('skeletons', 1, 14.5, 17); sk.deployTimer = 0;  // 挡路骷髅
+  run(4, g);
+  ok(sk.hp === sk.maxHp, `不打单位(骷髅 hp=${Math.round(sk.hp)})`);
+  ok(rg.y < 17.5, `向塔推进(y=${rg.y.toFixed(1)})`);
+  // 弹道:实体炮弹
+  const g2 = newGame();
+  const rg2 = g2.spawnUnit('royalGiant', 0, 14.5, 12); rg2.deployTimer = 0;
+  let sawProj = false;
+  for (let i = 0; i < 30 * 2; i++) { g2.update(1/30); if (g2.projectiles.length > 0) sawProj = true; }
+  ok(sawProj, '炮弹为实体投射物(弹速 25)');
+  // 与塔互殴:无白嫖窗口(攻击极限 6.77 < 塔还手极限 9.27)
+  const g3 = newGame();
+  const rg3 = g3.spawnUnit('royalGiant', 0, 14.5, 20); rg3.deployTimer = 0;
+  run(12, g3);
+  const tw3 = g3.towers[1].right;
+  ok(rg3.hp < rg3.maxHp, `被塔还手(hp=${Math.round(rg3.hp)}——无白嫖)`);
+  ok(tw3.hp < tw3.maxHp, `对塔造成伤害(${Math.round(tw3.maxHp - tw3.hp)})`);
+  ok(Math.round(tw3.maxHp - tw3.hp) % 154 === 0 || (tw3.maxHp - tw3.hp) > 150,
+    `伤害为 154 的整数倍量级(${Math.round(tw3.maxHp - tw3.hp)})`);
+},
+
 '矿工-全图部署与挖掘': () => {
   // 2016-05-03 批次,第 3 张传奇。规格 §8.4b:全图部署(anywhereGround,
   // 河道非桥与建筑/塔占地仍禁);出生在己方国王塔,直线挖到落点

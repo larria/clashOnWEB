@@ -440,6 +440,16 @@
     "implemented": true
   },
   {
+    "file": "Royal_Giant",
+    "dt": "2016-02-29",
+    "date": "29 February 2016",
+    "type": "Troop",
+    "rarity": "Common",
+    "cost": "6",
+    "arena": "Royal Arena",
+    "implemented": true
+  },
+  {
     "file": "Three_Musketeers",
     "dt": "2016-02-29",
     "date": "29 February 2016",

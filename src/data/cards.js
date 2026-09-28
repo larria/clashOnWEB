@@ -217,6 +217,15 @@ export const CARDS = {
     // 对塔伤害 ×0.25(wiki crown_11=48=194×0.25;卡面 quote "reduced
     // damage to Crown Towers");对其他建筑全额(部队版 towerMult,
     // 与法术 TOWER_MULT 表分离)
+  royalGiant: { id:'royalGiant', name:'皇家巨人', cost:6, rarity:'普通', kind:KIND.TROOP,
+    hp:1582, dmg:154, hitSpeed:1.8, firstHit:0.9, range:5, sightRange:7.5, speed:SPEED.SLOW,
+    targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#5c6bc0', radius:0.57,
+    projectileSpeed:25 },
+    // wiki 11级×0.5:hp 3164/2=1582 dmg 307/2≈154 攻速1.8 前摇0.9 Slow
+    // 射程 5(2018-10 从 6.5 下调)只打建筑;projectile speed 1000×0.025=25格/s
+    // (实弹炮弹,弹道可见);C++:RangedBuildingTargeter sight 7.5
+    // (2016-02-29 与公主同批上线,索引曾漏登;2018-10 部署 2s→1s)
+    // 机制:远程攻城——站在塔射程(7.5)边缘外炮击;对塔全额(部队无 towerMult)
   elixirCollector: { id:'elixirCollector', name:'圣水收集器', cost:6, rarity:'稀有', kind:KIND.BUILDING,
     hp:535, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:93, color:'#d32f2f', radius:1.35,

@@ -173,5 +173,8 @@
   },
   "miner": {
     "file": "MinerCard.png"
+  },
+  "royalGiant": {
+    "file": "RoyalGiantCard.png"
   }
 }

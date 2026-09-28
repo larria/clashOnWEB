@@ -20,6 +20,7 @@ import { TOWER_MULT } from './spells.js';
 const COUNTERS = {
   // 坦克(只打建筑):用高伤地面/递增伤害解
   giant:        ['miniPekka', 'infernoTower', 'barbarians', 'skeletonArmy', 'pekka'],
+  royalGiant:   ['miniPekka', 'infernoTower', 'barbarians', 'pekka'],   // 同巨人:高伤单体/递增解
   golem:        ['infernoTower', 'miniPekka', 'pekka', 'barbarians'],
   hogRider:     ['cannon', 'tombstone', 'skeletons', 'barbarians', 'tesla'],
   balloon:      ['minions', 'minionHorde', 'archers', 'musketeer', 'wizard', 'tesla'],
@@ -54,7 +55,7 @@ const COUNTERS = {
 
 // 卡牌角色分类(用于进攻组队)
 export const ROLE = {
-  TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie', 'iceGolem'],
+  TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie', 'iceGolem', 'royalGiant'],
   WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka', 'miner'],
   SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess', 'furnace'],
   CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows', 'iceSpirit', 'fireSpirit'],
