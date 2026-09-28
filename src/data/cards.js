@@ -194,6 +194,16 @@ export const CARDS = {
     hp:264, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#9e9e9e', radius:1.35,
     special:{ spawn:{ card:'skeletons', count:2, interval:3.5, firstDelay:1 }, deathSummon:{ card:'skeletons', count:4 } } },  // wiki:每 3.5s 出 2 只
+  furnace: { id:'furnace', name:'熔炉', cost:4, rarity:'稀有', kind:KIND.TROOP,
+    hp:364, dmg:90, hitSpeed:1.7, firstHit:0.5, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
+    targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, color:'#ff8a65', radius:0.55,
+    special:{ spawn:{ card:'fireSpirit', count:1, interval:5, firstDelay:1 } } },
+    // wiki 11级×0.5:hp 727/2≈364 dmg 179/2≈90(自身攻击:远程单体
+    // "special cauldron brew",对空对地);hitSpeed 1.7(2026-01 从 1.8 提速)
+    // 射程 5.5(2026-06 从 6 下调);Medium(2025-08 起会走路,2025-10 提速)
+    // 每 5s 产 1 只火精灵(2026-04 从 7s 下调;wiki 属性表 7s 已过时,
+    // 以 Balance History 最新为准),无亡语(2025-08 移除 death spawn)
+    // (2016-05-03 批次;火精灵复用已实装卡)
   elixirCollector: { id:'elixirCollector', name:'圣水收集器', cost:6, rarity:'稀有', kind:KIND.BUILDING,
     hp:535, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:93, color:'#d32f2f', radius:1.35,

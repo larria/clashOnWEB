@@ -467,7 +467,7 @@
     "rarity": "Rare",
     "cost": "4",
     "arena": "Hog Mountain",
-    "implemented": false
+    "implemented": true
   },
   {
     "file": "Guards",

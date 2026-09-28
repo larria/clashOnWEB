@@ -167,5 +167,8 @@
   },
   "fireSpirit": {
     "file": "FireSpiritCard.png"
+  },
+  "furnace": {
+    "file": "FurnaceCard.png"
   }
 }

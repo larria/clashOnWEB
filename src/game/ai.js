@@ -55,7 +55,7 @@ const COUNTERS = {
 export const ROLE = {
   TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie', 'iceGolem'],
   WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka'],
-  SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess'],
+  SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess', 'furnace'],
   CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows', 'iceSpirit', 'fireSpirit'],
   SPELL: ['fireball', 'arrows', 'rocket', 'lightning', 'zap', 'freeze', 'rage', 'theLog'],
   DEFENSE_BUILDING: ['cannon', 'tesla', 'infernoTower', 'bombTower', 'tombstone'],

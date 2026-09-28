@@ -725,6 +725,37 @@ const SCENARIOS = {
   ok(t < 3.0, `桥口出发应在 3s 内贴塔(t=${t.toFixed(2)}s;被塔打死则 >2.4s 且无塔伤)`);
 },
 
+'熔炉-走路产兵与自身攻击': () => {
+  // 2016-05-03 批次:4 费稀有部队(2025-08 起会走!),远程单体攻击
+  // (90/1.7s/射程 5.5/对空对地)+ 每 5s 身前产 1 只火精灵(2026-04
+  // 从 7s 下调;wiki 属性表 7s 已过时,以 Balance History 最新为准)
+  const g = newGame();
+  const f = g.spawnUnit('furnace', 0, 9, 25);
+  f.deployTimer = 0;
+  const y0 = f.y;
+  let spiritCount = 0, lastCount = 0;
+  const spawnTimes = [];
+  for (let i = 0; i < 30 * 12; i++) {
+    g.update(1/30);
+    const n = g.units.filter(u => u.cardId === 'fireSpirit').length;
+    if (n > lastCount) { spawnTimes.push(+g.time.toFixed(1)); lastCount = n; }
+  }
+  ok(f.y < y0 - 1, `熔炉会走路(y ${y0}→${f.y.toFixed(1)})`);
+  ok(spawnTimes.length >= 2, `12s 至少产 2 只火精灵(实际 ${spawnTimes.length} 只 @${spawnTimes.join(',')}s)`);
+  ok(Math.abs(spawnTimes[0] - 1) < 0.3, `首只在 firstDelay 1s(实际 ${spawnTimes[0]}s)`);
+  ok(Math.abs(spawnTimes[1] - spawnTimes[0] - 5) < 0.5, `间隔 5s(实际 ${spawnTimes[1] - spawnTimes[0]}s)`);
+  // 自身攻击:熔炉本体远程打骑士
+  const g2 = newGame();
+  for (const s of [0, 1]) for (const k of ['left','right','king']) {
+    const tw = g2.towers[s][k]; tw.frozen = 9999; tw.activated = false;
+  }
+  const f2 = g2.spawnUnit('furnace', 0, 9, 20); f2.deployTimer = 0;
+  const k2 = g2.spawnUnit('knight', 1, 9, 23); k2.deployTimer = 0;
+  for (let i = 0; i < 30 * 2; i++) g2.update(1/30);
+  const dealt = 883 - k2.hp;
+  ok(dealt >= 90, `本体有远程攻击(2s 内 ≥90 伤,实际 ${Math.round(dealt)})`);
+},
+
 '火精灵-自爆伤害与溅射': () => {
   // 2016-05-03 批次:1 费普通,kamikaze 纯伤害(无冻结),溅射 2.3
   // (wiki "largest area damage radius of all troops"),对空对地,
