@@ -102,8 +102,10 @@ export const CARDS = {
     // wiki 11级:hp 215 dmg 110;溅射1.5·冻结1.1s·极快(2.0格/s)
     // 官方 kamikaze 8 卡之一:命中即死(as part of its attack),对空对地
     // (2016-05-03 批次);冻结=时间停止(frozen),非减速
-    // hp 口径:215 < 塔 dmg109×2=218 恰好吃满 2 发——官方同级数学,
-    // Strategy 节"sufficient hitpoints to reach an opposing Tower Princess"
+    // hp 口径:2026-08-04 平衡更新血量 -6%(229→215),同级塔 109×2=218
+    // 第 2 箭即死——摸塔依赖跳跃无敌而非血量硬吃(wiki Strategy 节
+    // "sufficient hitpoints to reach an opposing Tower Princess" 附条件:
+    // 精灵等级低于塔不成立)
   iceGolem: { id:'iceGolem', name:'冰人', cost:2, rarity:'稀有', kind:KIND.TROOP,
     hp:1315, dmg:84, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#b3e5fc', radius:0.42,
