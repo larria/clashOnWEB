@@ -128,7 +128,7 @@ function applySpellEffect(card, side, x, y, game) {
         if (game.gameOver) return;
         let hits = 0;
         for (const e of game.units) {
-          if (e.dead || e.side === side) continue;
+          if (e.dead || e.side === side || e._digTo) continue;
           if (dist2(x, y, e.x, e.y) > (radius + e.radius) * (radius + e.radius)) continue;
           game.dealDamage(e, d.dmg, null, card);
           hits++;
@@ -156,6 +156,7 @@ function applySpellEffect(card, side, x, y, game) {
   }
 
   for (const e of targets) {
+    if (e._digTo) continue;   // 地下矿工:法术效果完全免疫(伤害/控制/击退)
     if (!(sp && sp.chain)) {
       const d = dist2(x, y, e.x, e.y);
       if (d > (radius + e.radius) * (radius + e.radius)) continue;
@@ -283,9 +284,11 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
     u._digT = 0;
     u.invulnUntil = game.time + dur;   // 地下不可被攻击
     // 视觉:折线轨迹(双方可见,走向线索)+ 落点标记(只画己方)
+    // digTrail life 含 0.4s 驻留(轨迹落地后短暂停留),但渲染层土堆
+    // 进度按 dur 归一(usesDigProgress):避免土堆比矿工慢 0.4s 到点
     game.addEffect({ type: 'digTrail', side, fromX: king.x, fromY: king.y,
       bendX: x, bendY: king.y, toX: x, toY: y,
-      life: dur + 0.4, maxLife: dur + 0.4 });
+      life: dur + 0.4, maxLife: dur + 0.4, digDur: dur });
     game.addEffect({ type: 'digMark', side, x, y, life: dur + 0.5, maxLife: dur + 0.5 });
     game.lastPlayedCard[side] = cardId;
     return true;

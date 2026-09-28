@@ -6,6 +6,7 @@
 // 每局随机卡组 × 双方向(新AI当side0/当side1各跑N局),合计统计胜率
 // ===============================================
 import { Game } from '../src/game/game.js';
+import { makeRng } from '../src/core/rng.js';
 import { AI } from '../src/game/ai.js';
 import { AIBaseline } from './baseline/ai_baseline.mjs';
 import { CARDS } from '../src/data/cards.js';
@@ -25,13 +26,15 @@ function sanitizeDeck(cards) {
 }
 const DT = 1/30;
 
-function playMatch(deck, newAiSide) {
-  const game = new Game();
+function playMatch(deck, newAiSide, matchSeed) {
+  // 固定 seed(可重复回归);相位从 seed 派生,同 seed 全确定
+  const game = new Game({ seed: matchSeed });
+  const phase = makeRng(matchSeed ^ 0x9e3779b9)() * 0.7;
   const d = deck.slice();
   const aiNew = newAiSide === 0 ? new AI(game, d, 0) : new AI(game, d, 1);
   const aiOld = newAiSide === 0 ? new AIBaseline(game, d, 1) : new AIBaseline(game, d, 0);
-  aiNew.thinkTimer = Math.random() * 0.7;
-  aiOld.thinkTimer = Math.random() * 0.7;
+  aiNew.thinkTimer = phase;
+  aiOld.thinkTimer = 0.7 - phase;   // 反相,避免同步决策
   let steps = 0;
   const MAX = Math.ceil(310 / DT);
   while (!game.gameOver && steps < MAX) {
@@ -53,7 +56,7 @@ const t0 = Date.now();
 for (let i = 0; i < N * 2 * PRESET_DECKS.length; i++) {
   const deck = sanitizeDeck(PRESET_DECKS[i % PRESET_DECKS.length]);
   const newAiSide = (i % 2 === 0) ? 0 : 1; // 交替侧别
-  const r = playMatch(deck, newAiSide);
+  const r = playMatch(deck, newAiSide, 7000 + i);   // 固定 seed 序列
   if (r.winner === -1 || r.winner == null) { draw++; continue; }
   if (r.winner === newAiSide) {
     newWin++;

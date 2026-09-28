@@ -327,7 +327,7 @@ const SCENARIOS = {
   const counts = [...hits.values()];
   ok(counts.length >= 3, `塔应逐个攻击哥布林(${counts.length}只被打过)`);
   // 当前 wiki 同级口径:每只 2 发
-  ok(counts.every(c => c >= 2), `每只哥布林至少被击2发(${counts.join(',')})`);
+  ok(counts.every(c => c === 2), `每只哥布林恰好被击2发(${counts.join(',')};劣化为3发即口径回归)`);
 },
 
 
@@ -499,7 +499,7 @@ const SCENARIOS = {
   gob.deployTimer = 0;
   run(3, g);
   ok(gob.hp < gob.maxHp, `塔箭应命中哥布林(${Math.round(gob.hp)}/${gob.maxHp})`);
-  ok(g.projectiles.length === 0 || g.projectiles.every(p => !p.dead || true), '投射物列表无泄漏(命中即清)');
+  ok(g.projectiles.every(p => !p.dead), '投射物列表无泄漏(命中即清)');
 },
 
 '投射-目标死亡弹落空': () => {
@@ -678,28 +678,26 @@ const SCENARIOS = {
 // ===== 卡牌实装(v0.6.11:冰雪精灵/冰人/滚木) =====
 
 '冰精灵-冲刺摸塔自爆': () => {
-  // v0.6.11 用户战报:①被塔一击秒(hp 误 47,官方 215/2=108=塔 2 发)
-  // ②站桩不自爆(缺扑击冲刺)。官方行为:锁定目标后加速扑击,残血
-  // 摸到塔爆开(伤害+冻结)——wiki Strategy "sufficient hitpoints to
-  // reach an opposing Tower Princess" 的机制支撑是冲刺缩短暴露时间
-  // v0.6.13 加严:此前"打了塔一下→被塔打死"的错误路径也满足旧断言
-  // (伪通过);kamikaze 分支曾只写 target.type==='unit',攻塔不自爆。
-  // 加"死亡即自爆(时间 < 塔射出第 2 箭)"+"冻结塔"两条硬断言
+  // v0.6.11 用户战报:站桩不自爆(缺扑击冲刺)。官方行为:进入扑击
+  // 距离(range 2.5+双方半径 ≈ 4.0 格)后起跳加速 ×3,贴塔爆开
+  // (伤害+冻结)。2026-08-26 官方削弱后起跳不附无敌帧,从塔射程边缘
+  // 出发的精灵吃 2 箭(218≥215)死在半路(该情形由"不再单独连塔"
+  // 场景覆盖);本场景验证近距扑击:放在扑击距离内,立即起跳自爆
+  // v0.6.13 加严:kamikaze 分支曾只写 target.type==='unit',
+  // 攻塔不自爆。"冻结塔"是自爆路径的铁证(被塔打死则无冻结)
   const g = newGame();
-  const sp = g.spawnUnit('iceSpirit', 0, 3.5, 14);   // 河边,塔射程边缘
+  const sp = g.spawnUnit('iceSpirit', 0, 3.5, 10.5);  // 距塔 4.0,扑击距离内
   sp.deployTimer = 0;
-  const tw = g.towers[1].left;                        // (3.5,6.5) 距 7.5
+  const tw = g.towers[1].left;                        // (3.5,6.5)
   let t = 0;
   while (!sp.dead && t < 8) { g.update(1/30); t += 1/30; }
   ok(sp.dead, '精灵应已自爆');
   const dist = Math.hypot(sp.x - tw.x, sp.y - tw.y);
   ok(dist < 4.5, `爆点应贴近塔(距 ${dist.toFixed(1)} 格 < 4.5)`);
   ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${tw.maxHp - tw.hp})`);
-  // 自爆 vs 被塔打死:自爆发生在接触瞬间(冲刺 ×3,全程 < 1.3s);
-  // 被塔打死需吃塔 2 发(0.5 前摇 + 0.8 间隔 ≈ 1.3s+)。爆点冻结塔
-  // 是自爆路径的铁证(kamikaze freeze 对塔同样生效)
+  // 扑击距离内出发:起跳即冲刺,塔首箭(0.5s 前摇)未及射出已贴塔
   ok(tw.frozen > 0, `自爆应冻结塔(frozen=${tw.frozen.toFixed(2)}s>0)`);
-  ok(t < 1.3, `自爆应发生在塔第 2 箭前(t=${t.toFixed(2)}s < 1.3s)`);
+  ok(t < 0.5, `扑击距离内立即自爆(t=${t.toFixed(2)}s < 0.5s 塔首箭)`);
 },
 
 '冰精灵-不再单独连塔(2026-08削弱)': () => {
@@ -754,8 +752,8 @@ const SCENARIOS = {
   const tw3 = g3.towers[1].right;
   ok(rg3.hp < rg3.maxHp, `被塔还手(hp=${Math.round(rg3.hp)}——无白嫖)`);
   ok(tw3.hp < tw3.maxHp, `对塔造成伤害(${Math.round(tw3.maxHp - tw3.hp)})`);
-  ok(Math.round(tw3.maxHp - tw3.hp) % 154 === 0 || (tw3.maxHp - tw3.hp) > 150,
-    `伤害为 154 的整数倍量级(${Math.round(tw3.maxHp - tw3.hp)})`);
+  ok(Math.round(tw3.maxHp - tw3.hp) % 307 === 0,
+    `伤害为 307 的整数倍(${Math.round(tw3.maxHp - tw3.hp)})`);
 },
 
 '矿工-全图部署与挖掘': () => {
@@ -1017,7 +1015,7 @@ const SCENARIOS = {
   const ps = [[12.4,29.8],[13.3,29.8],[12.4,30.6],[13.3,30.6]];   // 战报同款 2×2 队形
   const gs = ps.map(p => { const u = g.spawnUnit('goblins', 0, p[0], p[1]); u.deployTimer = 0; return u; });
   run(3, g);
-  const moved = gs.filter(u => !u.dead && Math.abs(u.y - 29.8) > 1.5 || Math.abs(u.x - 12.85) > 0.8);
+  const _movedUnused = gs.filter(u => !u.dead && Math.abs(u.y - 29.8) > 1.5 || Math.abs(u.x - 12.85) > 0.8);
   const alive = gs.filter(u => !u.dead);
   ok(alive.length > 0 && alive.every(u => Math.abs(u.y - 29.8) > 1.0 || Math.abs(u.x - 12.85) > 0.8),
     `3s 后应全部离开部署点(实际 ${alive.map(u=>`(${u.x.toFixed(1)},${u.y.toFixed(1)})`).join(' ')})`);

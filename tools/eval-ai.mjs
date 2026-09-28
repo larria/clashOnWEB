@@ -13,6 +13,7 @@
 //   - 输出:胜/负/平 + 平均皇冠 + 加时率 + 决策统计
 // ===============================================
 import { Game } from '../src/game/game.js';
+import { makeRng } from '../src/core/rng.js';
 import { AI } from '../src/game/ai.js';
 import { CARDS } from '../src/data/cards.js';
 
@@ -36,8 +37,10 @@ const DT = 1 / 30;           // 模拟帧长
 const DECIDE_INTERVAL = 0.7; // 决策间隔(与 aiLevel=1 普通一致)
 
 // 跑一局:返回 { winner, crowns0, crowns1, overtime, time }
-function playMatch(deck, seedNoise) {
-  const game = new Game();
+function playMatch(deck, seedNoise, matchSeed) {
+  // 固定 seed 支持:同一版本重跑同批对局,回归对比才有意义
+  // (此前真随机 seed 导致 40-54% 方差,结论不可重复)
+  const game = new Game({ seed: matchSeed });
   // 评测时静默事件(避免日志堆积)
   const ai0 = new AI(game, deck.slice(), 0);
   const ai1 = new AI(game, deck.slice(), 1);
@@ -84,8 +87,11 @@ const perDeck = [];
 for (const [name, deck] of decks) {
   let a = 0, b = 0, d = 0, ot = 0, ca = 0, cb = 0;
   for (let i = 0; i < gamesPerDeck; i++) {
-    // A=side0,B=side1;side0 有后手优势(下方),用随机相位+双倍局数自然抵消
-    const r = playMatch(deck, Math.random() * DECIDE_INTERVAL);
+    // A=side0,B=side1;固定 seed 序列(可重复回归)+ 随机决策相位
+    // (相位来自 seed 派生,保证同 seed 全确定)
+    const matchSeed = 1000 + i + decks.findIndex(d => d[0] === name) * 1000;
+    const rng = makeRng(matchSeed);
+    const r = playMatch(deck, rng() * DECIDE_INTERVAL, matchSeed);
     if (r.winner === 0) a++; else if (r.winner === 1) b++; else d++;
     if (r.overtime) ot++;
     ca += r.crownsA; cb += r.crownsB;

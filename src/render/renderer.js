@@ -1122,14 +1122,14 @@ export class Renderer {
         }
         ctx.restore();
       } else if (e.type === 'spellIcon') {
-      } else if (e.type === 'spellIcon') {
         this.drawSpellIcon(e, t);
       } else if (e.type === 'digTrail') {
         // 矿工挖掘轨迹(双方可见):虚线地道从国王塔先横后竖折线到落点 +
         // 推进土堆(官方口径:横+竖两段,规格 §8.4b)。对手只能从走向
         // 推断落点(信息不对称——折线第一段的横移直接暴露落点所在列)
         {
-          const p = 1 - t;
+          // 土堆进度按挖掘时长归一(digDur),含 0.4s 驻留期进度保持 1
+          const p = e.digDur != null ? Math.min(1, (e.maxLife - e.life) / e.digDur) : (1 - t);
           const fx = e.fromX*CELL, fy = e.fromY*CELL;
           const bx = (e.bendX != null ? e.bendX : e.toX)*CELL, by = (e.bendY != null ? e.bendY : e.fromY)*CELL;
           const tx = e.toX*CELL, ty = e.toY*CELL;
@@ -1935,7 +1935,7 @@ export class Renderer {
       const bvr = (card.radius || 0.4) * CELL;
       // 体型档放大系数(与实际渲染 drawUnit 一致,见上方分档注释)
       const cr = card.radius || 0.4;
-      const artScaleP = isSwarm ? 2.1 : (cr >= 0.55 ? 3.3 : (cr >= 0.45 ? 2.8 : 2.7));
+      const artScaleP = isSwarm ? 2.1 : (cr >= 0.55 ? 2.9 : (cr >= 0.45 ? 2.8 : 2.7));
       const fxR = art ? (isSwarm ? r*2.1 : (isBuildingCard ? bvr : r*artScaleP)) : r;
       if (art && !p.invalid) {
         ctx.globalAlpha = ok ? 0.65 : 0.3;

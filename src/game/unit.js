@@ -75,11 +75,19 @@ export class Unit {
     if (this.charged && this.card.special && this.card.special.charge) {
       s *= this.card.special.charge.speedMult;
     }
-    // kamikaze 冲刺(冰雪精灵类):进入射程(起跳点)后扑击加速 ×3——
-    // 官方精灵起跳扑向目标爆开。2026-08-26 平衡更新后起跳不附无敌帧
-    // (hp 215 < 塔两箭 218,单独的精灵死在半路,见 game.updateUnits)
+    // kamikaze 冲刺(冰雪精灵类):进入攻击触及(扑击距离 = range+
+    // 双方半径)才起跳加速 ×3——官方精灵起跳扑向目标爆开,"起跳"是
+    // 进入扑击距离的行为,不是锁定目标(5.5 格视野)就飞。2026-08-26
+    // 平衡更新后起跳不附无敌帧(hp 215 < 塔两箭 218,单独的精灵死在
+    // 半路)。若锁定即 ×3,5.5 格全程冲刺会大幅缩短塔火暴露时间,
+    // 变相冲淡官方"不再单独连塔"的削弱意图
     if (this.card.special && this.card.special.kamikaze && this.target) {
-      s *= 3;
+      const t = this.target.ref;
+      if (t) {
+        const reach = this.card.range + this.radius + t.radius;
+        const d = Math.hypot(this.x - t.x, this.y - t.y);
+        if (d <= reach + 0.5) s *= 3;    // +0.5 缓冲:防止在阈值边缘抖动回走速
+      }
     }
     return s;
   }

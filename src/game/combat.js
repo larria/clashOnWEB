@@ -47,7 +47,12 @@ export function findTarget(unit, game) {
 
   // 敌方单位(含建筑单位——攻城单位可被敌方建筑牵引)
   if (!towerOnly) {
-    const enemies = game.units.filter(u => u.side !== unit.side && !u.dead && !u._digTo);   // 地下单位(矿工挖掘)不可被索敌
+    // 每帧缓存(game._frameUnits)优先;独立调用(测试)回退现场过滤。
+    // 地下单位(矿工挖掘)不可被索敌
+    const pool = game._frameUnits || game.units;
+    const enemies = pool === game.units
+      ? pool.filter(u => u.side !== unit.side && !u.dead && !u._digTo)
+      : pool.filter(u => u.side !== unit.side);
     for (const e of enemies) {
       let valid = canTarget(unit, e.card, e.flying, e.isBuilding);
       if (!valid) continue;
@@ -118,7 +123,11 @@ export function findNearestEnemyUnit(unit, game) {
   const card = unit.card;
   const sightR = effectiveSight(unit);
   let best = null, bestD = Infinity;
-  const enemies = game.units.filter(u => u.side !== unit.side && !u.dead && !u._digTo);   // 地下单位(矿工挖掘)不可被索敌
+  // 每帧缓存优先(见 findTarget 同款回退);地下单位不可被索敌
+  const pool = game._frameUnits || game.units;
+  const enemies = pool === game.units
+    ? pool.filter(u => u.side !== unit.side && !u.dead && !u._digTo)
+    : pool.filter(u => u.side !== unit.side);
   // 只打建筑的单位(巨人/野猪/气球):只对敌方建筑感兴趣(被牵引)
   const onlyBuilding = (card.targets === T.BUILDING);
   for (const e of enemies) {

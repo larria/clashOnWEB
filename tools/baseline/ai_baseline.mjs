@@ -6,6 +6,7 @@
 // ===============================================
 import { T, RIVER_Y1, RIVER_Y2, GRID_W, GRID_H, SIDE_PLAYER, dist, canDeploy } from '../../src/core/constants.js';
 import { CARDS, KIND } from '../../src/data/cards.js';
+import { TOWER_MULT } from '../../src/game/spells.js';
 
 // counter 关系:威胁卡 -> 推荐应对卡
 // 玩法逻辑:AI 检测到敌方威胁,选最优解牌
@@ -61,9 +62,9 @@ export function getRole(cardId) {
 }
 
 export class AIBaseline {
-  constructor(game, deck) {
+  constructor(game, deck, side = 1) {
     this.game = game;
-    this.side = 1; // SIDE_AI
+    this.side = side;   // 评测需交换侧别;默认 1(SIDE_AI)兼容旧用法
     this.deck = deck || [];
     this.hand = [];
     this.handSize = 4;
@@ -79,7 +80,7 @@ export class AIBaseline {
     this.drawPile = this.deck.slice();
     // 洗牌
     for (let i = this.drawPile.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random()*(i+1));
+      const j = Math.floor(this.game.rng()*(i+1));   // 走 game.rng:确定性可复现
       [this.drawPile[i],this.drawPile[j]] = [this.drawPile[j],this.drawPile[i]];
     }
     this.hand = [];
@@ -102,7 +103,7 @@ export class AIBaseline {
 
   decide() {
     const game = this.game;
-    const enemies = game.units.filter(u => u.side === SIDE_PLAYER && !u.dead);
+    const enemies = game.units.filter(u => u.side === (1 - this.side) && !u.dead);
     const myUnits = game.units.filter(u => u.side === this.side && !u.dead);
     const elixir = game.elixir[this.side];
 
@@ -278,8 +279,10 @@ export class AIBaseline {
         if (c.kind !== KIND.SPELL) continue;
         if (!c.dmg) continue;
         if (elixir < c.cost) continue;
-        // 火箭/雷电能秒残血塔
-        if (tw.hp <= c.dmg && c.cost <= 6) {
+        // 对塔减伤后能秒才算补刀(与主 AI 同口径;否则塔血高时空放)
+        const mult = TOWER_MULT[c.id] != null ? TOWER_MULT[c.id] : 0.3;
+        const realDmg = c.dmg * mult * ((c.special && c.special.hits) || 1);
+        if (tw.hp <= realDmg && c.cost <= 6) {
           return { cardId: this.hand[i], x: tw.x, y: tw.y, handIndex: i, role: 'spell_finish' };
         }
       }

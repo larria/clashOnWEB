@@ -320,6 +320,10 @@ export class Game {
     this.elixir[0] = Math.floor(this.elixirFloat[0]);
     this.elixir[1] = Math.floor(this.elixirFloat[1]);
 
+    // 每帧敌我单位缓存(索敌热路径用;单位在同一 update 内增删时
+    // 由 spawnUnit/死亡路径维护,避免 N 个行军单位 × N 次数组分配)
+    this._frameUnits = this.units.filter(u => !u.dead && !u._digTo);
+
     // 更新实体
     this.updateTowers(dt);
     this.updateUnits(dt);
@@ -506,11 +510,20 @@ export class Game {
           this.bus.emit('unit:spawnDamage', { unit: u });
         }
       }
+      // ===== 状态计时器(挖掘/击退等 continue 分支之前统一递减,
+      // 防"控制效果穿透挖掘落地"——地下被电击的矿工落地时眩晕应已耗尽)=====
+      if (u.frozen > 0) u.frozen -= dt;
+      if (u.stunned > 0) u.stunned -= dt;
+      if (u.curseTimer > 0) u.curseTimer -= dt;
+
       // ===== 矿工挖掘(规格 §8.4b):地下折线推进(先横后竖)到落点,
       // 期间不可被选中/攻击(索敌过滤 _dig;invulnUntil 兜底挡范围伤害)。
       // 落地后清状态成为普通单位。位置直接写(地下无碰撞,河/单位都穿过)。
       // 单位本体位置随折线插值(土堆推进位置);落地结算在终点
       if (u._digTo && !u.dead) {
+        // 地下不可被位移影响:法术击退波及地下矿工时补间作废
+        // (否则落地后被过期 fromX/fromY 传送回挖掘途中位置)
+        if (u._knock) { u._knock = null; u.knockUntil = 0; }
         u._digT += dt;
         const p = Math.min(1, u._digT / u._digDur);
         const fromX = u._digFrom ? u._digFrom.x : u._digTo.x;
@@ -539,17 +552,13 @@ export class Game {
       // 状态计时器在补间前照常递减:被击退的冰冻单位若在补间期间暂停
       // frozen 倒数,冻结会被净延长整个补间时长(0.45-0.5s)=====
       if (u._knock && !u.dead) {
-        if (u.frozen > 0) u.frozen -= dt;
-        if (u.stunned > 0) u.stunned -= dt;
-        if (u.curseTimer > 0) u.curseTimer -= dt;
         tickKnock(u, dt);
         continue;
       }
       if (u.knockUntil > this.time) continue;   // 补间已结束但硬直尾帧
 
-      // ===== 状态计时器统一递减(规格 §5.6:集中一处,禁止散落)=====
-      if (u.frozen > 0) u.frozen -= dt;
-      if (u.stunned > 0) u.stunned -= dt;
+      // ===== 状态计时器统一递减(规格 §5.6:集中一处,禁止散落)。
+      // frozen/stunned/curseTimer 已在挖掘分支前统一递减,这里不再重复 =====
       if (u.rageTimer > 0) u.rageTimer -= dt;
       if (u.slowTimer > 0) u.slowTimer -= dt;
       if (u.curseTimer > 0) u.curseTimer -= dt;
@@ -654,7 +663,8 @@ export class Game {
   // 存活塔同样是静态障碍(塔不在 units 里,需单独纳入——
   // 此前单位会径直穿过公主塔)
   separateUnits() {
-    const movers = this.units.filter(u => !u.dead && !u.flying && !u.isBuilding && u.deployTimer <= 0);
+    // _digTo(地下矿工)排除:地下单位不参与碰撞(不被塔挤出、不推别人)
+    const movers = this.units.filter(u => !u.dead && !u.flying && !u.isBuilding && u.deployTimer <= 0 && !u._digTo);
     const solids = this.units.filter(u => !u.dead && !u.flying && u.isBuilding);
     const towers = [];
     for (const side of [0, 1]) {
@@ -664,8 +674,9 @@ export class Game {
       }
     }
     // 1. 单位 vs 建筑/塔静态挤出
+    const obstacles = solids.concat(towers);   // 提出循环(每帧一次,而非每 mover 一次)
     for (const m of movers) {
-      for (const b of [...solids, ...towers]) {
+      for (const b of obstacles) {
         const minD = m.radius + b.radius;
         const dx = m.x - b.x, dy = m.y - b.y;
         const d = Math.sqrt(dx*dx + dy*dy);

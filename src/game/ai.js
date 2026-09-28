@@ -94,7 +94,9 @@ function collectThreats(game, side) {
       : (e.y > RIVER_Y1 - 3);
     if (!inMyHalf && !nearTower && !approaching) continue;
     // 威胁度:费用为主,攻城单位加权,离塔越近越急
-    let score = e.card.cost * 2 + e.hp / 100;
+    // 威胁度血量项按满血比例归一(×10 封顶)——绝对值除法(hp/100)
+    // 会随数值体系缩放漂移(v0.7.0 直读翻倍后曾翻倍偏置)
+    let score = e.card.cost * 2 + Math.min(10, e.hp / e.card.hp * 10);
     if (e.card.targets === T.BUILDING) score *= 1.6;   // 攻城单位直捣塔
     if (e.flying) score *= 1.15;
     score += Math.max(0, (12 - nd)) * 1.5;
@@ -163,7 +165,7 @@ export class AI {
   decide() {
     const game = this.game;
     const elixir = game.elixir[this.side];
-    const enemies = game.units.filter(u => u.side !== this.side && !u.dead);
+    const enemies = game.units.filter(u => u.side !== this.side && !u.dead && !u._digTo);
     const myUnits = game.units.filter(u => u.side === this.side && !u.dead);
     const threats = collectThreats(game, this.side);
 
@@ -200,7 +202,14 @@ export class AI {
       const t = game.towers[s];
       return (t.left.dead ? 0 : t.left.hp) + (t.right.dead ? 0 : t.right.hp) + (t.king.dead ? 0 : t.king.hp);
     };
-    const diff = (sumHp(this.side) - sumHp(1 - this.side)) / 3000; // 正=领先
+    // 按双方塔满血总和归一(数值体系无关;固定 /3000 在塔血翻倍后
+    // 会使一座公主塔倒下就把 aggression 顶到夹逼边界)
+    const sumMax = (s) => {
+      const t = game.towers[s];
+      return (t.left.dead ? 0 : t.left.maxHp) + (t.right.dead ? 0 : t.right.maxHp)
+           + (t.king.dead ? 0 : t.king.maxHp);
+    };
+    const diff = (sumHp(this.side) - sumHp(1 - this.side)) / (sumMax(this.side) + sumMax(1 - this.side) || 1); // 正=领先
     let target = 0.5 - diff * 0.3 + (enemyCrowns - myCrowns) * 0.15;
     this.aggression = Math.max(0.35, Math.min(0.85, target));
   }
@@ -275,6 +284,13 @@ export class AI {
 
   // ===== 2. 法术候选 =====
   _collectSpells({ enemies, elixir, game }, out) {
+    // 法术落点合法预检(受限法术如滚木 riverbanks 只能己方半场+河带):
+    // 越界的塔补刀/解场候选执行时会被 canDeploy 静默拒绝,整个决策
+    // 周期空转(与"最高分动作静默失败"同类问题,在源头过滤)
+    const spellPlaceable = (card, x, y) => {
+      if (!card.deployZone || card.deployZone === 'anywhere') return true;
+      return this.canPlace(x, y, card.id);
+    };
     // 2a. 塔补刀:按真实对塔倍率算能秒才放(不再用面板伤害误判)
     for (const tw of game.getEnemyTowers(this.side)) {
       if (tw.dead) continue;
@@ -284,7 +300,7 @@ export class AI {
         if (elixir < c.cost) continue;
         const mult = TOWER_MULT[c.id] != null ? TOWER_MULT[c.id] : 0.3;
         const realDmg = c.dmg * mult * ((c.special && c.special.hits) || 1);
-        if (tw.hp <= realDmg) {
+        if (tw.hp <= realDmg && spellPlaceable(c, tw.x, tw.y)) {
           // 补刀必杀:高分
           out.push({ cardId: this.hand[i], x: tw.x, y: tw.y, handIndex: i, role: 'spell_finish', score: 100 });
           return;
@@ -332,6 +348,7 @@ export class AI {
               score -= 20;               // 价值够 → 接受代价但降优先级
             }
           }
+          if (!spellPlaceable(c, cluster.cx, cluster.cy)) continue;
           out.push({ cardId: this.hand[i], x: cluster.cx, y: cluster.cy, handIndex: i, role: 'spell_clear', score });
         }
       }
@@ -417,12 +434,16 @@ export class AI {
     // inner front corner——距己方国王塔最近,更早开始攻击;对手圣水
     // 不足时是最佳挖塔窗口)。矿工走 anywhereGround,不受常规部署区限制
     const minerIdx = this.hand.indexOf('miner');
-    if (minerIdx >= 0 && elixir >= 3 && game.elixir[1 - this.side] <= 3) {
+    if (minerIdx >= 0 && elixir >= CARDS.miner.cost && game.elixir[1 - this.side] <= 3) {
       const mt = this._pickTargetTower();
       if (mt) {
-        // 内侧前角:塔心朝中线偏 1 格、朝敌方一侧偏 1 格(AI side1 攻下方)
-        const mx = mt.x + (mt.x < 9 ? 1 : -1);
-        const my = mt.y + 1.1;
+        // 内侧前角(wiki:inner front corner tile,距己方国王塔横竖路径
+        // 最近):塔角相邻格——朝中线偏 1.6 格(出塔半宽 1.5)、朝
+        // 敌方方向偏 1.6 格。偏移 <1.6 会落在塔占面积内被
+        // canDeploy 拒绝(旧版 ±1/±1.1 恰好在占格里,候选恒非法=死代码)
+        const towardCenter = mt.x < 9 ? 1 : -1;
+        const mx = mt.x + towardCenter * 1.6;
+        const my = mt.y + this.dir * 1.6;   // dir:side1 向下 +1,side0 向上 -1
         if (this.canPlace(mx, my, 'miner')) {
           out.push({ cardId: 'miner', x: mx, y: my, handIndex: minerIdx, role: 'wincon', score: 22 });
         }
@@ -508,6 +529,9 @@ export class AI {
     for (let i = 0; i < this.hand.length; i++) {
       const c = CARDS[this.hand[i]];
       if (c.kind === KIND.SPELL) continue;
+      // kamikaze 精灵不用于过牌:2026-08-26 官方削弱后单独放摸不到塔,
+      // 白白烧掉最优 1 费防守牌(应留给组合/拦截)
+      if (c.special && c.special.kamikaze) continue;
       if (c.cost <= 3 && c.cost > 0 && elixir >= c.cost) {
         // 过牌位置候选:双塔之间的中场空地(首个合法点)。
         // 历史:(9,4) 落国王塔内恒非法;(13,7) 恰在右公主塔占面积边界上
