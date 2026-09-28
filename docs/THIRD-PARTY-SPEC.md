@@ -235,6 +235,25 @@ attackReach = attackRange + myRadius + targetRadius
 
 巨人/野猪类:`findTarget` 同 5.4 但过滤 `!entity->isBuilding()` 跳过;塔与建筑平等竞争。车道兜底同样适用,**保证只打建筑的单位和它的护卫队走向同一座塔**(注释明言这是共用 LanePath 的原因)。
 
+### 5.5b 精灵类自爆(CardRegistry.h "Spirit" troops + 官方行为)
+
+```
+"Spirit" troops detonate on their first hit and vanish(CombatEntity::dieAfterFirstHit)
+Ice Spirit:FreezeOnHit(1 秒冰冻)——是"时间停止"档,不是减速档
+C++ 把精灵建成 RangedSquad(range 2.5)+ 首击即死
+```
+
+**跳跃无敌(官方行为观察,C++ 未显式建模——其通用机制
+`chargeGrantsInvulnerability`(冲刺过半即免伤,Bandit)是同概念的既有先例)**:
+
+```
+精灵锁定目标的瞬间起跳扑击,跳跃全程无法被选中/攻击(塔箭、法术均无效),
+落地(进入溅射触发距离)爆开:伤害 + 冰冻,自身消失。
+自爆是主动行为,不被自身无敌帧阻挡(bypassInvuln)。
+净效果:走路阶段可被塔射(残血),起跳后必然命中——
+官方"残血跳过去冻住塔"的机制支撑。
+```
+
 ### 5.6 攻击节奏与结算顺序(CombatEntity.h:596-725)
 
 一次完整 update 的次序(严格遵守):

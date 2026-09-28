@@ -483,8 +483,10 @@ export function attackTarget(attacker, target, game) {
     }
     game.addEffect({ type: 'spell', cardId: attacker.cardId, x: e.x, y: e.y,
       radius: card.splash || 1.5, life: 0.4, maxLife: 0.4, color: card.color });
-    // 自杀:走 dealDamage 死亡管线(死亡能力/事件/特效统一)
-    game.dealDamage(attacker, attacker.hp + 999, null);
+    // 自杀:走 dealDamage 死亡管线(死亡能力/事件/特效统一);
+    // bypassInvuln:自爆是主动行为,不被自身扑击无敌帧挡
+    // (否则首击被无敌帧吞掉,要等 hitSpeed 一整轮才能再自爆)
+    game.dealDamage(attacker, attacker.hp + 999, null, null, { bypassInvuln: true });
     attacker.atkAnim = 0.3;
     return;
   }

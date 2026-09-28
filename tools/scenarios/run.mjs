@@ -702,6 +702,29 @@ const SCENARIOS = {
   ok(t < 1.3, `自爆应发生在塔第 2 箭前(t=${t.toFixed(2)}s < 1.3s)`);
 },
 
+'冰精灵-跳跃无敌(残血摸塔)': () => {
+  // v0.6.16 用户战报:从桥口出发的精灵被塔 2 箭(108=54×2)恰好秒杀,
+  // 摸不到塔。官方行为:精灵被塔射到残血后"跳过去"冻住+伤害塔——
+  // 跳跃期间无法被选中/攻击(无敌帧,概念对齐 C++ chargeGrantsInvul)
+  // 修复:kamikaze 锁定目标瞬间起跳,扑击全程无敌;自爆走 bypassInvuln
+  // (主动行为不被自身无敌帧挡——否则首击自爆被吞,延迟一整轮 hitSpeed)
+  const g = newGame();
+  // 远距离出发(桥口,暴露在塔射程内 >1.3s,修复前必死)
+  const sp = g.spawnUnit('iceSpirit', 0, 3.5, 17.5);
+  sp.deployTimer = 0;
+  const tw = g.towers[1].left;
+  let t = 0, hpAtLeap = null;
+  while (!sp.dead && t < 10) { g.update(1/30); t += 1/30; }
+  ok(sp.dead, `精灵应完成自爆(t=${t.toFixed(2)}s)`);
+  ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${Math.round(tw.maxHp - tw.hp)})`);
+  ok(tw.frozen > 0 || t < 3.9, `塔被冻结(frozen 观察时点 ${tw.frozen.toFixed(1)})`);
+  ok(Math.round(tw.maxHp - tw.hp) === 55, `自爆伤害 55(实际 ${Math.round(tw.maxHp - tw.hp)})`);
+  // 无敌帧验证:起跳后塔伤无效(桥口出发吃 1 箭后 hp 恒 54 到爆)
+  // 精灵 hp 108=54×2:走路阶段吃 1 箭(54),起跳后免疫第 2 箭 → 自爆
+  // (修复前第 2 箭在 1.3s 时刻把它打死在半路)
+  ok(t < 3.0, `桥口出发应在 3s 内贴塔(t=${t.toFixed(2)}s;被塔打死则 >2.4s 且无塔伤)`);
+},
+
 '冰精灵-自杀攻击冻结群体': () => {
   // 官方 kamikaze:命中即死;溅射 1.5 内敌人冻 1.1s。
   // 冻结 knight 防反杀干扰时间线

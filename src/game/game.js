@@ -123,10 +123,12 @@ export class Game {
   //   5. 扣血 + 受击触发器
   // 各段位由 unit 上的可选字段驱动(未实装的机制字段不存在 = 跳过该段),
   // 新状态机制加进这里,禁止在调用方预判。
-  dealDamage(unit, dmg, attacker, sourceCard) {
+  dealDamage(unit, dmg, attacker, sourceCard, opts = {}) {
     if (unit.dead || dmg <= 0) return;
-    // 1. 无敌帧(飞贼冲刺/弓箭女王隐身等;invulnUntil 为 game.time 戳)
-    if (unit.invulnUntil && this.time < unit.invulnUntil) return;
+    // 1. 无敌帧(飞贼冲刺/弓箭女王隐身等;invulnUntil 为 game.time 戳)。
+    // 例外:opts.bypassInvuln —— 主动行为(冰雪精灵命中即自爆)不受
+    // 自身无敌帧阻挡(无敌是对"受击"的免疫,不是对"自爆"的)
+    if (unit.invulnUntil && this.time < unit.invulnUntil && !opts.bypassInvuln) return;
     // 2. 诅咒乘区(巫婆诅咒类:受击伤害加深;curseMult 缺省 1)
     if (unit.curseTimer > 0 && unit.curseMult > 1) {
       dmg = dmg * unit.curseMult;
@@ -580,6 +582,21 @@ export class Game {
       }
 
       if (u.target) {
+        // kamikaze 起跳(冰雪精灵类):锁定目标瞬间即起跳扑击,跳跃全程
+        // 无敌(空中无法被选中/攻击,塔箭打不掉)——官方精灵被塔射到
+        // 残血后跳过去冻住+伤害塔(wiki Strategy "sufficient hitpoints
+        // to reach an opposing Tower Princess";无敌帧概念对齐 C++
+        // chargeGrantsInvulnerability 的通用机制)。冲刺 ×3 已在
+        // unit.speed 表达;换目标重新起跳
+        const kami = u.card.special && u.card.special.kamikaze;
+        if (kami && u._leaptFor !== u.target.ref) {
+          u._leaptFor = u.target.ref;
+          u._leapAt = this.time;               // 起跳时刻(渲染层画跳跃弧线)
+          // 无敌帧:扑击飞行时间 = 到触发距离的剩余路程/冲刺速度 + 余量
+          const leapDist = Math.max(0, dist(u, u.target.ref) - (u.card.splash || 1.5));
+          const leapSpeed = u.speed;           // getter:冲刺 ×3 已含
+          u.invulnUntil = this.time + leapDist / Math.max(0.1, leapSpeed) + 0.3;
+        }
         if (this.inAttackRange(u, u.target)) {
           // 在攻击范围,攻击
           if (u.atkCD <= 0) {

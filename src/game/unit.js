@@ -75,10 +75,12 @@ export class Unit {
     if (this.charged && this.card.special && this.card.special.charge) {
       s *= this.card.special.charge.speedMult;
     }
-    // kamikaze 冲刺(冰雪精灵类):锁定目标后扑击加速 ×3——官方精灵
-    // 起跳扑向目标爆开;无此加速会被塔在途中点掉(wiki Strategy:
-    // "sufficient hitpoints to reach an opposing Tower Princess"的
-    // 机制支撑正是扑击缩短暴露时间,而非硬吃塔伤)
+    // kamikaze 冲刺(冰雪精灵类):进入射程(起跳点)后扑击加速 ×3——
+    // 官方精灵起跳扑向目标爆开。起跳瞬间同时获得跳跃无敌帧
+    // (见 game.updateUnits 的 kamikaze 起跳处理):空中无法被选中/
+    // 攻击,塔箭打不掉它——官方"被塔射到残血后跳过去冻住塔"的
+    // 机制支撑(wiki Strategy "sufficient hitpoints to reach an
+    // opposing Tower Princess" + C++ chargeGrantsInvulnerability 同概念)
     if (this.card.special && this.card.special.kamikaze && this.target) {
       s *= 3;
     }
