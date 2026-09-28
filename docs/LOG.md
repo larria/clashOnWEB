@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-09-27 实装火精灵 Fire Spirit(v0.6.17)
+
+**第 49 张卡:普通部队,2016-05-03 批次(与冰雪精灵同日上线)。**
+
+零新机制——完全复用 v0.6.16 的 kamikaze 底盘(锁定起跳+扑击无敌+
+自爆 bypassInvuln),只落数据:
+
+- wiki 11级×0.5:hp 215/2≈108(与冰雪精灵同框架),dmg 207/2≈104,
+  溅射 2.3(2021 从 2.5 下调;wiki "largest area damage radius of all
+  troops"),极快,射程 2.5,对空对地,firstHit 0
+- 无冻结附加(纯伤害,104/1 费是定位);对塔**全额**伤害——wiki
+  "same damage to Crown Towers as the Fireball"一句与数值矛盾
+  (207≠688×0.25),按机制口径统一不采纳(TOWER_MULT 只列法术)
+- 素材:卡图 FireSpiritCard.png(wiki 抓取,277×330);音效复用
+  (deploy=冰雪精灵,自爆=火球);art-map 登记
+- kamikaze 自爆补发 spell:hit 事件(此前精灵自爆无音效——火精灵
+  接音效时发现冰雪精灵也一直无声,一并修复)
+- AI:counter/ROLE(CYCLE)注册
+- release-dates 索引同步:修正 9 张代码已实装但标 false 的卡
+  (goblinBarrel/darkPrince/iceWizard/poison/threeMusketeers 等)
+
+### 验证
+
+- 场景 54→56 全绿(火精灵-自爆伤害与溅射:圈内地面死/空中残血 11/
+  圈外无伤;火精灵-跳跃无敌摸塔:全额 104+无冻结)
+- 测试基建教训:隔离塔用"冻结+不激活"而非推掉——推国王塔会触发
+  gameOver 使引擎停止,精灵全部站桩(第一版测试全挂的根因)
+- AI 评测 400 局无异常;浏览器实测(清 SW 缓存后):桥口出发 2.6s
+  摸塔自爆 104 伤
+
+---
+
 ## 2026-09-26 冰雪精灵跳跃无敌 + 冰人牵引查证(v0.6.16)
 
 **用户战报:①冰雪精灵从桥口出发仍摸不到塔即死;②官方可放冰人把过桥

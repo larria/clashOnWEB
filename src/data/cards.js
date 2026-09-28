@@ -111,6 +111,16 @@ export const CARDS = {
     // wiki 11级×0.5:hp1315/2≈658 dmg84/2=42 攻速2.5 前摇1.0 近战Short0.75 Slow
     // 只打建筑(小坦克);死亡爆炸 84/2=42·半径2·减速30%/2s(wiki Slow子表:
     // Duration 2sec / Slowdown -30%);死亡伤害+减速一体(deathDamage.slow)
+  fireSpirit: { id:'fireSpirit', name:'火精灵', cost:1, rarity:'普通', kind:KIND.TROOP,
+    hp:108, dmg:104, hitSpeed:1, firstHit:0, range:2.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    targets:T.ALL, flying:false, count:1, splash:2.3, deployTime:1, color:'#ff8a65', radius:0.30,
+    special:{ kamikaze:{} } },
+    // wiki 11级×0.5:hp 215/2≈108 dmg 207/2≈104;溅射 2.3(2021 从 2.5 下调,
+    // "largest area damage radius of all troops")·极快(2.0格/s)·对空对地
+    // 官方 kamikaze 8 卡之一:命中即死,跳跃无敌(v0.6.16 机制)同冰雪精灵
+    // (2016-05-03 批次);无冻结附加(纯伤害,高 dmg 低费是定位)
+    // 对塔全额伤害(机制口径:法术对塔减伤表只列法术;wiki "same damage
+    // to Crown Towers as the Fireball" 一句与 207≠688×0.25 矛盾,不采纳)
     // (2016-05-03 批次;"Ice Golem's Death Damage"是官方战术用语)
 
   // ===== 史诗 =====

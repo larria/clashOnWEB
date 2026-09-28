@@ -164,5 +164,8 @@
   },
   "theLog": {
     "file": "TheLogCard.png"
+  },
+  "fireSpirit": {
+    "file": "FireSpiritCard.png"
   }
 }

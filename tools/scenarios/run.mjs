@@ -725,9 +725,42 @@ const SCENARIOS = {
   ok(t < 3.0, `桥口出发应在 3s 内贴塔(t=${t.toFixed(2)}s;被塔打死则 >2.4s 且无塔伤)`);
 },
 
+'火精灵-自爆伤害与溅射': () => {
+  // 2016-05-03 批次:1 费普通,kamikaze 纯伤害(无冻结),溅射 2.3
+  // (wiki "largest area damage radius of all troops"),对空对地,
+  // 跳跃无敌同冰雪精灵(v0.6.16 机制);对塔全额 104
+  const g = newGame();
+  // 隔离双方塔(冻结+不激活,防干扰;不杀国王塔避免 gameOver)
+  for (const s of [0, 1]) for (const k of ['left','right','king']) {
+    const tw = g.towers[s][k]; tw.frozen = 9999; tw.activated = false;
+  }
+  const fs = g.spawnUnit('fireSpirit', 0, 9, 20); fs.deployTimer = 0;
+  const near = g.spawnUnit('skeletons', 1, 9, 22); near.deployTimer = 0;    // 圈内(距爆点 2.0)
+  const far = g.spawnUnit('knight', 1, 9, 25.5); far.deployTimer = 0;       // 圈外(距爆点 3.5)
+  const m = g.spawnUnit('minions', 1, 8.5, 21.5); m.deployTimer = 0;        // 空中圈内
+  let t = 0;
+  while (!fs.dead && t < 8) { g.update(1/30); t += 1/30; }
+  ok(fs.dead, `火精灵自爆(t=${t.toFixed(2)}s)`);
+  ok(near.dead, '圈内地面骷髅被炸死(40<104)');
+  ok(far.hp === far.maxHp, `圈外骑士无伤(hp=${Math.round(far.hp)})`);
+  ok(Math.round(m.hp) === 11, `圈内空中亡灵残血 115-104=11(实际 ${Math.round(m.hp)})`);
+},
+
+'火精灵-跳跃无敌摸塔(全额伤害)': () => {
+  // 同冰雪精灵机制:锁定起跳+扑击无敌;塔伤害 104 全额(法术减伤表
+  // 只列法术;wiki "same damage as Fireball" 句数值矛盾不采纳)
+  const g = newGame();
+  const fs = g.spawnUnit('fireSpirit', 0, 3.5, 17.5);   // 桥口出发(暴露塔射程)
+  fs.deployTimer = 0;
+  const tw = g.towers[1].left;
+  let t = 0;
+  while (!fs.dead && t < 10) { g.update(1/30); t += 1/30; }
+  ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${Math.round(tw.maxHp - tw.hp)})`);
+  ok(Math.round(tw.maxHp - tw.hp) === 104, `全额 104(实际 ${Math.round(tw.maxHp - tw.hp)})`);
+  ok(tw.frozen === 0, `无冻结(frozen=${tw.frozen},火精灵纯伤害)`);
+},
+
 '冰精灵-自杀攻击冻结群体': () => {
-  // 官方 kamikaze:命中即死;溅射 1.5 内敌人冻 1.1s。
-  // 冻结 knight 防反杀干扰时间线
   const g = newGame();
   killTower(g, 0, 'left'); killTower(g, 0, 'right');   // 隔离玩家塔(54 伤干扰)
   const sp = g.spawnUnit('iceSpirit', 0, 9, 20); sp.deployTimer = 0;

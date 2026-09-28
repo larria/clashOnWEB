@@ -42,6 +42,7 @@ const COUNTERS = {
   princess:      ['fireball', 'zap', 'goblins', 'skeletons', 'knight'],   // 脆皮远程:法术秒杀/小兵贴脸围杀(zap 96<131 需补刀)
   iceGolem:      ['minions', 'minionHorde', 'musketeer', 'infernoTower'],   // 小坦克:空军直伤本体
   iceSpirit:     ['zap', 'skeletons', 'goblins'],   // 自杀控场:任意法术/小兵拦截
+  fireSpirit:    ['zap', 'skeletons', 'goblins', 'theLog'],   // 自杀伤害:同上(104 伤威胁更大)
   // 飞龙:用对空远程
   babyDragon:    ['musketeer', 'minions', 'archers', 'wizard'],
   knight:        ['minions', 'skeletonArmy', 'miniPekka', 'barbarians'],
@@ -55,7 +56,7 @@ export const ROLE = {
   TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie', 'iceGolem'],
   WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka'],
   SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess'],
-  CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows', 'iceSpirit'],
+  CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows', 'iceSpirit', 'fireSpirit'],
   SPELL: ['fireball', 'arrows', 'rocket', 'lightning', 'zap', 'freeze', 'rage', 'theLog'],
   DEFENSE_BUILDING: ['cannon', 'tesla', 'infernoTower', 'bombTower', 'tombstone'],
   SPAWN_BUILDING: ['goblinHut', 'barbarianHut', 'elixirCollector'],

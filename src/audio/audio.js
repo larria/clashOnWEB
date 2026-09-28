@@ -35,7 +35,7 @@ const SFX_FILES = [
   'deploy_minions','deploy_barbarians','deploy_bomber','deploy_giant','deploy_miniPekka',
   'deploy_musketeer','deploy_valkyrie','deploy_hogRider','deploy_wizard','deploy_pekka',
   'deploy_prince','deploy_darkPrince','deploy_iceWizard','deploy_threeMusketeers','deploy_babyDragon','deploy_skeletonArmy','deploy_witch','deploy_balloon',
-  'deploy_giantSkeleton','deploy_golem','deploy_minionHorde','deploy_princess','deploy_iceSpirit','deploy_iceGolem','deploy_cannon','deploy_tesla',
+  'deploy_giantSkeleton','deploy_golem','deploy_minionHorde','deploy_princess','deploy_iceSpirit','deploy_iceGolem','deploy_fireSpirit','deploy_cannon','deploy_tesla',
   'deploy_infernoTower','deploy_bombTower','deploy_goblinHut','deploy_barbarianHut',
   'deploy_tombstone','deploy_elixirCollector','deploy_xbow','deploy_mortar',
   // 攻击(卡牌专属)
@@ -51,7 +51,7 @@ const SFX_FILES = [
   'landhit_giantSkeleton','landhit_archers','landhit_threeMusketeers',
   'landhit_goblins','landhit_skeletons','landhit_barbarians','landhit_princess','landhit_iceSpirit',
   // 法术
-  'spell_fireball','spell_arrows','spell_rocket','spell_lightning','spell_zap',
+  'spell_fireball','spell_fireSpirit','spell_arrows','spell_rocket','spell_lightning','spell_zap',
   'spell_rage','spell_freeze','spell_mirror','spell_poison','spell_theLog','landhit_theLog',
   // 塔
   'tower_fire','king_fire','king_activate','tower_destroyed','princess_destroyed',
