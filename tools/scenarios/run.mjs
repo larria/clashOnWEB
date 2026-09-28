@@ -760,29 +760,36 @@ const SCENARIOS = {
 
 '矿工-全图部署与挖掘': () => {
   // 2016-05-03 批次,第 3 张传奇。规格 §8.4b:全图部署(anywhereGround,
-  // 河道非桥与建筑/塔占地仍禁);出生在己方国王塔,直线挖到落点
-  // (官方 burrow 650×0.025=16.25格/s),地下期间不可被索敌/法术伤害;
-  // 对塔伤害 ×0.25(wiki crown_11=48=194×0.25)
+  // 河道非桥与建筑/塔占地仍禁);出生在己方国王塔,先横后竖折线挖到
+  // 落点(官方口径:地道只有横/竖走向),时长=(|dx|+|dy|)/16.25格/s,
+  // 地下期间不可被索敌/法术伤害;对塔伤害 ×0.20(2026-07-06 官方
+  // 从 25% 降至 20%)
   const g = newGame();
   ok(deployCard('miner', 0, 3.5, 8.5, g), '敌方半场可部署');
   const g2 = newGame();
   ok(!deployCard('miner', 0, 9, 16, g2), '河道非桥禁部署');
   const g3 = newGame();
   ok(!deployCard('miner', 0, 9, 3, g3), '塔占格禁部署');
-  // 挖掘:出生在国王塔 → 直线到落点
+  // 挖掘:出生在国王塔 → 折线(先横后竖)到落点
   const g4 = newGame();
   deployCard('miner', 0, 3.5, 8.5, g4);
   const m = g4.units.find(u => u.cardId === 'miner');
   ok(m && Math.abs(m.x - 9) < 0.1 && Math.abs(m.y - 29) < 0.1, `出生在己方国王塔(实际 ${m.x},${m.y})`);
   ok(m._digTo && m._digTo.x === 3.5, '携带挖掘目标');
+  // 折线路径验证:国王塔(9,29)→(3.5,29)→(3.5,8.5),总长 5.5+20.5=26 格
+  // 时长 26/16.25=1.60s;t=0.5s 时已走 8.125 格(横段 5.5 完,竖段 2.6)
+  run(0.5, g4);
+  ok(Math.abs(m.y - 29) < 0.05 || Math.abs(m.x - 3.5) < 0.05,
+    `中途在折线上(横段 y=29 或竖段 x=3.5;实际 ${m.x.toFixed(2)},${m.y.toFixed(2)})`);
+  ok(Math.abs(m._digDur - 26/16.25) < 0.01, `时长=横竖和/速度(${m._digDur.toFixed(2)}s ≈ 1.60s,直线口径仅 1.33s)`);
   // 挖掘期间塔不索敌它(塔 target 不含地下单位)
-  run(1.2, g4);
+  run(0.7, g4);
   const tw = g4.towers[1].left;
   ok(!tw.target || tw.target.ref !== m, '地下矿工不被塔索敌');
   // 落地后正常交战,对塔伤害减伤
   run(7, g4);
   const dealt = tw.maxHp - tw.hp;
-  ok(dealt > 0 && dealt < 400, `对塔伤害 ${Math.round(dealt)}(减伤 48.5/击;全额 194/击会远超 400)`);
+  ok(dealt > 0 && dealt < 400, `对塔伤害 ${Math.round(dealt)}(减伤 38.8/击;全额 194/击会远超 400)`);
   ok(Math.abs(m.x - 3.5) < 1 && Math.abs(m.y - 8.5) < 1.5, `落地位置正确(${m.x.toFixed(1)},${m.y.toFixed(1)})`);
 },
 

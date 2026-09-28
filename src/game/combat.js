@@ -509,7 +509,7 @@ export function attackTarget(attacker, target, game) {
     }
   } else if (target.type === 'tower') {
     const tw = target.ref;
-    // 部队对塔减伤(矿工 ×0.25,wiki crown_11=48=194×0.25;卡面 quote
+    // 部队对塔减伤(矿工 ×0.20,2026-07-06 官方从 25% 降至 20%;卡面 quote
     // "reduced damage to Crown Towers")——部队版 per-card towerMult,
     // 与法术 TOWER_MULT 表分离(法术减伤是法术专属机制)
     const towerDmg = dmg * (card.towerMult != null ? card.towerMult : 1);

@@ -265,22 +265,26 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
 
   const count = card.count || 1;
   // 矿工挖掘(规格 §8.4b):出生点 = 己方国王塔,_digTo 目标落点;
-  // 地下直线穿越(无视河/单位),期间不可被选中/攻击(invisible 语义
-  // 用 invulnUntil + 挖掘状态表达);落地音效+尘土特效。
-  // 视觉:挖掘轨迹(digTrail 效果,双方可见——对手只见轨迹方向推落点,
-  // 不见落点标记;落点标记 digMark 仅施放方视角渲染)
+  // 地下折线穿越(先横后竖两段,官方口径——wiki:Miner "travels from
+  // the player's King Tower" 且 inner front corner tile "is the closest
+  // to the King Tower" 的最优性只在横竖路径下成立;此前直线口径勾股
+  // 距离 < 横竖和,导致挖掘偏快),无视河/单位,期间不可被选中/攻击。
+  // 时长 = (|dx|+|dy|)/burrow 速度
   const dig = card.special && card.special.dig;
   if (dig) {
     const king = game.towers[side].king;
     const u = game.spawnUnit(cardId, side, king.x, king.y);
-    const dist = Math.hypot(x - king.x, y - king.y);
-    const dur = dist / dig.speed;
+    const mh = Math.abs(x - king.x) + Math.abs(y - king.y);   // 横竖路径长
+    const dur = mh / dig.speed;
+    // 折线路径:国王塔 →(横)(x, king.y)→(竖)(x, y)
     u._digTo = { x, y };
+    u._digFrom = { x: king.x, y: king.y };
     u._digDur = dur;
     u._digT = 0;
     u.invulnUntil = game.time + dur;   // 地下不可被攻击
-    // 视觉:轨迹(双方可见,方向线索)+ 落点标记(渲染层按 side 只画己方)
-    game.addEffect({ type: 'digTrail', side, fromX: king.x, fromY: king.y, toX: x, toY: y,
+    // 视觉:折线轨迹(双方可见,走向线索)+ 落点标记(只画己方)
+    game.addEffect({ type: 'digTrail', side, fromX: king.x, fromY: king.y,
+      bendX: x, bendY: king.y, toX: x, toY: y,
       life: dur + 0.4, maxLife: dur + 0.4 });
     game.addEffect({ type: 'digMark', side, x, y, life: dur + 0.5, maxLife: dur + 0.5 });
     game.lastPlayedCard[side] = cardId;

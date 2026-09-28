@@ -1125,21 +1125,32 @@ export class Renderer {
       } else if (e.type === 'spellIcon') {
         this.drawSpellIcon(e, t);
       } else if (e.type === 'digTrail') {
-        // 矿工挖掘轨迹(双方可见):虚线地道从国王塔伸向落点方向 +
-        // 推进土堆。对手只能从走向推断落点(规格 §8.4b 信息不对称)
+        // 矿工挖掘轨迹(双方可见):虚线地道从国王塔先横后竖折线到落点 +
+        // 推进土堆(官方口径:横+竖两段,规格 §8.4b)。对手只能从走向
+        // 推断落点(信息不对称——折线第一段的横移直接暴露落点所在列)
         {
           const p = 1 - t;
           const fx = e.fromX*CELL, fy = e.fromY*CELL;
+          const bx = (e.bendX != null ? e.bendX : e.toX)*CELL, by = (e.bendY != null ? e.bendY : e.fromY)*CELL;
           const tx = e.toX*CELL, ty = e.toY*CELL;
           ctx.save();
           ctx.strokeStyle = e.side === 0 ? 'rgba(178,132,82,0.75)' : 'rgba(150,105,70,0.75)';
           ctx.lineWidth = 5;
           ctx.setLineDash([10, 8]);
           ctx.globalAlpha = Math.min(1, t * 2);
-          ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(bx, by); ctx.lineTo(tx, ty); ctx.stroke();
           ctx.setLineDash([]);
-          // 推进土堆(沿线移动的小土包)
-          const hx = fx + (tx-fx)*p, hy = fy + (ty-fy)*p;
+          // 推进土堆(沿折线移动的小土包:横段 L1 后接竖段 L2)
+          const L1 = Math.hypot(bx-fx, by-fy), L2 = Math.hypot(tx-bx, ty-by);
+          const total = L1 + L2 || 1, s = p * total;
+          let hx, hy;
+          if (s <= L1) {
+            const q = L1 > 0 ? s / L1 : 0;
+            hx = fx + (bx-fx)*q; hy = fy + (by-fy)*q;
+          } else {
+            const q = L2 > 0 ? (s - L1) / L2 : 0;
+            hx = bx + (tx-bx)*q; hy = by + (ty-by)*q;
+          }
           ctx.fillStyle = '#6d4c41';
           ctx.beginPath(); ctx.arc(hx, hy, 7, 0, Math.PI*2); ctx.fill();
           ctx.fillStyle = '#8d6e63';

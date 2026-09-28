@@ -506,14 +506,26 @@ export class Game {
           this.bus.emit('unit:spawnDamage', { unit: u });
         }
       }
-      // ===== 矿工挖掘(规格 §8.4b):地下直线推进到落点,期间不可被
-      // 选中/攻击(索敌过滤 _dig;invulnUntil 兜底挡范围伤害)。落地
-      // 后清状态成为普通单位。位置直接写(地下无碰撞,河/单位都穿过)
+      // ===== 矿工挖掘(规格 §8.4b):地下折线推进(先横后竖)到落点,
+      // 期间不可被选中/攻击(索敌过滤 _dig;invulnUntil 兜底挡范围伤害)。
+      // 落地后清状态成为普通单位。位置直接写(地下无碰撞,河/单位都穿过)。
+      // 单位本体位置随折线插值(土堆推进位置);落地结算在终点
       if (u._digTo && !u.dead) {
         u._digT += dt;
         const p = Math.min(1, u._digT / u._digDur);
-        u.x = u._digTo.x;
-        u.y = u._digTo.y;
+        const fromX = u._digFrom ? u._digFrom.x : u._digTo.x;
+        const fromY = u._digFrom ? u._digFrom.y : u._digTo.y;
+        // 两段:横(fromX→toX 于 fromY)长 L1,竖(fromY→toY 于 toX)长 L2
+        const L1 = Math.abs(u._digTo.x - fromX), L2 = Math.abs(u._digTo.y - fromY);
+        const total = L1 + L2 || 1;
+        const s = p * total;                        // 已走路程
+        if (s <= L1) {                              // 横段
+          u.x = fromX + Math.sign(u._digTo.x - fromX) * s;
+          u.y = fromY;
+        } else {                                    // 竖段
+          u.x = u._digTo.x;
+          u.y = fromY + Math.sign(u._digTo.y - fromY) * (s - L1);
+        }
         if (p >= 1) {
           u._digTo = null;
           u.invulnUntil = this.time;              // 落地即可被攻击

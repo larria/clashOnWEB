@@ -211,16 +211,17 @@ export const CARDS = {
   miner: { id:'miner', name:'掘地矿工', cost:3, rarity:'传奇', kind:KIND.TROOP,
     hp:1210, dmg:194, hitSpeed:1.3, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.FAST,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#8d6e63', radius:0.40,
-    deployZone:'anywhereGround', towerMult:0.25,
+    deployZone:'anywhereGround', towerMult:0.20,
     special:{ dig:{ speed:16.25 } } },
     // wiki 11级:hp 1210 dmg 194 攻速1.3 前摇0.5 Fast
     // 近战 Medium 1.2 只打地面;(2016-05-03 批次,第 3 张传奇)
     // 全图部署(规格 §8.4b deployAnywhere):河道非桥与建筑/塔占地仍禁
-    // 挖掘:从己方国王塔直线挖到落点,官方 burrow 速度 650×0.025=16.25格/s
+    // 挖掘:从己方国王塔先横后竖折线挖到落点(官方口径,规格 §8.4b),
+    // 官方 burrow 速度 650×0.025=16.25格/s,时长=(|dx|+|dy|)/速度
     // (全单位最快);地下期间不可被选中/攻击;落地后为普通单位,不能再挖
-    // 对塔伤害 ×0.25(wiki crown_11=48=194×0.25;卡面 quote "reduced
-    // damage to Crown Towers");对其他建筑全额(部队版 towerMult,
-    // 与法术 TOWER_MULT 表分离)
+    // 对塔伤害 ×0.20(2026-07-06 官方从 25% 降至 20%;卡面 quote
+    // "reduced damage to Crown Towers");对其他建筑全额
+    // (部队版 towerMult,与法术 TOWER_MULT 表分离)
   royalGiant: { id:'royalGiant', name:'皇家巨人', cost:6, rarity:'普通', kind:KIND.TROOP,
     hp:3164, dmg:307, hitSpeed:1.8, firstHit:0.9, range:5, sightRange:7.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#5c6bc0', radius:0.57,
