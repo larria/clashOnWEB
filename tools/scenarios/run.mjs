@@ -310,8 +310,8 @@ const SCENARIOS = {
 
 // ---- 塔击杀哥布林发数(wiki 口径监控) ----
 '塔-公主塔击杀哥布林发数': () => {
-  // wiki 11级:塔 dmg109(项目54), 哥布林 hp202(项目101)
-  // 同级数学:54×2=108>101 → 2发。此场景监控口径一致性:
+  // wiki 11级直读:塔 dmg109, 哥布林 hp202
+  // 同级数学:109×2=218>202 → 2发。此场景监控口径一致性:
   // 若未来调成"3发"(用户记忆/旧版数值),改这里断言即可
   const g = newGame();
   castSpell('goblinBarrel', 0, 3.5, 6.5, g);
@@ -655,7 +655,7 @@ const SCENARIOS = {
   // 此后每 3s 一发 → 9.5s 内 3 发(第 4 发 9.77s 才到)
   run(9.5, g);
   const dmg = k.maxHp - k.hp;
-  ok(dmg === 84 * 3, `9.5s 恰好 3 发×84=252(前摇口径,实际${dmg})`);
+  ok(dmg === 168 * 3, `9.5s 恰好 3 发×168=504(前摇口径,实际${dmg})`);
 },
 
 '公主-弹道实体化与速度': () => {
@@ -671,7 +671,7 @@ const SCENARIOS = {
   run(0.5, g);
   ok(k.hp === k.maxHp, `前摇+弹飞期间不应提前结算伤害(${Math.round(k.hp)})`);
   run(9.0, g);   // 累计 9.5s:3 发全到(第 4 发 9.77s)
-  ok(k.maxHp - k.hp === 84 * 3, `9.5s 恰好 3 发×84(前摇口径,实际${k.maxHp - k.hp})`);
+  ok(k.maxHp - k.hp === 168 * 3, `9.5s 恰好 3 发×168(前摇口径,实际${k.maxHp - k.hp})`);
 },
 
 
@@ -718,7 +718,7 @@ const SCENARIOS = {
   ok(sp.dead, `精灵应完成自爆(t=${t.toFixed(2)}s)`);
   ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${Math.round(tw.maxHp - tw.hp)})`);
   ok(tw.frozen > 0 || t < 3.9, `塔被冻结(frozen 观察时点 ${tw.frozen.toFixed(1)})`);
-  ok(Math.round(tw.maxHp - tw.hp) === 55, `自爆伤害 55(实际 ${Math.round(tw.maxHp - tw.hp)})`);
+  ok(Math.round(tw.maxHp - tw.hp) === 110, `自爆伤害 110(实际 ${Math.round(tw.maxHp - tw.hp)})`);
   // 无敌帧验证:起跳后塔伤无效(桥口出发吃 1 箭后 hp 恒 54 到爆)
   // 精灵 hp 108=54×2:走路阶段吃 1 箭(54),起跳后免疫第 2 箭 → 自爆
   // (修复前第 2 箭在 1.3s 时刻把它打死在半路)
@@ -780,7 +780,7 @@ const SCENARIOS = {
   // 落地后正常交战,对塔伤害减伤
   run(7, g4);
   const dealt = tw.maxHp - tw.hp;
-  ok(dealt > 0 && dealt < 200, `对塔伤害 ${Math.round(dealt)}(减伤 24.25/击;全额 97/击会远超 200)`);
+  ok(dealt > 0 && dealt < 400, `对塔伤害 ${Math.round(dealt)}(减伤 48.5/击;全额 194/击会远超 400)`);
   ok(Math.abs(m.x - 3.5) < 1 && Math.abs(m.y - 8.5) < 1.5, `落地位置正确(${m.x.toFixed(1)},${m.y.toFixed(1)})`);
 },
 
@@ -820,8 +820,8 @@ const SCENARIOS = {
   const f2 = g2.spawnUnit('furnace', 0, 9, 20); f2.deployTimer = 0;
   const k2 = g2.spawnUnit('knight', 1, 9, 23); k2.deployTimer = 0;
   for (let i = 0; i < 30 * 2; i++) g2.update(1/30);
-  const dealt = 883 - k2.hp;
-  ok(dealt >= 90, `本体有远程攻击(2s 内 ≥90 伤,实际 ${Math.round(dealt)})`);
+  const dealt = 1766 - k2.hp;
+  ok(dealt >= 180, `本体有远程攻击(2s 内 ≥180 伤,实际 ${Math.round(dealt)})`);
 },
 
 '火精灵-自爆伤害与溅射': () => {
@@ -842,7 +842,7 @@ const SCENARIOS = {
   ok(fs.dead, `火精灵自爆(t=${t.toFixed(2)}s)`);
   ok(near.dead, '圈内地面骷髅被炸死(40<104)');
   ok(far.hp === far.maxHp, `圈外骑士无伤(hp=${Math.round(far.hp)})`);
-  ok(Math.round(m.hp) === 11, `圈内空中亡灵残血 115-104=11(实际 ${Math.round(m.hp)})`);
+  ok(Math.round(m.hp) === 23, `圈内空中亡灵残血 230-207=23(实际 ${Math.round(m.hp)})`);
 },
 
 '火精灵-跳跃无敌摸塔(全额伤害)': () => {
@@ -855,7 +855,7 @@ const SCENARIOS = {
   let t = 0;
   while (!fs.dead && t < 10) { g.update(1/30); t += 1/30; }
   ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${Math.round(tw.maxHp - tw.hp)})`);
-  ok(Math.round(tw.maxHp - tw.hp) === 104, `全额 104(实际 ${Math.round(tw.maxHp - tw.hp)})`);
+  ok(Math.round(tw.maxHp - tw.hp) === 207, `全额 207(实际 ${Math.round(tw.maxHp - tw.hp)})`);
   ok(tw.frozen === 0, `无冻结(frozen=${tw.frozen},火精灵纯伤害)`);
 },
 
@@ -872,8 +872,8 @@ const SCENARIOS = {
   // 冻结被冰精灵的 1.1s 覆盖验证:knight frozen=99 已冻结,改用 hp 断言
   // (冻结叠加 max(99,1.1) 无法区分;冻结生效性由冰人场景的减速覆盖)
   ok(sp.dead, '冰精灵应自杀(命中即死)');
-  ok(k1.hp === k1.maxHp - 55, `主目标吃 55 伤(实际扣${k1.maxHp - k1.hp})`);
-  ok(k2.hp === k2.maxHp - 55, `溅射波及(实际扣${k2.maxHp - k2.hp})`);
+  ok(k1.hp === k1.maxHp - 110, `主目标吃 110 伤(实际扣${k1.maxHp - k1.hp})`);
+  ok(k2.hp === k2.maxHp - 110, `溅射波及(实际扣${k2.maxHp - k2.hp})`);
   // 冻结验证:改测冻结法术之外的真实冻结源——直接检查 iceSpirit 攻击
   // 后 frozen 是否被设置为 1.1(用非冻结靶子时;这里靶子已 99,跳过)
 },
@@ -897,7 +897,7 @@ const SCENARIOS = {
   }
   ok(ig.dead, `冰人应阵亡`);
   if (diedAt !== null) {
-    ok(foe.hp === foe.maxHp - 42, `死亡爆炸伤敌人 42(实际扣${foe.maxHp - foe.hp})`);
+    ok(foe.hp === foe.maxHp - 84, `死亡爆炸伤敌人 84(实际扣${foe.maxHp - foe.hp})`);
     ok(foe.slowTimer >= 1.8, `敌人被减速 2s(实际${foe.slowTimer.toFixed(2)})`);
     ok(foe.slowFactor === 0.7, `减速幅度 30%(factor=${foe.slowFactor})`);
   }
@@ -915,8 +915,8 @@ const SCENARIOS = {
   for (const u of g.units.filter(x=>x.cardId==='minions')) { u.deployTimer = 0; u.frozen = 99; }
   run(3, g);   // 10.1格/5速度 ≈ 2s 滚完
   const d1 = k1.maxHp - k1.hp, d2 = k2.maxHp - k2.hp, d3 = k3.maxHp - k3.hp;
-  ok(d1 === 133, `走廊中心恰好吃 1 次 133(实际${d1})`);
-  ok(d2 === 133, `走廊内横向偏移也吃 1 次(实际${d2})`);
+  ok(d1 === 266, `走廊中心恰好吃 1 次 266(实际${d1})`);
+  ok(d2 === 266, `走廊内横向偏移也吃 1 次(实际${d2})`);
   ok(d3 === 0, `走廊外不受伤(实际${d3})`);
   const mins = g.units.filter(u => u.cardId === 'minions' && !u.dead);
   ok(mins.every(u => u.hp === u.maxHp), '空军不受滚木伤害');
@@ -947,7 +947,7 @@ const SCENARIOS = {
   const y0 = k.y;
   for (let i = 0; i < 90 && hitAt === null; i++) {
     g.update(1/30);
-    if (k.maxHp - k.hp >= 344) hitAt = g.time;   // 火球伤害到账
+    if (k.maxHp - k.hp >= 688) hitAt = g.time;   // 火球伤害到账
   }
   ok(hitAt !== null, `火球应命中(t=${hitAt})`);
   if (hitAt !== null) {
@@ -986,7 +986,7 @@ const SCENARIOS = {
   castSpell('theLog', 0, 9, 20, g);
   run(0.6, g);   // 滚木速度 5,弹头 2 格外 ~0.4s 到骑士
   ok(Math.hypot(k.x - x0, k.y - y0) > 0.2, `甩飞位移(${Math.hypot(k.x-x0, k.y-y0).toFixed(2)} 格)`);
-  ok(k.maxHp - k.hp === 133, `滚木伤害 133(实际${k.maxHp - k.hp})`);
+  ok(k.maxHp - k.hp === 266, `滚木伤害 266(实际${k.maxHp - k.hp})`);
 },
 
 // ===== 分离死锁修复(v0.6.11,战报:沉底 4 哥布林原地锁死) =====

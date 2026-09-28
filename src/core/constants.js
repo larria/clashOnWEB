@@ -56,11 +56,11 @@ export const TOWERS = {
   },
 };
 
-// 塔属性(wiki 11级 × 0.5;射程 7.5/7 为官方值)
+// 塔属性(wiki 11级原值;射程 7.5/7 为官方值)
 // radius 为碰撞半径(略小于视觉:公主 3×3/国王 4×4)
 export const TOWER_STATS = {
-  princess: { hp: 1526, dmg: 54, hitSpeed: 0.8, range: 7.5, sightRange: 7.5, targets: T.ALL, radius: 1.2 },
-  king:     { hp: 2417, dmg: 54, hitSpeed: 1.0, range: 7.0, sightRange: 7.0, targets: T.ALL, radius: 1.6 },
+  princess: { hp: 3052, dmg: 109, hitSpeed: 0.8, range: 7.5, sightRange: 7.5, targets: T.ALL, radius: 1.2 },
+  king:     { hp: 4824, dmg: 109, hitSpeed: 1.0, range: 7.0, sightRange: 7.0, targets: T.ALL, radius: 1.6 },
 };
 
 // 圣水

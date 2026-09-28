@@ -76,11 +76,11 @@ src/game/combat.js       移动/攻击(查询式:canJumpRiver/charge)
 5. **资源规范**:卡图 `assets/cards/<id>.png`(wiki 官方图);
    音效 `spell_<id>.ogg` / `deploy_<id>.ogg`(本地 SFX 库,无则 fallback 已有 generic);
    assets-manifest 由 `node tools/version-check.mjs` 自动重生成。
-6. **数值换算**:wiki 11 级值 × 0.5(项目约定),记录在 docs/card-stats.json。
+6. **数值直读**:wiki 11 级原值(v0.7.0 起废除 ×0.5 缩放),记录在 docs/card-stats.json。
 
 ## 新卡实装 SOP(检查单)
 
-1. [ ] 查 `docs/cards-wiki/<Card>.md` 抄 11 级数值(×0.5)
+1. [ ] 查 `docs/cards-wiki/<Card>.md` 抄 11 级数值(原值直读)
 2. [ ] cards.js 加一条数据(效果用能力键表达;**全新机制 → 先查
        `docs/THIRD-PARTY-SPEC.md` 对应章节**(C++ 参考实现怎么建模),
        再在本文档登记键名后实现)

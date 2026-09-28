@@ -1,7 +1,7 @@
 {
  "_meta": {
   "source": "https://clashroyale.fandom.com (MediaWiki API)",
-  "note": "vars: wiki #vardefine 变量(*_11 与 hp_base/dmg_base 均为11级基准;建筑本体用 hut_/tomb_ 前缀;golem 页含 golem_/mite_)。全等级公式: value = var * 1.1^(level-11)。本项目缩放: 11级×0.5(公主塔 3052/109 ×0.5 = 1526/54)。attributes: unit-attributes-table(费用/攻速/速度/射程/目标/数量/运输)。levels: 静态等级表(塔)。",
+  "note": "vars: wiki #vardefine 变量(*_11 与 hp_base/dmg_base 均为11级基准;建筑本体用 hut_/tomb_ 前缀;golem 页含 golem_/mite_)。全等级公式: value = var * 1.1^(level-11)。本项目口径(v0.7.0 起): 11级原值直读(公主塔 3052/109、国王塔 4824/109);v0.6.x 及以前为 ×0.5 缩放。attributes: unit-attributes-table(费用/攻速/速度/射程/目标/数量/运输)。levels: 静态等级表(塔)。",
   "progress": "141 fetched, 0 pending",
   "fails": []
  },

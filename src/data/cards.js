@@ -1,6 +1,6 @@
 // ===============================================
 // 卡牌数据定义(42 张:24 部队 + 10 建筑 + 8 法术)
-// 数值对齐官方 wiki 11级 × 0.5(见 docs/card-stats.json)
+// 数值 = 官方 wiki 11级原值直读(v0.7.0 起废除 ×0.5 缩放;见 docs/card-stats.json)
 //
 // 新增卡牌指南:
 //   常规属性直接照抄 wiki 换算;
@@ -23,72 +23,72 @@ export const KIND = { TROOP: 'troop', BUILDING: 'building', SPELL: 'spell' };
 export const CARDS = {
   // ===== 普通 =====
   knight: { id:'knight', name:'骑士', cost:3, rarity:'普通', kind:KIND.TROOP,
-    hp:883, dmg:101, hitSpeed:1.2, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:1766, dmg:202, hitSpeed:1.2, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#9b8c7a', radius:0.42 },
   archers: { id:'archers', name:'弓箭手', cost:3, rarity:'普通', kind:KIND.TROOP,
-    hp:152, dmg:56, hitSpeed:0.9, firstHit:0.5, range:5.0, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:304, dmg:113, hitSpeed:0.9, firstHit:0.5, range:5.0, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:2, splash:0, deployTime:1, color:'#d65a5a', radius:0.35 },
   goblins: { id:'goblins', name:'哥布林', cost:2, rarity:'普通', kind:KIND.TROOP,
-    hp:101, dmg:62, hitSpeed:1.1, firstHit:0.6, range:0.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    hp:202, dmg:124, hitSpeed:1.1, firstHit:0.6, range:0.5, sightRange:5.5, speed:SPEED.VERY_FAST,
     targets:T.GROUND, flying:false, count:4, splash:0, deployTime:1, color:'#7cb342', radius:0.32 },
   spearGoblins: { id:'spearGoblins', name:'投矛哥布林', cost:2, rarity:'普通', kind:KIND.TROOP,
-    hp:66, dmg:40, hitSpeed:1.6, firstHit:0.5, range:5.0, sightRange:5.0, speed:SPEED.VERY_FAST,
+    hp:133, dmg:81, hitSpeed:1.6, firstHit:0.5, range:5.0, sightRange:5.0, speed:SPEED.VERY_FAST,
     targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#8bc34a', radius:0.30 },
   skeletons: { id:'skeletons', name:'骷髅兵', cost:1, rarity:'普通', kind:KIND.TROOP,
-    hp:40, dmg:40, hitSpeed:1.1, firstHit:0.5, range:0.5, sightRange:5.0, speed:SPEED.FAST,
+    hp:81, dmg:81, hitSpeed:1.1, firstHit:0.5, range:0.5, sightRange:5.0, speed:SPEED.FAST,
     targets:T.GROUND, flying:false, count:3, splash:0, deployTime:1, color:'#eeeeee', radius:0.28 },
   minions: { id:'minions', name:'亡灵', cost:3, rarity:'普通', kind:KIND.TROOP,
-    hp:115, dmg:54, hitSpeed:1.2, firstHit:0.5, range:2.5, sightRange:5.5, speed:SPEED.FAST,
+    hp:230, dmg:107, hitSpeed:1.2, firstHit:0.5, range:2.5, sightRange:5.5, speed:SPEED.FAST,
     targets:T.ALL, flying:true, count:3, splash:0, deployTime:1, color:'#5c6bc0', radius:0.33 },
   barbarians: { id:'barbarians', name:'野蛮人', cost:5, rarity:'普通', kind:KIND.TROOP,
-    hp:358, dmg:96, hitSpeed:1.4, firstHit:0.4, range:0.7, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:716, dmg:192, hitSpeed:1.4, firstHit:0.4, range:0.7, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:5, splash:0, deployTime:1, color:'#bf6b1f', radius:0.36 },
   bomber: { id:'bomber', name:'炸弹兵', cost:2, rarity:'普通', kind:KIND.TROOP,
-    hp:152, dmg:112, hitSpeed:1.8, firstHit:0.2, range:4.5, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:304, dmg:223, hitSpeed:1.8, firstHit:0.2, range:4.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:1.5, deployTime:1, color:'#3a3a3a', radius:0.35 },
 
   // ===== 稀有 =====
   giant: { id:'giant', name:'巨人', cost:5, rarity:'稀有', kind:KIND.TROOP,
-    hp:1984, dmg:126, hitSpeed:1.5, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.SLOW,
+    hp:3968, dmg:253, hitSpeed:1.5, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#ff9933', radius:0.55 },
   miniPekka: { id:'miniPekka', name:'迷你皮卡', cost:4, rarity:'稀有', kind:KIND.TROOP,
-    hp:695, dmg:378, hitSpeed:1.6, firstHit:0.5, range:0.8, sightRange:5.5, speed:SPEED.FAST,
+    hp:1391, dmg:755, hitSpeed:1.6, firstHit:0.5, range:0.8, sightRange:5.5, speed:SPEED.FAST,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#b0bec5', radius:0.4 },
   musketeer: { id:'musketeer', name:'火枪手', cost:4, rarity:'稀有', kind:KIND.TROOP,
-    hp:360, dmg:108, hitSpeed:1.0, firstHit:0.7, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
+    hp:720, dmg:218, hitSpeed:1.0, firstHit:0.7, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, color:'#ab47bc', radius:0.38 },
   threeMusketeers: { id:'threeMusketeers', name:'三个火枪手', cost:9, rarity:'稀有', kind:KIND.TROOP,
-    hp:442, dmg:102, hitSpeed:1.3, firstHit:0.7, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
+    hp:883, dmg:204, hitSpeed:1.3, firstHit:0.7, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#7e57c2', radius:0.38,
     artCard:'musketeer' },   // 场上每个子单位用火枪手卡图(三火枪本体=3个火枪手)
-    // wiki 11级×0.5:hp883/2=442 dmg204/2=102 攻速1.3 射程6 对空对地 中速
+    // wiki 11级:hp883 dmg204 攻速1.3 射程6 对空对地 中速
     // 2016-02-29 实装;部署分兵:放中线附近时 1 只走一侧路、2 只走另一侧
     // (横排队形+各自索敌最近塔天然实现;火枪手本体用 4 费单卡数值)
   valkyrie: { id:'valkyrie', name:'女武神', cost:4, rarity:'稀有', kind:KIND.TROOP,
-    hp:954, dmg:133, hitSpeed:1.5, firstHit:0.1, range:1.2, sightRange:5.0, speed:SPEED.MEDIUM,
+    hp:1909, dmg:266, hitSpeed:1.5, firstHit:0.1, range:1.2, sightRange:5.0, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:2.0, deployTime:1, color:'#e91e63', radius:0.42 },
   hogRider: { id:'hogRider', name:'野猪骑士', cost:4, rarity:'稀有', kind:KIND.TROOP,
-    hp:848, dmg:158, hitSpeed:1.6, firstHit:0.6, range:0.8, sightRange:5.5, speed:SPEED.VERY_FAST,
+    hp:1697, dmg:316, hitSpeed:1.6, firstHit:0.6, range:0.8, sightRange:5.5, speed:SPEED.VERY_FAST,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#8d6e63', radius:0.42,
     special:{ canJumpRiver:true } },
   wizard: { id:'wizard', name:'法师', cost:5, rarity:'稀有', kind:KIND.TROOP,
-    hp:416, dmg:140, hitSpeed:1.4, firstHit:0.4, range:5.5, sightRange:6.0, speed:SPEED.MEDIUM,
+    hp:832, dmg:280, hitSpeed:1.4, firstHit:0.4, range:5.5, sightRange:6.0, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#42a5f5', radius:0.38 },
   iceWizard: { id:'iceWizard', name:'冰法师', cost:3, rarity:'传奇', kind:KIND.TROOP,
-    hp:344, dmg:44, hitSpeed:1.7, firstHit:0.5, range:5.5, sightRange:6.0, speed:SPEED.MEDIUM,
+    hp:688, dmg:89, hitSpeed:1.7, firstHit:0.5, range:5.5, sightRange:6.0, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#4fc3f7', radius:0.38,
     special:{
       attackSlow:{ duration:2.5, factor:0.7 },
-      spawnDamage:{ dmg:42, radius:3.0, slow:{ duration:1.0, factor:0.7 } },
+      spawnDamage:{ dmg:84, radius:3.0, slow:{ duration:1.0, factor:0.7 } },
     } },
-    // wiki 11级×0.5:hp688/2=344 dmg89/2=44 攻速1.7 射程5.5 溅射1.5
+    // wiki 11级:hp688 dmg89 攻速1.7 射程5.5 溅射1.5
     // 首张传奇(2016-02-29):攻击附带范围减速30%/2.5s(移速+攻速);
-    // 落地伤害 84/2=42·半径3·落地减速30%/1s(可秒杀骷髅/蝙蝠)
+    // 落地伤害 84·半径3·落地减速30%/1s(可秒杀骷髅/蝙蝠)
   princess: { id:'princess', name:'公主', cost:3, rarity:'传奇', kind:KIND.TROOP,
-    hp:131, dmg:84, hitSpeed:3.0, firstHit:0.3, range:9.0, sightRange:9.0, speed:SPEED.SLOW,
+    hp:261, dmg:168, hitSpeed:3.0, firstHit:0.3, range:9.0, sightRange:9.0, speed:SPEED.SLOW,
     targets:T.ALL, flying:false, count:1, splash:2.0, deployTime:1, color:'#f48fb1', radius:0.38,
     projectileSpeed: 15 },
-    // wiki 11级×0.5:hp261/2≈131 dmg168/2=84 攻速3.0(极慢)
+    // wiki 11级:hp261 dmg168 攻速3.0(极慢)
     // 射程9(全游戏最远部队射程:站桥上可直接打公主塔,不被塔还手——
     // 塔 range 7.5<9;wiki Miner.md 确认"attacking a tower from the bridge")
     // 溅射2.0(箭矢落点 AOE);对空对地;速度 Slow
@@ -96,26 +96,26 @@ export const CARDS = {
     // (溅射弹走投射物,命中点为圆心 AOE);法术层同口径:fireball 600=15
     // 2016-02-29 与冰法师同批实装
   iceSpirit: { id:'iceSpirit', name:'冰雪精灵', cost:1, rarity:'普通', kind:KIND.TROOP,
-    hp:108, dmg:55, hitSpeed:1, firstHit:0, range:2.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    hp:215, dmg:110, hitSpeed:1, firstHit:0, range:2.5, sightRange:5.5, speed:SPEED.VERY_FAST,
     targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#81d4fa', radius:0.30,
     special:{ kamikaze:{ freeze:1.1 } } },
-    // wiki 11级×0.5:hp 215/2≈108 dmg 110/2=55;溅射1.5·冻结1.1s·极快(2.0格/s)
+    // wiki 11级:hp 215 dmg 110;溅射1.5·冻结1.1s·极快(2.0格/s)
     // 官方 kamikaze 8 卡之一:命中即死(as part of its attack),对空对地
     // (2016-05-03 批次);冻结=时间停止(frozen),非减速
-    // hp 口径:108 = 塔 dmg54×2 恰好吃满 2 发——官方同级数学(215 vs 109×2
-    // =218,Strategy 节"sufficient hitpoints to reach an opposing Tower Princess")
+    // hp 口径:215 < 塔 dmg109×2=218 恰好吃满 2 发——官方同级数学,
+    // Strategy 节"sufficient hitpoints to reach an opposing Tower Princess"
   iceGolem: { id:'iceGolem', name:'冰人', cost:2, rarity:'稀有', kind:KIND.TROOP,
-    hp:658, dmg:42, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
+    hp:1315, dmg:84, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#b3e5fc', radius:0.42,
-    special:{ deathDamage:{ dmg:42, splash:2.0, targets:T.ALL, slow:{ duration:2.0, factor:0.7 } } } },
-    // wiki 11级×0.5:hp1315/2≈658 dmg84/2=42 攻速2.5 前摇1.0 近战Short0.75 Slow
-    // 只打建筑(小坦克);死亡爆炸 84/2=42·半径2·减速30%/2s(wiki Slow子表:
+    special:{ deathDamage:{ dmg:84, splash:2.0, targets:T.ALL, slow:{ duration:2.0, factor:0.7 } } } },
+    // wiki 11级:hp1315 dmg84 攻速2.5 前摇1.0 近战Short0.75 Slow
+    // 只打建筑(小坦克);死亡爆炸 84·半径2·减速30%/2s(wiki Slow子表:
     // Duration 2sec / Slowdown -30%);死亡伤害+减速一体(deathDamage.slow)
   fireSpirit: { id:'fireSpirit', name:'火精灵', cost:1, rarity:'普通', kind:KIND.TROOP,
-    hp:108, dmg:104, hitSpeed:1, firstHit:0, range:2.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    hp:215, dmg:207, hitSpeed:1, firstHit:0, range:2.5, sightRange:5.5, speed:SPEED.VERY_FAST,
     targets:T.ALL, flying:false, count:1, splash:2.3, deployTime:1, color:'#ff8a65', radius:0.30,
     special:{ kamikaze:{} } },
-    // wiki 11级×0.5:hp 215/2≈108 dmg 207/2≈104;溅射 2.3(2021 从 2.5 下调,
+    // wiki 11级:hp 215 dmg 207;溅射 2.3(2021 从 2.5 下调,
     // "largest area damage radius of all troops")·极快(2.0格/s)·对空对地
     // 官方 kamikaze 8 卡之一:命中即死,跳跃无敌(v0.6.16 机制)同冰雪精灵
     // (2016-05-03 批次);无冻结附加(纯伤害,高 dmg 低费是定位)
@@ -125,91 +125,91 @@ export const CARDS = {
 
   // ===== 史诗 =====
   pekka: { id:'pekka', name:'皮卡超人', cost:7, rarity:'史诗', kind:KIND.TROOP,
-    hp:1880, dmg:421, hitSpeed:1.8, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.SLOW,
-    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#90a4ae', radius:0.55 },  // wiki 11级×0.5;速度 Slow(45)=0.6格/s;近战 Medium 1.2
+    hp:3760, dmg:842, hitSpeed:1.8, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.SLOW,
+    targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#90a4ae', radius:0.55 },  // wiki 11级;速度 Slow(45)=0.6格/s;近战 Medium 1.2
   prince: { id:'prince', name:'王子', cost:5, rarity:'史诗', kind:KIND.TROOP,
-    hp:960, dmg:196, hitSpeed:1.4, firstHit:0.5, range:1.6, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:1920, dmg:391, hitSpeed:1.4, firstHit:0.5, range:1.6, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#5d4037', radius:0.5,
     special:{ charge:{ distance:2, dmgMult:2.0, speedMult:1.6 } } },  // 冲锋:走2格充能(wiki:travels 2 tiles),命中/眩晕/击退重置
   darkPrince: { id:'darkPrince', name:'黑王子', cost:4, rarity:'史诗', kind:KIND.TROOP,
-    hp:600, dmg:133, hitSpeed:1.3, firstHit:0.6, range:1.2, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:1200, dmg:266, hitSpeed:1.3, firstHit:0.6, range:1.2, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:1.1, deployTime:1, color:'#37474f', radius:0.5,
-    special:{ shield:128,
+    special:{ shield:256,
       charge:{ distance:3, dmgMult:2.0, speedMult:2.0, splash:1.1 } } },
-    // wiki 11级×0.5:hp1200/2=600 盾256/2=128 dmg266/2=133 冲锋532/2=266(=2×dmg)
+    // wiki 11级:hp1200 盾256 dmg266 冲锋532(=2×dmg)
     // 攻速1.3(wiki atk_speed) 射程1.2 溅射1.1 冲锋3格充能·速度极快(2×中速)
     // 冲锋命中360°溅射(围杀无效);护盾先扣·溢出不穿透
     // 不跳河(原版:黑王子/王子均不能跳河,必须走桥;冲锋中也走桥)
   babyDragon: { id:'babyDragon', name:'飞龙宝宝', cost:4, rarity:'史诗', kind:KIND.TROOP,
-    hp:576, dmg:84, hitSpeed:1.5, firstHit:0.3, range:3.5, sightRange:5.5, speed:SPEED.FAST,
+    hp:1153, dmg:168, hitSpeed:1.5, firstHit:0.3, range:3.5, sightRange:5.5, speed:SPEED.FAST,
     targets:T.ALL, flying:true, count:1, splash:1.5, deployTime:1, color:'#ec407a', radius:0.45 },
   skeletonArmy: { id:'skeletonArmy', name:'骷髅军团', cost:3, rarity:'史诗', kind:KIND.TROOP,
-    hp:40, dmg:40, hitSpeed:1.1, firstHit:0.5, range:0.5, sightRange:5.0, speed:SPEED.FAST,
+    hp:81, dmg:81, hitSpeed:1.1, firstHit:0.5, range:0.5, sightRange:5.0, speed:SPEED.FAST,
     targets:T.GROUND, flying:false, count:15, splash:0, deployTime:1, color:'#fafafa', radius:0.26,
     artCard:'skeletons' },   // 场上单位用骷髅兵卡图(军团本体=一群骷髅,非"骷髅军团"图标)
   witch: { id:'witch', name:'女巫', cost:5, rarity:'史诗', kind:KIND.TROOP,
-    hp:420, dmg:68, hitSpeed:1.1, firstHit:0.7, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:839, dmg:135, hitSpeed:1.1, firstHit:0.7, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:1.5, deployTime:1, color:'#6a1b9a', radius:0.380,
     special:{ summon:{ card:'skeletons', count:4, interval:7, firstDelay:1 } } }, // wiki:每7秒4只,首波部署后1秒
   balloon: { id:'balloon', name:'气球兵', cost:5, rarity:'史诗', kind:KIND.TROOP,
-    hp:840, dmg:320, hitSpeed:2.0, firstHit:0.2, range:0.1, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:1679, dmg:640, hitSpeed:2.0, firstHit:0.2, range:0.1, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.BUILDING, flying:true, count:1, splash:1.5, deployTime:1, color:'#26a69a', radius:0.50,
-    special:{ deathDamage:{ dmg:120, splash:1.5, targets:T.ALL, delay:3 } } },  // wiki 11级×0.5:死亡伤害 240/2=120  // 3秒引信
+    special:{ deathDamage:{ dmg:240, splash:1.5, targets:T.ALL, delay:3 } } },  // wiki 11级:死亡伤害 240 // 3秒引信
   giantSkeleton: { id:'giantSkeleton', name:'骷髅巨人', cost:6, rarity:'史诗', kind:KIND.TROOP,
-    hp:1680, dmg:138, hitSpeed:1.3, firstHit:0.3, range:0.8, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:3361, dmg:276, hitSpeed:1.3, firstHit:0.3, range:0.8, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#cfd8dc', radius:0.52,
-    special:{ deathDamage:{ dmg:344, splash:2.0, targets:T.ALL, delay:3 } } },  // wiki 11级×0.5:死亡 688/2=344 半径 2(原 2.5/对塔双倍为误设)  // 对塔双倍
+    special:{ deathDamage:{ dmg:688, splash:2.0, targets:T.ALL, delay:3 } } },  // wiki 11级:死亡 688 半径 2(原 2.5/对塔双倍为误设)
   golem: { id:'golem', name:'戈仑石人', cost:8, rarity:'史诗', kind:KIND.TROOP,
-    hp:2560, dmg:156, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
+    hp:5120, dmg:312, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:3, color:'#558b2f', radius:0.60,
-    special:{ deathDamage:{ dmg:112, splash:2.0, targets:T.ALL }, summonOnDeath:{ card:'golemite', count:2 } } },  // wiki 11级×0.5:部署3s(特有);近战 Short 0.75;死亡伤害 225/2≈112
+    special:{ deathDamage:{ dmg:225, splash:2.0, targets:T.ALL }, summonOnDeath:{ card:'golemite', count:2 } } },  // wiki 11级:部署3s(特有);近战 Short 0.75;死亡伤害 225/2≈112
   minionHorde: { id:'minionHorde', name:'亡灵大军', cost:5, rarity:'史诗', kind:KIND.TROOP,
-    hp:115, dmg:54, hitSpeed:1.1, firstHit:0.5, range:2.5, sightRange:5.5, speed:SPEED.FAST,
+    hp:230, dmg:107, hitSpeed:1.1, firstHit:0.5, range:2.5, sightRange:5.5, speed:SPEED.FAST,
     targets:T.ALL, flying:true, count:6, splash:0, deployTime:1, color:'#3949ab', radius:0.32 },
 
   // ===== 建筑 =====
   cannon: { id:'cannon', name:'加农炮', cost:3, rarity:'普通', kind:KIND.BUILDING,
-    hp:412, dmg:106, hitSpeed:1.0, firstHit:1.0, range:5.5, sightRange:5.5, speed:0,
+    hp:824, dmg:212, hitSpeed:1.0, firstHit:1.0, range:5.5, sightRange:5.5, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#455a64', radius:1.35 },
   tesla: { id:'tesla', name:'特斯拉电磁塔', cost:4, rarity:'普通', kind:KIND.BUILDING,
-    hp:576, dmg:110, hitSpeed:1.1, firstHit:0.5, range:5.5, sightRange:5.5, speed:0,
+    hp:1152, dmg:220, hitSpeed:1.1, firstHit:0.5, range:5.5, sightRange:5.5, speed:0,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, lifetime:25, color:'#ffd54f', radius:0.9 },
   infernoTower: { id:'infernoTower', name:'地狱之塔', cost:5, rarity:'稀有', kind:KIND.BUILDING,
-    hp:874, dmg:60, hitSpeed:0.4, firstHit:0.5, range:6.0, sightRange:6.0, speed:0,
+    hp:1748, dmg:43, hitSpeed:0.4, firstHit:0.5, range:6.0, sightRange:6.0, speed:0,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, lifetime:40, color:'#ff5722', radius:1.35,
-    special:{ rampDamage:{ maxMult:8.0, rampTime:2.5 } } },  // 对空(wiki:air-targeting,可打气球/亡灵)
+    special:{ rampDamage:{ maxMult:19.7, rampTime:4.0 } } },  // 对空(wiki:air-targeting,可打气球/亡灵)
   bombTower: { id:'bombTower', name:'炸弹塔', cost:4, rarity:'稀有', kind:KIND.BUILDING,
-    hp:678, dmg:111, hitSpeed:1.8, firstHit:0.5, range:6.0, sightRange:5.5, speed:0,
+    hp:1356, dmg:222, hitSpeed:1.8, firstHit:0.5, range:6.0, sightRange:5.5, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:1.5, deployTime:1, lifetime:30, color:'#37474f', radius:1.35,
-    special:{ deathDamage:{ dmg:111, splash:2.0, targets:T.GROUND } } },  // wiki 11级×0.5:死亡伤害 222/2=111
+    special:{ deathDamage:{ dmg:222, splash:2.0, targets:T.GROUND } } },  // wiki 11级:死亡伤害 222
   goblinHut: { id:'goblinHut', name:'哥布林小屋', cost:4, rarity:'稀有', kind:KIND.BUILDING,
-    hp:614, dmg:0, hitSpeed:0, firstHit:0.5, range:0, sightRange:0, speed:0,
+    hp:1228, dmg:0, hitSpeed:0, firstHit:0.5, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#689f38', radius:1.35,
     special:{ spawn:{ card:'spearGoblins', count:1, interval:2.2, firstDelay:1 } } },  // wiki:每 2.2s 出 1 只投矛(有敌时)
   barbarianHut: { id:'barbarianHut', name:'野蛮人小屋', cost:6, rarity:'稀有', kind:KIND.BUILDING,
-    hp:582, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
+    hp:1164, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#a1887f', radius:1.35,
     special:{ spawn:{ card:'barbarians', count:2, interval:15, firstDelay:1 }, deathSummon:{ card:'barbarians', count:2 } } },  // wiki:每 15s 出 2 只
   tombstone: { id:'tombstone', name:'骷髅墓碑', cost:3, rarity:'稀有', kind:KIND.BUILDING,
-    hp:264, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
+    hp:529, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#9e9e9e', radius:1.35,
     special:{ spawn:{ card:'skeletons', count:2, interval:3.5, firstDelay:1 }, deathSummon:{ card:'skeletons', count:4 } } },  // wiki:每 3.5s 出 2 只
   furnace: { id:'furnace', name:'熔炉', cost:4, rarity:'稀有', kind:KIND.TROOP,
-    hp:364, dmg:90, hitSpeed:1.7, firstHit:0.5, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
+    hp:727, dmg:179, hitSpeed:1.7, firstHit:0.5, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, color:'#ff8a65', radius:0.55,
     special:{ spawn:{ card:'fireSpirit', count:1, interval:5, firstDelay:1 } } },
-    // wiki 11级×0.5:hp 727/2≈364 dmg 179/2≈90(自身攻击:远程单体
+    // wiki 11级:hp 727/2≈364 dmg 179/2≈90(自身攻击:远程单体
     // "special cauldron brew",对空对地);hitSpeed 1.7(2026-01 从 1.8 提速)
     // 射程 5.5(2026-06 从 6 下调);Medium(2025-08 起会走路,2025-10 提速)
     // 每 5s 产 1 只火精灵(2026-04 从 7s 下调;wiki 属性表 7s 已过时,
     // 以 Balance History 最新为准),无亡语(2025-08 移除 death spawn)
     // (2016-05-03 批次;火精灵复用已实装卡)
   miner: { id:'miner', name:'掘地矿工', cost:3, rarity:'传奇', kind:KIND.TROOP,
-    hp:605, dmg:97, hitSpeed:1.3, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.FAST,
+    hp:1210, dmg:194, hitSpeed:1.3, firstHit:0.5, range:1.2, sightRange:5.5, speed:SPEED.FAST,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, color:'#8d6e63', radius:0.40,
     deployZone:'anywhereGround', towerMult:0.25,
     special:{ dig:{ speed:16.25 } } },
-    // wiki 11级×0.5:hp 1210/2=605 dmg 194/2=97 攻速1.3 前摇0.5 Fast
+    // wiki 11级:hp 1210 dmg 194 攻速1.3 前摇0.5 Fast
     // 近战 Medium 1.2 只打地面;(2016-05-03 批次,第 3 张传奇)
     // 全图部署(规格 §8.4b deployAnywhere):河道非桥与建筑/塔占地仍禁
     // 挖掘:从己方国王塔直线挖到落点,官方 burrow 速度 650×0.025=16.25格/s
@@ -218,48 +218,48 @@ export const CARDS = {
     // damage to Crown Towers");对其他建筑全额(部队版 towerMult,
     // 与法术 TOWER_MULT 表分离)
   royalGiant: { id:'royalGiant', name:'皇家巨人', cost:6, rarity:'普通', kind:KIND.TROOP,
-    hp:1582, dmg:154, hitSpeed:1.8, firstHit:0.9, range:5, sightRange:7.5, speed:SPEED.SLOW,
+    hp:3164, dmg:307, hitSpeed:1.8, firstHit:0.9, range:5, sightRange:7.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#5c6bc0', radius:0.57,
     projectileSpeed:25 },
-    // wiki 11级×0.5:hp 3164/2=1582 dmg 307/2≈154 攻速1.8 前摇0.9 Slow
+    // wiki 11级:hp 3164 dmg 307 攻速1.8 前摇0.9 Slow
     // 射程 5(2018-10 从 6.5 下调)只打建筑;projectile speed 1000×0.025=25格/s
     // (实弹炮弹,弹道可见);C++:RangedBuildingTargeter sight 7.5
     // (2016-02-29 与公主同批上线,索引曾漏登;2018-10 部署 2s→1s)
     // 机制:远程攻城——站在塔射程(7.5)边缘外炮击;对塔全额(部队无 towerMult)
   elixirCollector: { id:'elixirCollector', name:'圣水收集器', cost:6, rarity:'稀有', kind:KIND.BUILDING,
-    hp:535, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
+    hp:1070, dmg:0, hitSpeed:0, firstHit:1.0, range:0, sightRange:0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:93, color:'#d32f2f', radius:1.35,
     special:{ produceElixir:{ amount:1, interval:8.5 } } },  // wiki:寿命 1min33s=93s,产 10 滴(净+4)
   xbow: { id:'xbow', name:'X连弩', cost:6, rarity:'史诗', kind:KIND.BUILDING,
-    hp:800, dmg:22, hitSpeed:0.3, firstHit:0.3, range:11.5, sightRange:11.0, speed:0,
+    hp:1600, dmg:43, hitSpeed:0.3, firstHit:0.3, range:11.5, sightRange:11.0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:0, deployTime:1, lifetime:30, color:'#5d4037', radius:1.35,
     special:{} },  // wiki:寿命 30s。Target=Ground(打一切地面目标,含
     // 部队——此前误设 targetsTower 只索塔,导致连弩被戈仑白打不还手)
   mortar: { id:'mortar', name:'迫击炮', cost:4, rarity:'普通', kind:KIND.BUILDING,
-    hp:684, dmg:133, hitSpeed:5.0, firstHit:1.0, range:12.08, sightRange:12.0, speed:0,
+    hp:1369, dmg:266, hitSpeed:5.0, firstHit:1.0, range:12.08, sightRange:12.0, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:2.0, deployTime:1, lifetime:30, color:'#6d4c41', radius:1.35,
     special:{ blindSpot:4.0 } },  // wiki:近身盲区(过近打不着),其余地面目标均可打
 
   // ===== 法术 =====
   fireball: { id:'fireball', name:'火球', cost:4, rarity:'稀有', kind:KIND.SPELL,
-    radius:2.5, dmg:344, knockback:0.6, color:'#ff6f00', deployZone:'anywhere', projectile: 15 },  // 投射速度600(wiki),从国王塔飞出
+    radius:2.5, dmg:688, knockback:0.6, color:'#ff6f00', deployZone:'anywhere', projectile: 15 },  // 投射速度600(wiki),从国王塔飞出
   arrows: { id:'arrows', name:'万箭齐发', cost:3, rarity:'普通', kind:KIND.SPELL,
-    radius:3.5, dmg:61, knockback:0, color:'#bdbdbd', deployZone:'anywhere',
+    radius:3.5, dmg:122, knockback:0, color:'#bdbdbd', deployZone:'anywhere',
     special:{ hits:3 }, projectile: 27.5 },  // 投射速度1100(wiki);每单位命中3次;半径3.5(wiki)
   rocket: { id:'rocket', name:'火箭', cost:6, rarity:'稀有', kind:KIND.SPELL,
-    radius:2.0, dmg:742, knockback:0.3, color:'#d50000', deployZone:'anywhere', projectile: 8.75 },  // 投射速度350(wiki),全场约3.2s
+    radius:2.0, dmg:1484, knockback:0.3, color:'#d50000', deployZone:'anywhere', projectile: 8.75 },  // 投射速度350(wiki),全场约3.2s
   lightning: { id:'lightning', name:'雷电法术', cost:6, rarity:'史诗', kind:KIND.SPELL,
-    radius:3.5, dmg:528, knockback:0, color:'#ffd600', deployZone:'anywhere',
+    radius:3.5, dmg:1057, knockback:0, color:'#ffd600', deployZone:'anywhere',
     special:{ chain:3, stun:0.5 } },  // 半径3.5(wiki:2018-04-25 从3恢复3.5);眩晕0.5s·无击退(wiki)
   zap: { id:'zap', name:'电击法术', cost:2, rarity:'普通', kind:KIND.SPELL,
-    radius:2.5, dmg:96, knockback:0, color:'#29b6f6', deployZone:'anywhere',
+    radius:2.5, dmg:192, knockback:0, color:'#29b6f6', deployZone:'anywhere',
     special:{ stun:0.5 }, castTime: 0.5 },  // 施法时间0.5s(wiki);半径2.5(wiki);眩晕0.5s·无击退(wiki,击退是火球/滚木/雪球特性)
   rage: { id:'rage', name:'狂暴法术', cost:2, rarity:'史诗', kind:KIND.SPELL,
     radius:3.0, dmg:0, knockback:0, color:'#ff1744', deployZone:'anywhere',
     special:{ buff:1.35, duration:6.0 } },  // 半径3(wiki);狂暴是增益法术,半径是buff范围
   freeze: { id:'freeze', name:'冰冻法术', cost:4, rarity:'史诗', kind:KIND.SPELL,
-    radius:3.0, dmg:58, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
-    special:{ freeze:4.0 } },  // 即时生效;伤害 115/2=58(11级×0.5),对塔约 17.5(倍率表 0.3 换算)
+    radius:3.0, dmg:115, knockback:0, color:'#4fc3f7', deployZone:'anywhere',
+    special:{ freeze:4.0 } },  // 即时生效;伤害 115,对塔 34.5(倍率表 0.3 换算)
   goblinBarrel: { id:'goblinBarrel', name:'哥布林飞桶', cost:3, rarity:'史诗', kind:KIND.SPELL,
     radius:1.5, dmg:0, knockback:0, color:'#7cb342', deployZone:'anywhere', projectile: 13,
     special:{ spawnUnits:{ card:'goblins', count:3, deployTime:1.1, ring:1.6 } } },
@@ -269,17 +269,17 @@ export const CARDS = {
     // 官方行为——塔先打靠国王塔一侧的,AOE 难一次全清)
   poison: { id:'poison', name:'毒药', cost:4, rarity:'史诗', kind:KIND.SPELL,
     radius:3.5, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere', castTime: 0.5,
-    special:{ dot:{ dmg:46, towerDmg:11, hits:8, tick:1.0, slow:{ duration:1.2, factor:0.85 } } } },
-    // wiki 11级×0.5:每跳 92/2=46·共8跳(每秒1跳·持续8s)·对塔 22/2=11/跳;
+    special:{ dot:{ dmg:92, towerDmg:22, hits:8, tick:1.0, slow:{ duration:1.2, factor:0.85 } } } },
+    // wiki 11级:每跳 92·共8跳(每秒1跳·持续8s)·对塔 22/跳;
     // 半径3.5;减速15%(factor0.85,2019回归的版本);伤害不即时(首跳延迟1s);
     // 2016-02-29 实装;对空对地,出圈即不受伤(减速短暂残留)
   mirror: { id:'mirror', name:'镜像法术', cost:0, rarity:'史诗', kind:KIND.SPELL,
     radius:0, dmg:0, knockback:0, color:'#9c27b0', deployZone:'anywhere',
     special:{ mirror:true } },
   theLog: { id:'theLog', name:'滚木', cost:2, rarity:'传奇', kind:KIND.SPELL,
-    radius:1.95, dmg:133, knockback:0, color:'#8d6e63', deployZone:'riverbanks',
+    radius:1.95, dmg:266, knockback:0, color:'#8d6e63', deployZone:'riverbanks',
     special:{ roll:{ range:10.1, width:3.9, speed:5.0, knockback:0.7 }, groundOnly:true } },
-    // wiki 11级×0.5:dmg 266/2=133·射程10.1·宽3.9·击退0.7格(2023-02 从1.0降)
+    // wiki 11级:dmg 266·射程10.1·宽3.9·击退0.7格(2023-02 从1.0降)
     // 弹速 wiki 200(2016-08 提到)×0.025=5格/s(滚动约 2s 走完全程)
     // 只打地面(groundOnly);对塔伤害走 TOWER_MULT(滚木官方对塔大幅减伤)
     // 部署限制:只能己方半场+河带(deployZone:'riverbanks'——官方"can only
@@ -289,9 +289,9 @@ export const CARDS = {
 
   // ===== 内部卡(不在选择列表)=====
   golemite: { id:'golemite', name:'小戈仑', cost:0, rarity:'史诗', kind:KIND.TROOP,
-    hp:520, dmg:42, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
+    hp:1039, dmg:84, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:0, color:'#7cb342', radius:0.42,
-    special:{ deathDamage:{ dmg:50, splash:1.5, targets:T.ALL } }, hidden:true },  // wiki 11级×0.5:hp 1039/2≈520 dmg 84/2=42 死亡 99/2≈50 近战 Short 0.75
+    special:{ deathDamage:{ dmg:99, splash:1.5, targets:T.ALL } }, hidden:true },  // wiki 11级:hp 1039 dmg 84 死亡 99 近战 Short 0.75
 };
 
 export const SELECTABLE_CARDS = Object.keys(CARDS).filter(k => !CARDS[k].hidden && k !== 'golemite');
