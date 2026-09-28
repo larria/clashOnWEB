@@ -598,20 +598,16 @@ export class Game {
       }
 
       if (u.target) {
-        // kamikaze 起跳(冰雪精灵类):锁定目标瞬间即起跳扑击,跳跃全程
-        // 无敌(空中无法被选中/攻击,塔箭打不掉)——官方精灵被塔射到
-        // 残血后跳过去冻住+伤害塔(wiki Strategy "sufficient hitpoints
-        // to reach an opposing Tower Princess";无敌帧概念对齐 C++
-        // chargeGrantsInvulnerability 的通用机制)。冲刺 ×3 已在
-        // unit.speed 表达;换目标重新起跳
+        // kamikaze 起跳(冰雪精灵类):锁定目标瞬间即起跳扑击。
+        // 2026-08-26 官方平衡更新:精灵不再单独连塔(No longer connect
+        // to Crown Towers on their own)——hp 230→215 后塔两箭 218≥215,
+        // 起跳不附无敌帧(扑击 2.5 格内冲刺,但暴露路程上第 2 箭先到),
+        // 单独的精灵死在半路;需前排坦克吸塔伤才能贴塔自爆。
+        // _leapAt 仅存起跳时刻供渲染层画跳跃弧线;冲刺 ×3 在 unit.speed
         const kami = u.card.special && u.card.special.kamikaze;
         if (kami && u._leaptFor !== u.target.ref) {
           u._leaptFor = u.target.ref;
           u._leapAt = this.time;               // 起跳时刻(渲染层画跳跃弧线)
-          // 无敌帧:扑击飞行时间 = 到触发距离的剩余路程/冲刺速度 + 余量
-          const leapDist = Math.max(0, dist(u, u.target.ref) - (u.card.splash || 1.5));
-          const leapSpeed = u.speed;           // getter:冲刺 ×3 已含
-          u.invulnUntil = this.time + leapDist / Math.max(0.1, leapSpeed) + 0.3;
         }
         if (this.inAttackRange(u, u.target)) {
           // 在攻击范围,攻击

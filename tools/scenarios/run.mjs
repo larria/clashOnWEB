@@ -702,29 +702,29 @@ const SCENARIOS = {
   ok(t < 1.3, `自爆应发生在塔第 2 箭前(t=${t.toFixed(2)}s < 1.3s)`);
 },
 
-'冰精灵-跳跃无敌(残血摸塔)': () => {
-  // v0.6.16 用户战报:从桥口出发的精灵被塔 2 箭(旧口径 54×2=108=hp)秒杀,
-  // 摸不到塔。v0.7.0 官方原值:hp 215 vs 塔两箭 218,第 2 箭即死——
-  // "血量硬吃"依然不成立,摸塔的机制支撑不变:精灵被塔射到残血后
-  // "跳过去"冻住+伤害塔(wiki:2026-08 血量削弱 6% 后行为仍然如此)——
-  // 跳跃期间无法被选中/攻击(无敌帧,概念对齐 C++ chargeGrantsInvul)
-  // 修复:kamikaze 锁定目标瞬间起跳,扑击全程无敌;自爆走 bypassInvuln
-  // (主动行为不被自身无敌帧挡——否则首击自爆被吞,延迟一整轮 hitSpeed)
+'冰精灵-不再单独连塔(2026-08削弱)': () => {
+  // 2026-08-26 官方平衡更新:精灵不再单独连塔(No longer connect to
+  // Crown Towers on their own)。hp 230→215(-6%)后塔两箭 218≥215,
+  // 起跳不附无敌帧——暴露路程上第 2 箭先到,单独的精灵死在半路。
+  // 本场景 v0.6.16-v0.7.0 曾断言"跳跃无敌保自爆",官方削弱后反转。
   const g = newGame();
-  // 远距离出发(桥口,暴露在塔射程内 >1.3s,修复前必死)
-  const sp = g.spawnUnit('iceSpirit', 0, 3.5, 17.5);
+  const sp = g.spawnUnit('iceSpirit', 0, 3.5, 17.5);   // 桥口出发(暴露塔射程)
   sp.deployTimer = 0;
   const tw = g.towers[1].left;
-  let t = 0, hpAtLeap = null;
+  let t = 0;
   while (!sp.dead && t < 10) { g.update(1/30); t += 1/30; }
-  ok(sp.dead, `精灵应完成自爆(t=${t.toFixed(2)}s)`);
-  ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${Math.round(tw.maxHp - tw.hp)})`);
-  ok(tw.frozen > 0 || t < 3.9, `塔被冻结(frozen 观察时点 ${tw.frozen.toFixed(1)})`);
-  ok(Math.round(tw.maxHp - tw.hp) === 110, `自爆伤害 110(实际 ${Math.round(tw.maxHp - tw.hp)})`);
-  // 无敌帧验证:起跳后塔伤无效(桥口出发吃 1 箭后 hp 恒 106 到爆)
-  // 精灵 hp 215 vs 塔 109:走路阶段吃 1 箭(剩 106),起跳后免疫第 2 箭 → 自爆
-  // (若无跳跃无敌,第 2 箭 109>106 会把它打死在半路——机制价值所在)
-  ok(t < 3.0, `桥口出发应在 3s 内贴塔(t=${t.toFixed(2)}s;被塔打死则 >2.4s 且无塔伤)`);
+  ok(sp.dead, `精灵已死亡(t=${t.toFixed(2)}s,吃塔 2 箭)`);
+  ok(Math.round(tw.maxHp - tw.hp) === 0, `单独出发摸不到塔(塔扣 ${Math.round(tw.maxHp - tw.hp)})`);
+  ok(Math.hypot(sp.x - tw.x, sp.y - tw.y) > 2.5, `死在半路(距塔 ${Math.hypot(sp.x - tw.x, sp.y - tw.y).toFixed(1)} 格 > 2.5)`);
+  // 配合坦克(not on their own):前排吸塔伤,精灵贴塔自爆
+  const g2 = newGame();
+  const giant = g2.spawnUnit('giant', 0, 3.5, 10); giant.deployTimer = 0;
+  const sp2 = g2.spawnUnit('iceSpirit', 0, 3.5, 17.5); sp2.deployTimer = 0;
+  const tw2 = g2.towers[1].left;
+  let t2 = 0;
+  while (!sp2.dead && t2 < 12) { g2.update(1/30); t2 += 1/30; }
+  ok(Math.round(tw2.maxHp - tw2.hp) >= 110, `坦克掩护下自爆成功(塔扣 ${Math.round(tw2.maxHp - tw2.hp)} ≥ 110)`);
+  ok(tw2.frozen > 0 || Math.round(tw2.maxHp - tw2.hp) >= 110, '自爆含冻结或已全额伤害');
 },
 
 '皇家巨人-远程攻城与不打单位': () => {
@@ -847,18 +847,26 @@ const SCENARIOS = {
   ok(Math.round(m.hp) === 23, `圈内空中亡灵残血 230-207=23(实际 ${Math.round(m.hp)})`);
 },
 
-'火精灵-跳跃无敌摸塔(全额伤害)': () => {
-  // 同冰雪精灵机制:锁定起跳+扑击无敌;塔伤害 104 全额(法术减伤表
-  // 只列法术;wiki "same damage as Fireball" 句数值矛盾不采纳)
+'火精灵-不再单独连塔(2026-08削弱)': () => {
+  // 2026-08-26 精灵削弱:同冰雪精灵,不再单独连塔(见上一场景)。
+  // 单独出发吃塔 2 箭死在半路;坦克掩护下自爆对塔 207 全额
+  // (法术减伤表只列法术;wiki "same damage as Fireball" 句数值矛盾不采纳)
   const g = newGame();
   const fs = g.spawnUnit('fireSpirit', 0, 3.5, 17.5);   // 桥口出发(暴露塔射程)
   fs.deployTimer = 0;
   const tw = g.towers[1].left;
   let t = 0;
   while (!fs.dead && t < 10) { g.update(1/30); t += 1/30; }
-  ok(tw.hp < tw.maxHp, `塔被自爆伤害(扣 ${Math.round(tw.maxHp - tw.hp)})`);
-  ok(Math.round(tw.maxHp - tw.hp) === 207, `全额 207(实际 ${Math.round(tw.maxHp - tw.hp)})`);
-  ok(tw.frozen === 0, `无冻结(frozen=${tw.frozen},火精灵纯伤害)`);
+  ok(Math.round(tw.maxHp - tw.hp) === 0, `单独出发摸不到塔(塔扣 ${Math.round(tw.maxHp - tw.hp)})`);
+  // 坦克掩护:自爆全额 207、无冻结
+  const g2 = newGame();
+  const giant = g2.spawnUnit('giant', 0, 3.5, 10); giant.deployTimer = 0;
+  const fs2 = g2.spawnUnit('fireSpirit', 0, 3.5, 17.5); fs2.deployTimer = 0;
+  const tw2 = g2.towers[1].left;
+  let t2 = 0;
+  while (!fs2.dead && t2 < 12) { g2.update(1/30); t2 += 1/30; }
+  ok(Math.round(tw2.maxHp - tw2.hp) >= 207, `坦克掩护下全额自爆(塔扣 ${Math.round(tw2.maxHp - tw2.hp)} ≥ 207)`);
+  ok(tw2.frozen === 0, `无冻结(frozen=${tw2.frozen},火精灵纯伤害)`);
 },
 
 '冰精灵-自杀攻击冻结群体': () => {

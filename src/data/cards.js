@@ -102,10 +102,11 @@ export const CARDS = {
     // wiki 11级:hp 215 dmg 110;溅射1.5·冻结1.1s·极快(2.0格/s)
     // 官方 kamikaze 8 卡之一:命中即死(as part of its attack),对空对地
     // (2016-05-03 批次);冻结=时间停止(frozen),非减速
-    // hp 口径:2026-08-04 平衡更新血量 -6%(229→215),同级塔 109×2=218
-    // 第 2 箭即死——摸塔依赖跳跃无敌而非血量硬吃(wiki Strategy 节
-    // "sufficient hitpoints to reach an opposing Tower Princess" 附条件:
-    // 精灵等级低于塔不成立)
+    // hp 口径:2026-08-26 平衡更新血量 -6%(230→215)且不再单独连塔
+    // (官方公告 No longer connect to Crown Towers on their own):
+    // 同级塔 109×2=218≥215,第 2 箭即死,单独的精灵死在半路;
+    // 需前排坦克吸塔伤才能贴塔自爆(wiki Strategy 节"sufficient
+    // hitpoints"句为此前版本表述)
   iceGolem: { id:'iceGolem', name:'冰人', cost:2, rarity:'稀有', kind:KIND.TROOP,
     hp:1315, dmg:84, hitSpeed:2.5, firstHit:1.0, range:0.75, sightRange:5.5, speed:SPEED.SLOW,
     targets:T.BUILDING, flying:false, count:1, splash:0, deployTime:1, color:'#b3e5fc', radius:0.42,
@@ -119,7 +120,8 @@ export const CARDS = {
     special:{ kamikaze:{} } },
     // wiki 11级:hp 215 dmg 207;溅射 2.3(2021 从 2.5 下调,
     // "largest area damage radius of all troops")·极快(2.0格/s)·对空对地
-    // 官方 kamikaze 8 卡之一:命中即死,跳跃无敌(v0.6.16 机制)同冰雪精灵
+    // 官方 kamikaze 8 卡之一:命中即死;2026-08-26 削弱后同冰雪精灵
+    // 不再单独连塔(hp 215 < 塔两箭 218,需坦克掩护)
     // (2016-05-03 批次);无冻结附加(纯伤害,高 dmg 低费是定位)
     // 对塔全额伤害(机制口径:法术对塔减伤表只列法术;wiki "same damage
     // to Crown Towers as the Fireball" 一句与 207≠688×0.25 矛盾,不采纳)

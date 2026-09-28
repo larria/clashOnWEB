@@ -76,11 +76,8 @@ export class Unit {
       s *= this.card.special.charge.speedMult;
     }
     // kamikaze 冲刺(冰雪精灵类):进入射程(起跳点)后扑击加速 ×3——
-    // 官方精灵起跳扑向目标爆开。起跳瞬间同时获得跳跃无敌帧
-    // (见 game.updateUnits 的 kamikaze 起跳处理):空中无法被选中/
-    // 攻击,塔箭打不掉它——官方"被塔射到残血后跳过去冻住塔"的
-    // 机制支撑(wiki Strategy "sufficient hitpoints to reach an
-    // opposing Tower Princess" + C++ chargeGrantsInvulnerability 同概念)
+    // 官方精灵起跳扑向目标爆开。2026-08-26 平衡更新后起跳不附无敌帧
+    // (hp 215 < 塔两箭 218,单独的精灵死在半路,见 game.updateUnits)
     if (this.card.special && this.card.special.kamikaze && this.target) {
       s *= 3;
     }

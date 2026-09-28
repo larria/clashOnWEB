@@ -486,9 +486,10 @@ export function attackTarget(attacker, target, game) {
     // 自爆音效(走法术命中事件:spell_iceSpirit/spell_fireSpirit)
     game.bus.emit('spell:hit', { cardId: attacker.cardId, side: attacker.side,
       x: e.x, y: e.y, radius: card.splash || 1.5, hits: 1, kills: [] });
-    // 自杀:走 dealDamage 死亡管线(死亡能力/事件/特效统一);
-    // bypassInvuln:自爆是主动行为,不被自身扑击无敌帧挡
-    // (否则首击被无敌帧吞掉,要等 hitSpeed 一整轮才能再自爆)
+    // 自杀:走 dealDamage 死亡管线(死亡能力/事件/特效统一)。
+    // bypassInvuln 保留:自爆是主动行为,不受任何无敌帧挡
+    // (2026-08-26 起扑击不再附无敌帧,此处保留是通用正确性——
+    // 若精灵在跳跃中经过其他无敌源,自爆仍应正常结算)
     game.dealDamage(attacker, attacker.hp + 999, null, null, { bypassInvuln: true });
     attacker.atkAnim = 0.3;
     return;
