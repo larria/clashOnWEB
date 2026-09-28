@@ -92,6 +92,23 @@ export const SIDE_AI = 1;
 export function canDeploy(side, x, y, enemyTowers, opts = {}, myTowers, buildingUnits) {
   // 卡牌级部署规则优先(打破常规部署区域的卡:法术/矿工/飞桶…)
   if (opts.zone === 'anywhere') return true;
+  // 矿工类全图部署(规格 §8.4b deployAnywhere):跳过己方半场规则,
+  // 但河道非桥与建筑/塔占地仍禁(C++ isValidPlacement 注释明言
+  // "skip the own-half rule but not the building check")。
+  // 与法术的 'anywhere'(河面可放,半径是效果范围)区分
+  if (opts.zone === 'anywhereGround') {
+    if (y < 0 || y > GRID_H || x < 0 || x > GRID_W) return false;
+    if (isRiver(x, y) && !isBridge(x, y)) return false;   // 河道非桥禁
+    // 塔占面积 + 建筑单位占位(与常规部署同判定)
+    if (blockByTower(enemyTowers, x, y) || blockByTower(myTowers, x, y)) return false;
+    if (buildingUnits) {
+      for (const b of buildingUnits) {
+        if (!b || b.dead || !b.isBuilding) continue;
+        if (Math.abs(x - b.x) <= b.radius && Math.abs(y - b.y) <= b.radius) return false;
+      }
+    }
+    return true;
+  }
   // 河岸区(滚木):己方半场 + 河带(官方"can only be deployed on the
   // player's own side";深入敌方半场会滚出棋盘——C++ isValidPlacement
   // 的 rolling spell 特例,边界取河的近岸)

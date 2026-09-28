@@ -47,7 +47,7 @@ export function findTarget(unit, game) {
 
   // 敌方单位(含建筑单位——攻城单位可被敌方建筑牵引)
   if (!towerOnly) {
-    const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
+    const enemies = game.units.filter(u => u.side !== unit.side && !u.dead && !u._digTo);   // 地下单位(矿工挖掘)不可被索敌
     for (const e of enemies) {
       let valid = canTarget(unit, e.card, e.flying, e.isBuilding);
       if (!valid) continue;
@@ -118,7 +118,7 @@ export function findNearestEnemyUnit(unit, game) {
   const card = unit.card;
   const sightR = effectiveSight(unit);
   let best = null, bestD = Infinity;
-  const enemies = game.units.filter(u => u.side !== unit.side && !u.dead);
+  const enemies = game.units.filter(u => u.side !== unit.side && !u.dead && !u._digTo);   // 地下单位(矿工挖掘)不可被索敌
   // 只打建筑的单位(巨人/野猪/气球):只对敌方建筑感兴趣(被牵引)
   const onlyBuilding = (card.targets === T.BUILDING);
   for (const e of enemies) {
@@ -508,10 +508,14 @@ export function attackTarget(attacker, target, game) {
     }
   } else if (target.type === 'tower') {
     const tw = target.ref;
+    // 部队对塔减伤(矿工 ×0.25,wiki crown_11=48=194×0.25;卡面 quote
+    // "reduced damage to Crown Towers")——部队版 per-card towerMult,
+    // 与法术 TOWER_MULT 表分离(法术减伤是法术专属机制)
+    const towerDmg = dmg * (card.towerMult != null ? card.towerMult : 1);
     if (card.splash && card.splash > 0) {
-      applySplash(game, attacker, tw.x, tw.y, card.splash, dmg, card.targets);
+      applySplash(game, attacker, tw.x, tw.y, card.splash, towerDmg, card.targets);
     } else {
-      game.dealTowerDamage(tw, dmg);
+      game.dealTowerDamage(tw, towerDmg);
     }
     // 塔同样被减速(攻速降低;塔攻击间隔由 tower.update 驱动;
     // Tower 构造器已初始化 slowTimer/slowFactor)

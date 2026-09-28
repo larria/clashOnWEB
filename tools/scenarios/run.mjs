@@ -725,6 +725,43 @@ const SCENARIOS = {
   ok(t < 3.0, `桥口出发应在 3s 内贴塔(t=${t.toFixed(2)}s;被塔打死则 >2.4s 且无塔伤)`);
 },
 
+'矿工-全图部署与挖掘': () => {
+  // 2016-05-03 批次,第 3 张传奇。规格 §8.4b:全图部署(anywhereGround,
+  // 河道非桥与建筑/塔占地仍禁);出生在己方国王塔,直线挖到落点
+  // (官方 burrow 650×0.025=16.25格/s),地下期间不可被索敌/法术伤害;
+  // 对塔伤害 ×0.25(wiki crown_11=48=194×0.25)
+  const g = newGame();
+  ok(deployCard('miner', 0, 3.5, 8.5, g), '敌方半场可部署');
+  const g2 = newGame();
+  ok(!deployCard('miner', 0, 9, 16, g2), '河道非桥禁部署');
+  const g3 = newGame();
+  ok(!deployCard('miner', 0, 9, 3, g3), '塔占格禁部署');
+  // 挖掘:出生在国王塔 → 直线到落点
+  const g4 = newGame();
+  deployCard('miner', 0, 3.5, 8.5, g4);
+  const m = g4.units.find(u => u.cardId === 'miner');
+  ok(m && Math.abs(m.x - 9) < 0.1 && Math.abs(m.y - 29) < 0.1, `出生在己方国王塔(实际 ${m.x},${m.y})`);
+  ok(m._digTo && m._digTo.x === 3.5, '携带挖掘目标');
+  // 挖掘期间塔不索敌它(塔 target 不含地下单位)
+  run(1.2, g4);
+  const tw = g4.towers[1].left;
+  ok(!tw.target || tw.target.ref !== m, '地下矿工不被塔索敌');
+  // 落地后正常交战,对塔伤害减伤
+  run(7, g4);
+  const dealt = tw.maxHp - tw.hp;
+  ok(dealt > 0 && dealt < 200, `对塔伤害 ${Math.round(dealt)}(减伤 24.25/击;全额 97/击会远超 200)`);
+  ok(Math.abs(m.x - 3.5) < 1 && Math.abs(m.y - 8.5) < 1.5, `落地位置正确(${m.x.toFixed(1)},${m.y.toFixed(1)})`);
+},
+
+'矿工-挖掘期间法术免伤': () => {
+  const g = newGame();
+  deployCard('miner', 0, 3.5, 8.5, g);
+  const m = g.units.find(u => u.cardId === 'miner');
+  castSpell('fireball', 1, 3.5, 8.5, g);   // 对手火球砸落点(最坏情况)
+  run(1.2, g);                              // 挖掘 1.31s,1.2s 时仍在地下
+  ok(m.hp === m.maxHp, `地下期间火球无效(hp=${Math.round(m.hp)})`);
+},
+
 '熔炉-走路产兵与自身攻击': () => {
   // 2016-05-03 批次:4 费稀有部队(2025-08 起会走!),远程单体攻击
   // (90/1.7s/射程 5.5/对空对地)+ 每 5s 身前产 1 只火精灵(2026-04

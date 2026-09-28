@@ -5,6 +5,53 @@
 
 ---
 
+## 2026-09-28 实装掘地矿工 Miner(v0.6.19)
+
+**第 51 张卡:传奇部队,2016-05-03 批次(第 3 张传奇)。**
+
+### 规格考证(wiki + C++ GameManager::isValidPlacement)
+
+- **全图部署**(C++ `deployAnywhere`):跳过己方半场规则,但河道非桥
+  与建筑/塔占地仍禁(C++ 注释明言 "skip the own-half rule but not the
+  building check")——固化到规格 §8.4b
+- **挖掘机制**:从己方国王塔出发挖到落点(与投射法术同源),官方
+  burrow 速度 650(全单位最快)×0.025=16.25 格/s;地下期间不可被
+  选中/攻击;落地后普通单位,不能再挖
+- **对塔伤害 ×0.25**(wiki crown_11=48=194×0.25,卡面 quote "reduced
+  damage to Crown Towers");对其他建筑全额
+- **信息不对称**:对手只见挖掘轨迹方向,不见落点标记(社区技巧:
+  从轨迹走向推断塔的哪个角落)
+
+### 实现(4 个新机制点)
+
+1. `canDeploy` 新 zone `'anywhereGround'`(矿工专规,与法术的
+   'anywhere'(河面可放)区分)
+2. `deployCard` dig 分支:出生在己方国王塔 + `_digTo` 落点 +
+   invulnUntil 覆盖行程(地下免伤);`game.updateUnits` 挖掘推进分支
+   (直线穿越,落地清状态);索敌三处(findTarget/findNearestEnemyUnit/
+   findTowerTarget)过滤 `_digTo` 地下单位
+3. `attackTarget` 部队版 `towerMult`(per-card,与法术 TOWER_MULT 表
+   分离——法术减伤是法术专属机制)
+4. 渲染:挖掘轨迹 digTrail(双方可见,虚线地道+推进土堆)+ 落点标记
+   digMark(仅施放方视角)+ 落地破土 digSurface;挖掘期间矿工本体
+   隐藏(pixi+canvas 双层);部署遮罩 zone-aware(矿工选中时全图遮罩,
+   河道非桥/建筑仍红——两层遮罩缓存键均含 zone)
+5. AI:WIN_CON+COUNTERS 注册;矿工专用候选(对手圣水 ≤3 时挖最弱
+   公主塔的内侧前角——wiki 推荐位,距国王塔最近更早开打)
+
+数值:hp 605 dmg 97 攻速 1.3 前摇 0.5 Fast 近战 1.2 只打地面。
+
+### 验证
+
+- 场景 57→59 全绿(矿工-全图部署与挖掘:敌方半场可放/河道非桥禁/
+  塔占格禁/出生国王塔/地下不被索敌/落地后对塔减伤;矿工-挖掘期间
+  法术免伤:火球砸落点无效)
+- AI 评测 400 局无异常
+- 浏览器实测(动态 import 新模块绕过本地缓存):digTrail/digMark
+  效果生成、6s 落地开打、对塔 194≈8 击×24.25 减伤值
+
+---
+
 ## 2026-09-27 实装熔炉 Furnace(v0.6.18)
 
 **第 50 张卡:稀有部队,2016-05-03 批次。**

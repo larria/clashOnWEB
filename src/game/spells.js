@@ -264,6 +264,28 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
   if (!opts.bypass && !canDeploy(side === 0 ? 'player' : 'ai', x, y, enemyTowers, { zone: card.deployZone }, myTowers, buildings)) return false;
 
   const count = card.count || 1;
+  // 矿工挖掘(规格 §8.4b):出生点 = 己方国王塔,_digTo 目标落点;
+  // 地下直线穿越(无视河/单位),期间不可被选中/攻击(invisible 语义
+  // 用 invulnUntil + 挖掘状态表达);落地音效+尘土特效。
+  // 视觉:挖掘轨迹(digTrail 效果,双方可见——对手只见轨迹方向推落点,
+  // 不见落点标记;落点标记 digMark 仅施放方视角渲染)
+  const dig = card.special && card.special.dig;
+  if (dig) {
+    const king = game.towers[side].king;
+    const u = game.spawnUnit(cardId, side, king.x, king.y);
+    const dist = Math.hypot(x - king.x, y - king.y);
+    const dur = dist / dig.speed;
+    u._digTo = { x, y };
+    u._digDur = dur;
+    u._digT = 0;
+    u.invulnUntil = game.time + dur;   // 地下不可被攻击
+    // 视觉:轨迹(双方可见,方向线索)+ 落点标记(渲染层按 side 只画己方)
+    game.addEffect({ type: 'digTrail', side, fromX: king.x, fromY: king.y, toX: x, toY: y,
+      life: dur + 0.4, maxLife: dur + 0.4 });
+    game.addEffect({ type: 'digMark', side, x, y, life: dur + 0.5, maxLife: dur + 0.5 });
+    game.lastPlayedCard[side] = cardId;
+    return true;
+  }
   // 多体单位排布 + 逐个落地(对齐官方 deploy stagger:多单位卡每个
   // 间隔 ~0.1 秒依次出现,期间虚影/不可行动但可被攻击;骷髅军团是
   // 官方例外——scatter 阵型全体同时落地,不设 stagger)

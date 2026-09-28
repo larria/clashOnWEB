@@ -398,6 +398,20 @@ static_assert(TRIPLE == REGULATION_END)   // 三倍圣水与加时同刻,编译�
 
 Miner/Goblin Drill 的 `deployAnywhere` 跳过半场规则但**不跳过**建筑重叠检查。
 
+### 8.4b 矿工挖掘机制(官方行为观察 + wiki;C++ 只建了 deployAnywhere,未建模行程)
+
+```
+部署:全图任意点(己方/敌方半场皆可),但河道非桥格与建筑/塔占地仍禁
+行程:从己方国王塔出发挖到落点(与投射法术同源),耗时 ∝ 距离
+      (官方 burrow 速度 650,全单位最快;落点越近到达越早——
+       "inner front corner tile 距 King Tower 最近,更早开始攻击")
+落地:resurface 后为普通地面单位(Fast 近战);不能再次挖地
+对塔:伤害 ×0.25(wiki crown_11=48=194×0.25,卡面 quote 明言
+      "deals reduced damage to Crown Towers");对其他建筑全额
+信息:对手视角只见挖掘轨迹方向,不见落点标记——
+      有经验玩家从轨迹走向推断塔的哪个角落(社区共识技巧)
+```
+
 ### 8.5 tick 主循环(step)
 
 ```

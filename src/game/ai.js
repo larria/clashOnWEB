@@ -47,6 +47,7 @@ const COUNTERS = {
   babyDragon:    ['musketeer', 'minions', 'archers', 'wizard'],
   knight:        ['minions', 'skeletonArmy', 'miniPekka', 'barbarians'],
   // 建筑(玩家在我方领土附近放的防御建筑不响应,但进攻型建筑需要处理)
+  miner:         ['skeletons', 'goblins', 'guards', 'minions'],   // 矿工:小兵围杀(高 hp 单体)
   xbow:          ['hogRider', 'giant', 'rocket', 'miniPekka'],
   mortar:        ['hogRider', 'giant', 'miniPekka', 'rocket'],
 };
@@ -54,7 +55,7 @@ const COUNTERS = {
 // 卡牌角色分类(用于进攻组队)
 export const ROLE = {
   TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie', 'iceGolem'],
-  WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka'],
+  WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka', 'miner'],
   SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess', 'furnace'],
   CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows', 'iceSpirit', 'fireSpirit'],
   SPELL: ['fireball', 'arrows', 'rocket', 'lightning', 'zap', 'freeze', 'rage', 'theLog'],
@@ -407,6 +408,22 @@ export class AI {
         if (this.canPlace(this.counterPushLaneX, py)) {
           out.push({ cardId: this.hand[i], x: this.counterPushLaneX, y: py, handIndex: i, role: 'counter_push', score: 34 });
           break;
+        }
+      }
+    }
+
+    // 3c-bis. 矿工:挖敌方最弱公主塔的"内侧前角"(wiki 推荐
+    // inner front corner——距己方国王塔最近,更早开始攻击;对手圣水
+    // 不足时是最佳挖塔窗口)。矿工走 anywhereGround,不受常规部署区限制
+    const minerIdx = this.hand.indexOf('miner');
+    if (minerIdx >= 0 && elixir >= 3 && game.elixir[1 - this.side] <= 3) {
+      const mt = this._pickTargetTower();
+      if (mt) {
+        // 内侧前角:塔心朝中线偏 1 格、朝敌方一侧偏 1 格(AI side1 攻下方)
+        const mx = mt.x + (mt.x < 9 ? 1 : -1);
+        const my = mt.y + 1.1;
+        if (this.canPlace(mx, my, 'miner')) {
+          out.push({ cardId: 'miner', x: mx, y: my, handIndex: minerIdx, role: 'wincon', score: 22 });
         }
       }
     }

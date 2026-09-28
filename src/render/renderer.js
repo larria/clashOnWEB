@@ -108,6 +108,7 @@ export class Renderer {
       this.pixi.setShake(shakeX, shakeY);
       this.pixi.showDeployZone = !!(deployPreview &&
         CARDS[deployPreview.cardId].kind !== KIND.SPELL && settings.get('showDeployZone'));
+      this.pixi.deployZone = deployPreview ? CARDS[deployPreview.cardId].deployZone : 'own';
       this.pixi.render(dt == null ? 0.016 : dt);
     }
     // ===== fx 层(本层):状态叠加 + 特效 + 预览 + 暗角 =====
@@ -121,7 +122,7 @@ export class Renderer {
       this.drawArena();
       const previewCard = deployPreview ? CARDS[deployPreview.cardId] : null;
       const showDeployZone = previewCard && previewCard.kind !== KIND.SPELL && settings.get('showDeployZone');
-      if (showDeployZone) this.drawDeployMask();
+      if (showDeployZone) this.drawDeployMask(previewCard.deployZone);
       this.drawTowers();
       this.drawUnits();
     } else {
@@ -145,9 +146,10 @@ export class Renderer {
    * 变化时重算(塔被毁/建筑增减),缓存到离屏;每帧仅 drawImage +
    * 呼吸透明度。alpha 呼吸用整层 globalAlpha 变化,不动缓存内容
    */
-  drawDeployMask() {
+  drawDeployMask(zone) {
     const ctx = this.ctx;
     const t = this.animTime;
+    // zone 缺省 'own';矿工 anywhereGround 时全图(河道非桥+建筑仍红)
     const enemyTowers = this.game.towers[1];
     const myTowers = this.game.towers[0];
     const buildings = this.game.units.filter(u => u.isBuilding && !u.dead);
@@ -155,7 +157,7 @@ export class Renderer {
     const towersSig = ['left','right','king'].map(k => enemyTowers[k].dead ? 0 : 1).join('') +
       ['left','right','king'].map(k => myTowers[k].dead ? 0 : 1).join('');
     const bSig = buildings.map(b => `${b.x.toFixed(1)},${b.y.toFixed(1)},${b.radius}`).join(';');
-    const sig = towersSig + '|' + bSig;
+    const sig = (zone || 'own') + '|' + towersSig + '|' + bSig;
     if (this._maskSig !== sig || !this._maskCache) {
       this._maskSig = sig;
       const c = document.createElement('canvas');
@@ -164,7 +166,7 @@ export class Renderer {
       const step = 0.5;   // 半格粒度采样
       const okAt = (gx, gy) => {
         if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
-        return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers, buildings);
+        return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: zone || 'own' }, myTowers, buildings);
       };
       // 不可部署 → 红遮罩(单路径合并 fill)
       mc.fillStyle = 'rgba(208,44,44,1)';
@@ -633,7 +635,8 @@ export class Renderer {
   // ===== 单位 =====
   drawUnits() {
     const units = this.game.units.slice().sort((a,b) => a.y - b.y);
-    for (const u of units) this.drawUnit(u);
+    // 矿工挖掘中:地下不可见(信息不对称;轨迹/落点标记在 drawEffects)
+    for (const u of units) { if (!u._digTo) this.drawUnit(u); }
   }
 
   /** Pixi 模式:单位状态叠加(本体 sprite 由 Pixi 层渲染,
@@ -642,6 +645,7 @@ export class Renderer {
   drawUnitStates() {
     const units = this.game.units.slice().sort((a,b) => a.y - b.y);
     for (const u of units) {
+      if (u._digTo) continue;   // 挖掘中地下不可见
       const art = getCardImage(u.card.artCard || u.cardId);
       if (!art) { this.drawUnit(u); continue; }   // 卡图未加载:回退全量
       this.drawUnitStatesOne(u, art);
@@ -1120,6 +1124,58 @@ export class Renderer {
       } else if (e.type === 'spellIcon') {
       } else if (e.type === 'spellIcon') {
         this.drawSpellIcon(e, t);
+      } else if (e.type === 'digTrail') {
+        // 矿工挖掘轨迹(双方可见):虚线地道从国王塔伸向落点方向 +
+        // 推进土堆。对手只能从走向推断落点(规格 §8.4b 信息不对称)
+        {
+          const p = 1 - t;
+          const fx = e.fromX*CELL, fy = e.fromY*CELL;
+          const tx = e.toX*CELL, ty = e.toY*CELL;
+          ctx.save();
+          ctx.strokeStyle = e.side === 0 ? 'rgba(178,132,82,0.75)' : 'rgba(150,105,70,0.75)';
+          ctx.lineWidth = 5;
+          ctx.setLineDash([10, 8]);
+          ctx.globalAlpha = Math.min(1, t * 2);
+          ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty); ctx.stroke();
+          ctx.setLineDash([]);
+          // 推进土堆(沿线移动的小土包)
+          const hx = fx + (tx-fx)*p, hy = fy + (ty-fy)*p;
+          ctx.fillStyle = '#6d4c41';
+          ctx.beginPath(); ctx.arc(hx, hy, 7, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#8d6e63';
+          ctx.beginPath(); ctx.arc(hx, hy - 2, 4, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+      } else if (e.type === 'digMark') {
+        // 落点标记:仅施放方视角(对手视角信息不对称——不见落点)
+        if (e.side === 0) {
+          const x = e.x*CELL, y = e.y*CELL;
+          ctx.save();
+          ctx.globalAlpha = 0.4 + 0.3 * Math.sin(this.animTime * 6);
+          ctx.strokeStyle = '#ffd54f';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([6, 5]);
+          ctx.beginPath(); ctx.arc(x, y, 0.55*CELL, 0, Math.PI*2); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(x-6, y); ctx.lineTo(x+6, y);
+          ctx.moveTo(x, y-6); ctx.lineTo(x, y+6); ctx.stroke();
+          ctx.restore();
+        }
+      } else if (e.type === 'digSurface') {
+        // 落地:破土尘土环(双方可见——落地位置此时公开)
+        {
+          const x = e.x*CELL, y = e.y*CELL;
+          ctx.save();
+          const p = 1 - t;
+          ctx.globalAlpha = t;
+          ctx.fillStyle = '#8d6e63';
+          for (let i = 0; i < 8; i++) {
+            const a = i * Math.PI / 4 + 0.3;
+            const d = e.r*CELL + p * 18;
+            ctx.beginPath(); ctx.arc(x + Math.cos(a)*d, y + Math.sin(a)*d, 3.5*t + 1, 0, Math.PI*2); ctx.fill();
+          }
+          ctx.restore();
+        }
       } else if (e.type === 'jumpDust' || e.type === 'jumpLand') {
         this.drawJumpFx(e, t);
       } else if (e.type === 'deathBreak') {

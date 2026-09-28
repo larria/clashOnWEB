@@ -50,6 +50,7 @@ export class PixiLayer {
     this.app = new PIXI.Application();
     this.ready = false;                   // init() 异步完成前 render() 为 no-op
     this.showDeployZone = false;          // 由 Renderer.draw 每帧设置
+    this.deployZone = 'own';               // 选中卡的部署区(矿工 anywhereGround 全图)
     // 单位/塔 sprite 池:uid -> Sprite
     this.unitSprites = new Map();
     this.towerSprites = new Map();
@@ -312,7 +313,7 @@ export class PixiLayer {
     const towersSig = ['left','right','king'].map(k => enemyTowers[k].dead ? 0 : 1).join('') +
       ['left','right','king'].map(k => myTowers[k].dead ? 0 : 1).join('');
     const bSig = buildings.map(b => `${b.x.toFixed(1)},${b.y.toFixed(1)},${b.radius}`).join(';');
-    const sig = towersSig + '|' + bSig;
+    const sig = (this.deployZone || 'own') + '|' + towersSig + '|' + bSig;
     if (this._maskSig === sig && this._maskBuilt) {
       // 仅呼吸
       this.maskG.alpha = 0.42 + 0.04 * Math.sin(this.riverT * 2.2);
@@ -325,7 +326,7 @@ export class PixiLayer {
     const step = 0.5;
     const okAt = (gx, gy) => {
       if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) return false;
-      return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: 'own' }, myTowers, buildings);
+      return canDeploy('player', gx + step/2, gy + step/2, enemyTowers, { zone: this.deployZone || 'own' }, myTowers, buildings);
     };
     // 红遮罩 + 金色边界线
     // Pixi 8 Graphics 语义:先 rect 后 fill()提交当前 path(与 canvas 2D
@@ -393,6 +394,8 @@ export class PixiLayer {
     const seen = new Set();
     for (const u of game.units) {
       if (u.dead) continue;
+      // 矿工挖掘中:地下不可见(对手视角信息不对称;己方由 digMark 提示落点)
+      if (u._digTo) { seen.add(u.uid); const hs = this.unitSprites.get(u.uid); if (hs) hs.visible = false; continue; }
       seen.add(u.uid);
       let s = this.unitSprites.get(u.uid);
       const artId = u.card.artCard || u.cardId;

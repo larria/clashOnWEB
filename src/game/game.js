@@ -469,7 +469,7 @@ export class Game {
 
   findTowerTarget(tw) {
     let best = null, bd = Infinity;
-    const enemies = this.units.filter(u => u.side !== tw.side && !u.dead);
+    const enemies = this.units.filter(u => u.side !== tw.side && !u.dead && !u._digTo);   // 地下单位(矿工挖掘)不可被索敌
     // 有效视野 = max(sight, range),判定含双方半径(与攻击判定同口径):
     // 索敌绝不低于攻击触及,否则"打得着却看不见"(单位侧 findTarget
     // 同规则;塔侧原先不含目标半径,大体积单位在视野边缘不被索敌)
@@ -505,6 +505,22 @@ export class Game {
           this.addEffect({ type: 'spawnFrost', x: u.x, y: u.y, r: sd.radius, life: 0.5, maxLife: 0.5 });
           this.bus.emit('unit:spawnDamage', { unit: u });
         }
+      }
+      // ===== 矿工挖掘(规格 §8.4b):地下直线推进到落点,期间不可被
+      // 选中/攻击(索敌过滤 _dig;invulnUntil 兜底挡范围伤害)。落地
+      // 后清状态成为普通单位。位置直接写(地下无碰撞,河/单位都穿过)
+      if (u._digTo && !u.dead) {
+        u._digT += dt;
+        const p = Math.min(1, u._digT / u._digDur);
+        u.x = u._digTo.x;
+        u.y = u._digTo.y;
+        if (p >= 1) {
+          u._digTo = null;
+          u.invulnUntil = this.time;              // 落地即可被攻击
+          this.addEffect({ type: 'digSurface', x: u.x, y: u.y, r: u.radius + 0.5, life: 0.5, maxLife: 0.5 });
+          this.bus.emit('unit:dug', { unit: u });  // 落地音效
+        }
+        continue;
       }
       // ===== 击退补间(硬直):滑动推进,期间完全跳过下方一切行为
       // (索敌/攻击/移动;攻击前摇被打断——atkCD 不再递减,落地重新计)。

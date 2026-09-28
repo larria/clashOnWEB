@@ -170,5 +170,8 @@
   },
   "furnace": {
     "file": "FurnaceCard.png"
+  },
+  "miner": {
+    "file": "MinerCard.png"
   }
 }

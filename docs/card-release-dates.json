@@ -497,7 +497,7 @@
     "rarity": "Legendary",
     "cost": "3",
     "arena": "Electro Valley",
-    "implemented": false
+    "implemented": true
   },
   {
     "file": "Sparky",
