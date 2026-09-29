@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-09-29 修复:火球能推动皇家巨人(v0.7.5)
+
+**用户反馈:火球能推动皇家巨人,应该推不动。**
+
+**复现**:headless 火球炸皇家巨人——径向位移 0.6 格 + 0.45s 击退硬直
+(knockUntil 窗口实测),伤害正常。
+
+**根因**:abilities.js HEAVY_UNITS(法术击退免疫名单)漏登 royalGiant
+——名单只有 giant/golem/golemite/pekka/giantSkeleton/barbarianHut。
+
+**官方口径查证**(本地 wiki 快照交叉):
+- Fireball 页:击退效果作用于 "small to medium sized troops"
+  (中小体积部队)——坦克级不在其中
+- Fireball 页策略节把 Royal Giant 与 Giant/Golem/Mega Knight/
+  Giant Skeleton/P.E.K.K.A. 并列为"不该对他用火球"的高血坦克
+- 注:Royal_Giant 页与 The_Log 页各有一句"可用击退法术/滚木移动他"
+  ——这是滚木(pushback)语境,滚木官方能推动所有地面部队
+  (The_Log 页:"The Log can affect all ground troops"),与火球/雪球
+  的 heavy 免疫是两套机制;本项目滚木走 pushAlong 不查 isHeavy,
+  行为本就正确,不受本修复影响
+
+**修复**:HEAVY_UNITS 加 'royalGiant'(伤害照吃,只免击退/硬直)。
+
+**回归场景 +1**(共 65):'击退-火球推不动皇家巨人'——皇家巨人/巨人
+双免疫 + 火枪手对照(正常被推)+ 无位移 + 伤害到账断言。
+65/65 通过;eval-ai 39:60:1 与基线一致无回归。
+
+---
+
 ## 2026-09-29 实装蝙蝠 + 哥布林团伙(v0.7.4)
 
 **用户指令:实现蝙蝠与哥布林团伙;团伙的近战哥布林和投矛手要分别

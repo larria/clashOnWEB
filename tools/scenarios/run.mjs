@@ -1056,6 +1056,33 @@ const SCENARIOS = {
   }
 },
 
+// ===== 击退免疫:皇家巨人(v0.7.5 修复) =====
+'击退-火球推不动皇家巨人': () => {
+  // 官方:火球击退只作用于中小体积部队(wiki Fireball 页
+  // "small to medium sized troops");皇家巨人同巨人/戈仑坦克级免疫
+  const g = newGame();
+  const rg = g.spawnUnit('royalGiant', 1, 12, 22);
+  rg.deployTimer = 0;
+  const gi = g.spawnUnit('giant', 1, 8, 22);
+  gi.deployTimer = 0;
+  const mu = g.spawnUnit('musketeer', 1, 10, 21.5);   // 对照:中型单位可被推(爆心距 2 格,在半径内)
+  mu.deployTimer = 0;
+  castSpell('fireball', 0, 12, 21.4, g);
+  let rgKnocked = false, giKnocked = false, muKnocked = false;
+  for (let i = 0; i < 120; i++) {
+    g.update(1/30);
+    if (rg.knockUntil > g.time) rgKnocked = true;
+    if (gi.knockUntil > g.time) giKnocked = true;
+    if (mu.knockUntil > g.time) muKnocked = true;
+  }
+  ok(!rgKnocked, `皇家巨人不被火球击退(${rgKnocked ? '被推动了' : '岿然不动'})`);
+  ok(!giKnocked, '巨人对照:同样免疫');
+  ok(muKnocked, '火枪手对照:中型单位正常被击退');
+  // 皇家巨人径向位移应为 0(伤害照吃,只是不动)
+  ok(Math.abs(rg.y - 22) < 1e-9 && Math.abs(rg.x - 12) < 1e-9, `无位移(${rg.x.toFixed(2)},${rg.y.toFixed(2)})`);
+  ok(rg.maxHp - rg.hp >= 688, `伤害照吃(${rg.maxHp - rg.hp} ≥ 688)`);
+},
+
 '滚木-只能部署己方半场与河带': () => {
   // deployZone riverbanks:玩家可放 y<17(己方+河),不可放敌方腹地
   const g = newGame();

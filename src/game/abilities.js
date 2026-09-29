@@ -22,9 +22,12 @@
 // 全新机制:在此注册 + 在对应系统(combat/game/spells)留一个挂钩点调用。
 // ===============================================
 
-// 重型单位(不受法术击退):巨人/戈仑/皮卡/骷髅巨人/野蛮人小屋等大块头
+// 重型单位(不受法术击退):巨人/戈仑/皮卡/骷髅巨人/皇家巨人/野蛮人小屋
+// 等大块头。官方口径:火球击退只作用于"small to medium sized troops"
+// (wiki Fireball 页),坦克级免疫;皇家巨人同属坦克级(2026-09-29
+// 修复:此前名单漏登,火球能推着他走 0.6 格)
 // 新卡是重型 → 往这里加 cardId
-const HEAVY_UNITS = new Set(['giant', 'golem', 'golemite', 'pekka', 'giantSkeleton', 'barbarianHut']);
+const HEAVY_UNITS = new Set(['giant', 'golem', 'golemite', 'pekka', 'giantSkeleton', 'royalGiant', 'barbarianHut']);
 
 export function isHeavy(unit) {
   return HEAVY_UNITS.has(unit.cardId) || !!(unit.card.special && unit.card.special.heavy);
