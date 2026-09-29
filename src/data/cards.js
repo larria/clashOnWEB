@@ -30,19 +30,19 @@ export const CARDS = {
     targets:T.ALL, flying:false, count:2, splash:0, deployTime:1, color:'#d65a5a', radius:0.35 },
   goblins: { id:'goblins', name:'哥布林', cost:2, rarity:'普通', kind:KIND.TROOP,
     hp:202, dmg:124, hitSpeed:1.1, firstHit:0.6, range:0.5, sightRange:5.5, speed:SPEED.VERY_FAST,
-    targets:T.GROUND, flying:false, count:4, splash:0, deployTime:1, color:'#7cb342', radius:0.32 },
+    targets:T.GROUND, flying:false, count:4, formation:'square', splash:0, deployTime:1, color:'#7cb342', radius:0.32 },
   spearGoblins: { id:'spearGoblins', name:'投矛哥布林', cost:2, rarity:'普通', kind:KIND.TROOP,
     hp:133, dmg:81, hitSpeed:1.6, firstHit:0.5, range:5.0, sightRange:5.0, speed:SPEED.VERY_FAST,
-    targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#8bc34a', radius:0.30 },
+    targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#8bc34a', radius:0.30, formation:'triangle' },
   skeletons: { id:'skeletons', name:'骷髅兵', cost:1, rarity:'普通', kind:KIND.TROOP,
     hp:81, dmg:81, hitSpeed:1.1, firstHit:0.5, range:0.5, sightRange:5.0, speed:SPEED.FAST,
-    targets:T.GROUND, flying:false, count:3, splash:0, deployTime:1, color:'#eeeeee', radius:0.28 },
+    targets:T.GROUND, flying:false, count:3, splash:0, deployTime:1, color:'#eeeeee', radius:0.28, formation:'triangle' },
   minions: { id:'minions', name:'亡灵', cost:3, rarity:'普通', kind:KIND.TROOP,
     hp:230, dmg:107, hitSpeed:1.2, firstHit:0.5, range:2.5, sightRange:5.5, speed:SPEED.FAST,
-    targets:T.ALL, flying:true, count:3, splash:0, deployTime:1, color:'#5c6bc0', radius:0.33 },
+    targets:T.ALL, flying:true, count:3, splash:0, deployTime:1, color:'#5c6bc0', radius:0.33, formation:'triangle' },
   barbarians: { id:'barbarians', name:'野蛮人', cost:5, rarity:'普通', kind:KIND.TROOP,
     hp:716, dmg:192, hitSpeed:1.4, firstHit:0.4, range:0.7, sightRange:5.5, speed:SPEED.MEDIUM,
-    targets:T.GROUND, flying:false, count:5, splash:0, deployTime:1, color:'#bf6b1f', radius:0.36 },
+    targets:T.GROUND, flying:false, count:5, splash:0, deployTime:1, color:'#bf6b1f', radius:0.36, formation:'star' },
   bomber: { id:'bomber', name:'炸弹兵', cost:2, rarity:'普通', kind:KIND.TROOP,
     hp:304, dmg:223, hitSpeed:1.8, firstHit:0.2, range:4.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:1.5, deployTime:1, color:'#3a3a3a', radius:0.35 },
@@ -59,7 +59,7 @@ export const CARDS = {
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, color:'#ab47bc', radius:0.38 },
   threeMusketeers: { id:'threeMusketeers', name:'三个火枪手', cost:9, rarity:'稀有', kind:KIND.TROOP,
     hp:883, dmg:204, hitSpeed:1.3, firstHit:0.7, range:6.0, sightRange:6.5, speed:SPEED.MEDIUM,
-    targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#7e57c2', radius:0.38,
+    targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#7e57c2', radius:0.38, formation:'triangle',
     artCard:'musketeer' },   // 场上每个子单位用火枪手卡图(三火枪本体=3个火枪手)
     // wiki 11级:hp883 dmg204 攻速1.3 射程6 对空对地 中速
     // 2016-02-29 实装;部署分兵:放中线附近时 1 只走一侧路、2 只走另一侧
@@ -149,7 +149,7 @@ export const CARDS = {
     targets:T.ALL, flying:true, count:1, splash:1.5, deployTime:1, color:'#ec407a', radius:0.45 },
   skeletonArmy: { id:'skeletonArmy', name:'骷髅军团', cost:3, rarity:'史诗', kind:KIND.TROOP,
     hp:81, dmg:81, hitSpeed:1.1, firstHit:0.5, range:0.5, sightRange:5.0, speed:SPEED.FAST,
-    targets:T.GROUND, flying:false, count:15, splash:0, deployTime:1, color:'#fafafa', radius:0.26,
+    targets:T.GROUND, flying:false, count:15, splash:0, deployTime:1, color:'#fafafa', radius:0.26, formation:'scatter',
     artCard:'skeletons' },   // 场上单位用骷髅兵卡图(军团本体=一群骷髅,非"骷髅军团"图标)
   witch: { id:'witch', name:'女巫', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:839, dmg:135, hitSpeed:1.1, firstHit:0.7, range:5.5, sightRange:5.5, speed:SPEED.MEDIUM,
@@ -169,7 +169,7 @@ export const CARDS = {
     special:{ deathDamage:{ dmg:225, splash:2.0, targets:T.ALL }, summonOnDeath:{ card:'golemite', count:2 } } },  // wiki 11级:部署3s(特有);近战 Short 0.75;死亡伤害 225/2≈112
   minionHorde: { id:'minionHorde', name:'亡灵大军', cost:5, rarity:'史诗', kind:KIND.TROOP,
     hp:230, dmg:107, hitSpeed:1.1, firstHit:0.5, range:2.5, sightRange:5.5, speed:SPEED.FAST,
-    targets:T.ALL, flying:true, count:6, splash:0, deployTime:1, color:'#3949ab', radius:0.32 },
+    targets:T.ALL, flying:true, count:6, splash:0, deployTime:1, color:'#3949ab', radius:0.32, formation:'hexagon' },
 
   // ===== 建筑 =====
   cannon: { id:'cannon', name:'加农炮', cost:3, rarity:'普通', kind:KIND.BUILDING,

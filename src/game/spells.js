@@ -293,11 +293,14 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
     game.lastPlayedCard[side] = cardId;
     return true;
   }
-  // 多体单位排布 + 逐个落地(对齐官方 deploy stagger:多单位卡每个
-  // 间隔 ~0.1 秒依次出现,期间虚影/不可行动但可被攻击;骷髅军团是
-  // 官方例外——scatter 阵型全体同时落地,不设 stagger)
+  // 多体单位排布 + 依次落地(官方:哥布林/骷髅/投矛等 3-4 体卡
+  // 依次出现——前 2 个落地后第 3 个才落下;骷髅军团 scatter 阵型
+  // 官方是全体同时落地,不设 stagger)
   const stagger = (count > 1 && cardId !== 'skeletonArmy') ? 0.1 : 0;
-  const positions = getDeployPositions(x, y, count, card.radius);
+  // faceDir:敌方所在 y 方向(side0 敌在上=-1;side1 敌在下=+1)——
+  // 三角形等朝向队形的前排朝敌
+  const faceDir = side === 1 ? 1 : -1;
+  const positions = getDeployPositions(x, y, count, card.radius, card.formation, faceDir);
   for (let i = 0; i < count; i++) {
     const p = positions[i];
     if (i === 0 || stagger === 0) {

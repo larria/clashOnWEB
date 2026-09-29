@@ -937,6 +937,69 @@ const SCENARIOS = {
   ok(mins.every(u => u.hp === u.maxHp), '空军不受滚木伤害');
 },
 
+// ===== 部署队形(官方 wiki 口径,2026-09-29) =====
+'队形-哥布林方形与骷髅三角': () => {
+  // wiki:哥oblins 4=square(方形);小骷髅/投矛/亡灵/三火枪 3=triangle
+  // (等边三角形,前 2 后 1 朝敌方);野蛮人 5=star;亡灵大军 6=hexagon;
+  // 骷髅军团 15=scatter;弓箭手 2=horizontal line
+  const g = newGame();
+  deployCard('goblins', 0, 9, 21, g);
+  run(1, g);   // stagger 0.1s/个,等全部落地
+  const gobs = g.units.filter(u => u.cardId === 'goblins');
+  ok(gobs.length === 4, `哥布林 4 只(wiki 现 4 只,2022-10 从 3 上调;${gobs.length})`);
+  // 方形:两行两列,行间距≈列间距
+  if (gobs.length === 4) {
+    const ys = [...new Set(gobs.map(u => +u.y.toFixed(1)))].sort((a,b)=>a-b);
+    const xs = [...new Set(gobs.map(u => +u.x.toFixed(1)))].sort((a,b)=>a-b);
+    ok(ys.length === 2 && xs.length === 2, `方形两行两列(x:${xs} y:${ys})`);
+  }
+  const g2 = newGame();
+  deployCard('skeletons', 0, 9, 21, g2);
+  // stagger 0.1s:等全部落地
+  run(1, g2);
+  const sks = g2.units.filter(u => u.cardId === 'skeletons');
+  ok(sks.length === 3, `小骷髅 3 只(${sks.length})`);
+  if (sks.length === 3) {
+    const ys = sks.map(u => u.y);
+    const front = ys.filter(y => y === Math.min(...ys)).length;
+    const back = ys.filter(y => y === Math.max(...ys)).length;
+    ok(front === 2 && back === 1, `三角前 2 后 1(前排朝敌 y 小:${ys.map(y=>y.toFixed(2)).join(',')}——side0 敌在上)`);
+    // 等边:前排间距 = 前排到后排距离
+    const f = sks.filter(u => u.y === Math.min(...ys));
+    const b = sks.find(u => u.y === Math.max(...ys));
+    const w = Math.abs(f[0].x - f[1].x);
+    const h = Math.abs((f[0].y + f[1].y) / 2 - b.y);
+    // 等边三角形:高 = 底 × √3/2
+    ok(Math.abs(h - w * Math.sqrt(3) / 2) < 0.03, `等边三角形(底 ${w.toFixed(2)} 高 ${h.toFixed(2)} ≈ 底×√3/2=${(w*Math.sqrt(3)/2).toFixed(2)})`);
+  }
+  // side1 视角:三角形翻转(前排朝 y 大)
+  const g3 = newGame();
+  deployCard('spearGoblins', 1, 9, 11, g3);
+  run(1, g3);
+  const sgs = g3.units.filter(u => u.cardId === 'spearGoblins');
+  if (sgs.length === 3) {
+    const ys = sgs.map(u => u.y);
+    const front = ys.filter(y => y === Math.max(...ys)).length;
+    ok(front === 2, `side1 三角前排朝 y 大(敌在下:${ys.map(y=>y.toFixed(2)).join(',')})`);
+  }
+},
+
+'队形-依次落下与军团同时': () => {
+  // 官方:3-4 体卡依次出现(stagger ~0.1s);骷髅军团 scatter 全体同时
+  const g = newGame();
+  deployCard('archers', 0, 9, 21, g);
+  // stagger:0.05s 时第 2 只应尚未出现(0.1s 间隔;0.1s 后落地)
+  run(0.05, g);
+  const n1 = g.units.filter(u => u.cardId === 'archers').length;
+  ok(n1 === 1, `stagger 中只 1 只落地(0.05s 时 ${n1})`);
+  run(0.5, g);
+  const n2 = g.units.filter(u => u.cardId === 'archers').length;
+  ok(n2 === 2, `全部落地(${n2})`);
+  const g2 = newGame();
+  deployCard('skeletonArmy', 0, 9, 21, g2);
+  ok(g2.units.length === 15, `骷髅军团 15 只同时落地无 stagger(实际 ${g2.units.length};军团卡场上单位即 skeletons)`);
+},
+
 '滚木-只能部署己方半场与河带': () => {
   // deployZone riverbanks:玩家可放 y<17(己方+河),不可放敌方腹地
   const g = newGame();
