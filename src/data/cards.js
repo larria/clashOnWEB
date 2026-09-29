@@ -1,5 +1,5 @@
 // ===============================================
-// 卡牌数据定义(42 张:24 部队 + 10 建筑 + 8 法术)
+// 卡牌数据定义(44 张:26 部队 + 10 建筑 + 8 法术)
 // 数值 = 官方 wiki 11级原值直读(v0.7.0 起废除 ×0.5 缩放;见 docs/card-stats.json)
 //
 // 新增卡牌指南:
@@ -14,6 +14,11 @@
 //   firstHit:   攻击前摇(官方 First Hit Speed:首发蓄力秒数,spawn 时种一次)
 //   projectileSpeed: 弹速(格/s,wiki 弹速×0.025)。溅射远程声明此字段
 //               才走实体投射物(慢弹道可见);非溅射远程一律实体弹
+//   formation:  多体部署队形(triangle/square/star/hexagon/scatter/line,
+//               见 formation.js;未声明按数量推断)
+//   artCard:    场上单位借用他卡牌面(如骷髅军团用 skeletons 图)
+//   special.multiSpawn: 混合多体卡(哥布林团伙):部署时按子卡各自
+//               数值/牌面生成,本卡 stats 仅为卡面展示与 AI 估价
 // ===============================================
 
 const T = { GROUND: 1, AIR: 2, BUILDING: 4, ALL: 7 };
@@ -29,8 +34,9 @@ export const CARDS = {
     hp:304, dmg:113, hitSpeed:0.9, firstHit:0.5, range:5.0, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:false, count:2, splash:0, deployTime:1, color:'#d65a5a', radius:0.35 },
   goblins: { id:'goblins', name:'哥布林', cost:2, rarity:'普通', kind:KIND.TROOP,
-    hp:202, dmg:124, hitSpeed:1.1, firstHit:0.6, range:0.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    hp:202, dmg:125, hitSpeed:1.1, firstHit:0.6, range:0.5, sightRange:5.5, speed:SPEED.VERY_FAST,
     targets:T.GROUND, flying:false, count:4, formation:'square', splash:0, deployTime:1, color:'#7cb342', radius:0.32 },
+    // dmg 125:wiki 11级(2026-08-04 +4%;此前 v0.7.0 误用旧值 62×2=124)
   spearGoblins: { id:'spearGoblins', name:'投矛哥布林', cost:2, rarity:'普通', kind:KIND.TROOP,
     hp:133, dmg:81, hitSpeed:1.6, firstHit:0.5, range:5.0, sightRange:5.0, speed:SPEED.VERY_FAST,
     targets:T.ALL, flying:false, count:3, splash:0, deployTime:1, color:'#8bc34a', radius:0.30, formation:'triangle' },
@@ -46,6 +52,28 @@ export const CARDS = {
   bomber: { id:'bomber', name:'炸弹兵', cost:2, rarity:'普通', kind:KIND.TROOP,
     hp:304, dmg:223, hitSpeed:1.8, firstHit:0.2, range:4.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.GROUND, flying:false, count:1, splash:1.5, deployTime:1, color:'#3a3a3a', radius:0.35 },
+  bats: { id:'bats', name:'蝙蝠', cost:2, rarity:'普通', kind:KIND.TROOP,
+    hp:81, dmg:81, hitSpeed:1.2, firstHit:0.6, range:1.2, sightRange:5.5, speed:SPEED.VERY_FAST,
+    targets:T.ALL, flying:true, count:5, splash:0, deployTime:1, color:'#7e57c2', radius:0.28, formation:'star' },
+    // wiki 11级:hp 81 dmg 81 攻速 1.2(2026-03-02 从 1.3 提速)
+    // 前摇 0.6 极快(2.0格/s) 近战 Medium 1.2 对空对地 x5 空军
+    // star 队形(wiki:"Their deployment is in a star formation")
+    // 与骷髅并列全游戏最低血(一发 zap 192 即全灭);2017-07-07 首发
+  goblinGang: { id:'goblinGang', name:'哥布林团伙', cost:3, rarity:'普通', kind:KIND.TROOP,
+    hp:202, dmg:125, hitSpeed:1.1, firstHit:0.6, range:0.5, sightRange:5.5, speed:SPEED.VERY_FAST,
+    targets:T.GROUND, flying:false, count:6, splash:0, deployTime:1, color:'#7cb342', radius:0.32,
+    formation:'hexagon',
+    special:{ multiSpawn:[
+      { card:'goblins', count:3 },
+      { card:'spearGoblins', count:3 },
+    ] } },
+    // wiki 11级:3 近战哥布林(202/125/攻速1.1/前摇0.6/近战0.5)+
+    // 3 投矛哥布林(133/81/攻速1.6/前摇0.5/射程5/弹速500×0.025=12.5)
+    // hexagon 队形,近战先落地(官方:"The Goblins will spawn before
+    // the Spear Goblins");场上单位直接用哥布林/投矛哥布林两张卡的
+    // 全套数值与牌面(multiSpawn 部署,本卡 stats 仅为卡面展示与 AI 估价)
+    // 数值口径:团伙页 stab_dmg 120 是过时快照,以 Goblins 主页 125
+    // (2026-08-04 +4%)为准;2017-02-24 首发;全员极快(2.0格/s)
 
   // ===== 稀有 =====
   giant: { id:'giant', name:'巨人', cost:5, rarity:'稀有', kind:KIND.TROOP,

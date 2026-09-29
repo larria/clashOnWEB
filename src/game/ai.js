@@ -29,7 +29,9 @@ const COUNTERS = {
   skeletonArmy:  ['arrows', 'zap', 'wizard', 'bomber', 'valkyrie'],
   barbarians:    ['bomber', 'fireball', 'valkyrie', 'wizard'],
   goblins:       ['zap', 'arrows', 'bomber', 'valkyrie', 'skeletons'],
+  goblinGang:    ['zap', 'theLog', 'bomber', 'valkyrie', 'wizard'],   // 混合群体:小法术+范围单位
   spearGoblins:  ['zap', 'arrows', 'archers'],
+  bats:          ['zap', 'arrows', 'wizard', 'musketeer'],   // 81 血空军:zap 192 一发全灭
   minions:       ['arrows', 'zap', 'wizard', 'archers', 'musketeer'],
   minionHorde:   ['arrows', 'wizard', 'fireball', 'musketeer'],
   // 高伤单体:用群兵围杀
@@ -48,7 +50,7 @@ const COUNTERS = {
   babyDragon:    ['musketeer', 'minions', 'archers', 'wizard'],
   knight:        ['minions', 'skeletonArmy', 'miniPekka', 'barbarians'],
   // 建筑(玩家在我方领土附近放的防御建筑不响应,但进攻型建筑需要处理)
-  miner:         ['skeletons', 'goblins', 'guards', 'minions'],   // 矿工:小兵围杀(高 hp 单体)
+  miner:         ['skeletons', 'goblins', 'bats', 'minions'],   // 矿工:小兵围杀(高 hp 单体)
   xbow:          ['hogRider', 'giant', 'rocket', 'miniPekka'],
   mortar:        ['hogRider', 'giant', 'miniPekka', 'rocket'],
 };
@@ -57,8 +59,8 @@ const COUNTERS = {
 export const ROLE = {
   TANK: ['giant', 'golem', 'giantSkeleton', 'knight', 'valkyrie', 'iceGolem', 'royalGiant'],
   WIN_CON: ['hogRider', 'balloon', 'xbow', 'mortar', 'pekka', 'miniPekka', 'miner'],
-  SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess', 'furnace'],
-  CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'zap', 'arrows', 'iceSpirit', 'fireSpirit'],
+  SUPPORT: ['musketeer', 'wizard', 'archers', 'minions', 'minionHorde', 'witch', 'babyDragon', 'bomber', 'princess', 'furnace', 'bats'],
+  CYCLE: ['skeletons', 'goblins', 'spearGoblins', 'goblinGang', 'zap', 'arrows', 'iceSpirit', 'fireSpirit'],
   SPELL: ['fireball', 'arrows', 'rocket', 'lightning', 'zap', 'freeze', 'rage', 'theLog'],
   DEFENSE_BUILDING: ['cannon', 'tesla', 'infernoTower', 'bombTower', 'tombstone'],
   SPAWN_BUILDING: ['goblinHut', 'barbarianHut', 'elixirCollector'],

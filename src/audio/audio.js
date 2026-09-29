@@ -38,6 +38,7 @@ const SFX_FILES = [
   'deploy_giantSkeleton','deploy_golem','deploy_royalGiant','deploy_minionHorde','deploy_princess','deploy_iceSpirit','deploy_iceGolem','deploy_fireSpirit','deploy_miner','deploy_cannon','deploy_tesla',
   'deploy_infernoTower','deploy_bombTower','deploy_goblinHut','deploy_barbarianHut',
   'deploy_tombstone','deploy_elixirCollector','deploy_xbow','deploy_mortar','deploy_furnace',
+  'deploy_bats','deploy_goblinGang','atk_bats','atk_goblinGang',
   // 攻击(卡牌专属)
   'atk_knight','atk_archers','atk_goblins','atk_spearGoblins','atk_skeletons','atk_minions',
   'atk_barbarians','atk_bomber','atk_giant','atk_miniPekka','atk_musketeer','atk_valkyrie',

@@ -177,4 +177,10 @@
   "royalGiant": {
     "file": "RoyalGiantCard.png"
   }
+,  "bats": {
+    "file": "BatsCard.png"
+  },
+  "goblinGang": {
+    "file": "GoblinGangCard.png"
+  }
 }

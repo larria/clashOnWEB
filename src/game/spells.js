@@ -293,6 +293,28 @@ export function deployCard(cardId, side, x, y, game, opts = {}) {
     game.lastPlayedCard[side] = cardId;
     return true;
   }
+  // 混合多体卡(哥布林团伙:3 近战 + 3 投矛):全体按本卡队形(hexagon)
+  // 取位,但每个单位用它子卡的完整数值与牌面生成;官方口径近战先落地
+  // ("The Goblins will spawn before the Spear Goblins")——按
+  // multiSpawn 声明顺序依次 stagger,同子卡内也保持 0.1s 间隔
+  const multi = card.special && card.special.multiSpawn;
+  if (multi) {
+    const faceDir = side === 1 ? 1 : -1;
+    const total = multi.reduce((s, m) => s + m.count, 0);
+    const positions = getDeployPositions(x, y, total, card.radius, card.formation, faceDir);
+    let spawned = 0;   // 已分配的位次(决定 stagger 延时)
+    for (const m of multi) {
+      for (let i = 0; i < m.count; i++) {
+        const p = positions[spawned];
+        const delay = spawned === 0 ? 0 : 0.1 * spawned;
+        if (delay === 0) game.spawnUnit(m.card, side, p.x, p.y);
+        else game.schedule(delay, () => game.spawnUnit(m.card, side, p.x, p.y));
+        spawned++;
+      }
+    }
+    game.lastPlayedCard[side] = cardId;
+    return true;
+  }
   // 多体单位排布 + 依次落地(官方:哥布林/骷髅/投矛等 3-4 体卡
   // 依次出现——前 2 个落地后第 3 个才落下;骷髅军团 scatter 阵型
   // 官方是全体同时落地,不设 stagger)

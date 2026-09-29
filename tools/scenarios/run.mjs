@@ -1000,6 +1000,62 @@ const SCENARIOS = {
   ok(g2.units.length === 15, `骷髅军团 15 只同时落地无 stagger(实际 ${g2.units.length};军团卡场上单位即 skeletons)`);
 },
 
+// ===== 新卡:蝙蝠 + 哥布林团伙(2026-09-29) =====
+'新卡-蝙蝠五角星空军': () => {
+  // wiki:5 只·star 队形·空军·极快·近战 Medium 1.2·对空对地·81/81·攻速1.2
+  const g = newGame();
+  deployCard('bats', 0, 9, 21, g);
+  run(0.6, g);   // stagger 0.1s×4 = 0.4s 全落地
+  const bs = g.units.filter(u => u.cardId === 'bats' && !u.dead);
+  ok(bs.length === 5, `蝙蝠 5 只(${bs.length})`);
+  ok(bs.every(u => u.flying), '蝙蝠全部空军');
+  ok(bs.every(u => u.hp === 81 && u.dmg === 81), 'wiki 11级 81/81');
+  ok(bs.every(u => Math.abs(u.speed - 2.0) < 1e-9), '极快 2.0格/s');
+  // star 队形:5 点到中心等距(正五边形环)
+  if (bs.length === 5) {
+    const cx = bs.reduce((s, u) => s + u.x, 0) / 5;
+    const cy = bs.reduce((s, u) => s + u.y, 0) / 5;
+    const ds = bs.map(u => Math.hypot(u.x - cx, u.y - cy));
+    ok(Math.max(...ds) - Math.min(...ds) < 0.05, `五角星等距(半径 ${ds[0].toFixed(2)}±${(Math.max(...ds)-Math.min(...ds)).toFixed(3)})`);
+  }
+  // zap 192 一发全灭(wiki:"can be OHKOed by ... spells like Zap")
+  const g2 = newGame();
+  deployCard('bats', 1, 9, 11, g2);
+  run(0.6, g2);
+  castSpell('zap', 0, 9, 11, g2);
+  run(1, g2);
+  ok(g2.units.filter(u => u.cardId === 'bats').every(u => u.dead), 'zap 192 一发全灭 81 血蝙蝠');
+},
+
+'新卡-哥布林团伙混合部署': () => {
+  // wiki:3 近战哥布林 + 3 投矛哥布林·hexagon·近战先落地
+  // 场上单位直接用两张单卡的全套数值与牌面(multiSpawn)
+  const g = newGame();
+  deployCard('goblinGang', 0, 9, 21, g);
+  // 0.05s:只有第 1 只(近战)落地——官方"Goblins will spawn before the Spear Goblins"
+  run(0.05, g);
+  const early = g.units.filter(u => !u.dead);
+  ok(early.length === 1 && early[0].cardId === 'goblins', `近战先落地(0.05s 时 ${early.length} 只:${early.map(u=>u.cardId)})`);
+  run(1, g);   // 0.1s×5 = 0.5s 全落地
+  const gobs = g.units.filter(u => u.cardId === 'goblins' && !u.dead);
+  const sgs = g.units.filter(u => u.cardId === 'spearGoblins' && !u.dead);
+  ok(gobs.length === 3, `近战哥布林 3 只(${gobs.length})`);
+  ok(sgs.length === 3, `投矛哥布林 3 只(${sgs.length})`);
+  // 数值=子卡直读:哥布林 202/125(2026-08-04 +4%),投矛 133/81
+  ok(gobs.every(u => u.hp === 202 && u.dmg === 125), `哥布林 202/125(${gobs[0] && gobs[0].hp}/${gobs[0] && gobs[0].dmg})`);
+  ok(sgs.every(u => u.hp === 133 && u.dmg === 81), `投矛 133/81(${sgs[0] && sgs[0].hp}/${sgs[0] && sgs[0].dmg})`);
+  // 投矛能对空(团伙防空能力来自投矛)
+  ok(sgs.every(u => u.card.targets & 2), '投矛对空');
+  // hexagon:6 点到中心等距
+  const all = [...gobs, ...sgs];
+  if (all.length === 6) {
+    const cx = all.reduce((s, u) => s + u.x, 0) / 6;
+    const cy = all.reduce((s, u) => s + u.y, 0) / 6;
+    const ds = all.map(u => Math.hypot(u.x - cx, u.y - cy));
+    ok(Math.max(...ds) - Math.min(...ds) < 0.05, `六边形等距(半径 ${ds[0].toFixed(2)})`);
+  }
+},
+
 '滚木-只能部署己方半场与河带': () => {
   // deployZone riverbanks:玩家可放 y<17(己方+河),不可放敌方腹地
   const g = newGame();
