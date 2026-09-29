@@ -210,10 +210,24 @@ export function afterAttack(unit) {
   const sp = unit.card.special;
   if (sp && sp.rampDamage) {
     unit.rampTimer += unit.card.hitSpeed;
-    if (unit.rampTimer >= sp.rampDamage.rampTime) {
-      unit.rampMult = sp.rampDamage.maxMult;
+    // 官方三段阶梯模型(wiki Inferno Dragon/Tower 页原文):
+    //   前 4 发 ≈8.5% · 次 5 发 ≈28.5% · 之后 100%
+    //   ("For its first four hits...next five hits...after that full damage")
+    // 每 2s(4 发×0.4s 攻速)升一段。此前线性爬升导致中段伤害
+    // 翻倍(第5发 190 vs 官方 120),2026-09-29 用户反馈伤害偏高修正
+    const r = sp.rampDamage;
+    if (r.stages) {
+      // stages: [ {mult, hits}, ... ] 逐段消耗发数
+      let left = unit.rampTimer / unit.card.hitSpeed;   // 已开火发数
+      unit.rampMult = r.stages[r.stages.length - 1].mult;
+      for (const st of r.stages) {
+        if (left < st.hits) { unit.rampMult = st.mult; break; }
+        left -= st.hits;
+      }
+    } else if (unit.rampTimer >= r.rampTime) {
+      unit.rampMult = r.maxMult;
     } else {
-      unit.rampMult = 1 + (sp.rampDamage.maxMult - 1) * (unit.rampTimer / sp.rampDamage.rampTime);
+      unit.rampMult = 1 + (r.maxMult - 1) * (unit.rampTimer / r.rampTime);
     }
   }
 }

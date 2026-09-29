@@ -284,6 +284,37 @@ canvas { display:block; }
 .cvCfgRow { display:flex; align-items:center; gap:6px; }
 .cvCfgLabel { font-size:12px; color:#9aa3c7; letter-spacing:1px; }
 .cvCfgRow select { width:170px; }
+/* 选卡模式面板(封面 overlay 内,两张候选大卡) */
+#overlay.paused .draftPanel { display:none; }   /* 暂停态不显示 */
+.draftPanel {
+  display:flex; gap:clamp(16px, 4vw, 48px); justify-content:center; align-items:stretch;
+  margin:clamp(6px, 2vh, 18px) 0; flex-shrink:0;
+  animation:ovFloat .45s ease;
+}
+.draftCard {
+  position:relative; display:flex; flex-direction:column; align-items:center;
+  width:clamp(110px, 22vw, 170px); padding:10px 10px 14px;
+  border-radius:14px; cursor:pointer;
+  background:linear-gradient(170deg, rgba(52,60,108,0.92), rgba(30,35,64,0.92));
+  border:2px solid rgba(255,255,255,0.18);
+  box-shadow:0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.1);
+  transition:transform .12s, border-color .12s, box-shadow .12s, filter .12s;
+}
+.draftCard:hover {
+  transform:translateY(-6px) scale(1.03);
+  border-color:#ffd75e;
+  box-shadow:0 14px 34px rgba(255,190,40,0.35), inset 0 1px 0 rgba(255,255,255,0.16);
+}
+.draftCard:active { transform:translateY(-2px) scale(1.0); }
+.draftArt {
+  width:100%; aspect-ratio:0.84; border-radius:8px;
+  background-size:cover; background-position:center;
+  box-shadow:0 3px 8px rgba(0,0,0,0.4);
+}
+.draftName { margin-top:8px; font-size:14px; font-weight:700; color:#f2f3f9; letter-spacing:1px; }
+.draftCost { margin-top:4px; }
+.draftRarity { margin-top:4px; font-size:11px; color:#9aa3c7; letter-spacing:1px; }
+
 
 /* 封面底部:功能入口(二级页) */
 .cvMenu {

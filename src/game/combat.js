@@ -542,14 +542,18 @@ export function attackTarget(attacker, target, game) {
   afterAttack(attacker);
 
   // 攻击特效:按攻击类型分近战斩击/远程弹道(渲染层按 card.color 着色)
-  // beam(地狱飞龙)用 shotTrail 光束观感(着色为卡色火焰红)
-  game.addEffect({
-    type: (isRanged || isBeam) ? 'shotTrail' : 'meleeSlash',
-    cardId: attacker.cardId, side: attacker.side,
-    x: attacker.x, y: attacker.y, tx, ty,
-    splash: (card.splash || 0) > 0,
-    life: isRanged ? 0.22 : 0.28, maxLife: isRanged ? 0.22 : 0.28,
-  });
+  // beam/ramp 单位(地狱飞龙/地狱塔)不发逐发特效——持续激光由渲染层
+  // drawBeams 按锁定状态直接绘制,逐发残影会让激光看起来"一下一下"
+  const _beamSp = card.special && (card.special.beam || card.special.rampDamage);
+  if (!_beamSp) {
+    game.addEffect({
+      type: isRanged ? 'shotTrail' : 'meleeSlash',
+      cardId: attacker.cardId, side: attacker.side,
+      x: attacker.x, y: attacker.y, tx, ty,
+      splash: (card.splash || 0) > 0,
+      life: isRanged ? 0.22 : 0.28, maxLife: isRanged ? 0.22 : 0.28,
+    });
+  }
   // 冲锋命中(王子):重击白闪+放射冲击线(双倍伤害的分量感)
   if (attacker.charged) {
     game.addEffect({ type: 'chargeHit', x: tx, y: ty, life: 0.4, maxLife: 0.4 });

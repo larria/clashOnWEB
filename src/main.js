@@ -7,7 +7,7 @@
 // ===============================================
 import { MATCH_TIME, CANVAS_W, CANVAS_H, canDeploy, snapToDeployZone } from './core/constants.js';
 import { loadProgress } from './render/cardart.js';
-import { CARDS, KIND } from './data/cards.js';
+import { CARDS, KIND, SELECTABLE_CARDS } from './data/cards.js';
 import { settings, aiLevelInfo, AI_LEVELS } from './core/settings.js';
 import { appBus } from './core/events.js';
 import { makeRng, shuffle } from './core/rng.js';
@@ -47,6 +47,8 @@ const els = {
   resultText: document.getElementById('resultText'),
   resultSub: document.getElementById('resultSub'),
   deckSelect: document.getElementById('deckSelect'),
+  deckModeSelect: document.getElementById('deckModeSelect'),
+  aiDeckSelect: document.getElementById('aiDeckSelect'),
   openDeckEditor: document.getElementById('openDeckEditor'),
 };
 
@@ -57,12 +59,16 @@ const handUI = new HandUI(els.handArea, onHandCardClick, onHandCardDrag, () => {
 });
 const hud = new Hud(els);
 const screens = new Screens(els);
+screens.onDraftPick((idx) => draftPick(idx));   // 选卡面板点击回调
 
 // ===== 应用状态 =====
 let game, renderer, ai, recorder;
 let playerHand = [];
 let playerDeck = [];
 let aiDeck = [];
+// 选卡模式的成品卡组(draftFinish 后有值;玩家卡组来源切回 deck 时清空)
+let playerDraftDeck = null;
+let aiDraftDeck = null;
 let playerDrawPile = [];
 let playerNext = null;
 let selectedCardIdx = -1;
@@ -104,6 +110,29 @@ function buildDeckSelect() {
     sel.appendChild(opt);
   });
   if (prev && DECKS[prev]) sel.value = prev;
+  buildAiDeckSelect();
+}
+
+// AI 卡组下拉:'随机'默认 + 各满员卡组;选择持久化(settings)
+function buildAiDeckSelect() {
+  const sel = els.aiDeckSelect;
+  if (!sel) return;
+  const prev = settings.get('aiDeckChoice') || 'random';
+  sel.innerHTML = '';
+  const randOpt = document.createElement('option');
+  randOpt.value = 'random';
+  randOpt.textContent = '随机';
+  sel.appendChild(randOpt);
+  Object.keys(DECKS).forEach((k, i) => {
+    const d = DECKS[k];
+    if (d.cards.length < 8) return;   // 未满卡组不给 AI 用(同玩家规则)
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = d.name;
+    sel.appendChild(opt);
+  });
+  sel.value = prev && (prev === 'random' || DECKS[prev]) ? prev : 'random';
+  sel.onchange = () => settings.set('aiDeckChoice', sel.value);
 }
 // 修正:确保所有卡都存在且不重复;不足 8 张自动补足
 // (AI 不持有 mirror:它不在任何 ROLE/COUNTERS,AI 抽到永远打不出,是死牌)
@@ -180,7 +209,11 @@ function initGame() {
   }
   const deckKey = pickPlayableDeckKey();
   if (els.deckSelect.value !== deckKey) els.deckSelect.value = deckKey;
-  playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
+  if (playerDraftDeck && playerDraftDeck.length === 8) {
+    playerDeck = sanitizeDeck(playerDraftDeck);
+  } else {
+    playerDeck = sanitizeDeck(DECKS[deckKey] ? DECKS[deckKey].cards : DECKS['slot0'].cards);
+  }
   const aiInfo = aiLevelInfo(settings.get('aiLevel'));
   aiLevel = aiInfo.thinkMult;          // 决策频率倍率(主循环用)
   // 左上角 AI 难度徽章(噩梦档红字提示)
@@ -192,13 +225,22 @@ function initGame() {
     if (resolved) { aiDeck = sanitizeDeck(DECKS[resolved].cards, true); urlAiDeckFixed = true; }
     urlAiDeckKey = null;
   }
-  if (!urlAiDeckFixed) {
-    const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length > 0);
-    // 全部卡组被清空时回退到经典卡组(否则 DECKS[undefined] 崩溃,界面卡死在封面)
-    const pickKey = presetKeys.length > 0
-      ? presetKeys[Math.floor(Math.random() * presetKeys.length)]
-      : null;
-    aiDeck = sanitizeDeck(pickKey ? DECKS[pickKey].cards : [], true);
+  if (aiDraftDeck && aiDraftDeck.length === 8) {
+    aiDeck = sanitizeDeck(aiDraftDeck, true);
+  } else if (!urlAiDeckFixed) {
+    // AI 卡组来源优先级:URL 参数 > 玩家指定(封面下拉)> 随机
+    const choice = settings.get('aiDeckChoice') || 'random';
+    let pickKey = null;
+    if (choice !== 'random' && DECKS[choice] && DECKS[choice].cards.length >= 8) {
+      pickKey = choice;
+    } else if (choice === 'random') {
+      const presetKeys = Object.keys(DECKS).filter(k => DECKS[k].cards.length >= 8);
+      // 全部卡组不满员时回退经典卡组(否则 DECKS[undefined] 崩溃)
+      pickKey = presetKeys.length > 0
+        ? presetKeys[Math.floor(Math.random() * presetKeys.length)]
+        : 'slot0';
+    }
+    aiDeck = sanitizeDeck(pickKey && DECKS[pickKey] ? DECKS[pickKey].cards : [], true);
   }
 
   // 本局 RNG + 记录器:seed 记进 Recorder,"seed+出牌脚本"可确定性重放整局
@@ -276,10 +318,69 @@ function initGame() {
   window.scrollTo(0, 0);
 }
 
+// ===== 选卡模式(draft)=====
+// 玩家卡组来源:'deck'=经典/自定义卡组 | 'draft'=开局选卡模式
+// 状态:draftState = { round, playerPicks: [], aiPicks: [], pair: [idA, idB] }
+let draftState = null;
+
+// 生成一对费用差 ≤2 且双方都未选过的卡
+function draftMakePair() {
+  const pool = SELECTABLE_CARDS.filter(id => id !== 'mirror' &&
+    !draftState.playerPicks.includes(id) && !draftState.aiPicks.includes(id));
+  if (pool.length < 2) return null;
+  const a = pool[Math.floor(Math.random() * pool.length)];
+  // 找费用差 ≤2 的搭档:先同费段内随机,失败再放宽(池足够大必成功)
+  const partners = pool.filter(id => id !== a && Math.abs(CARDS[id].cost - CARDS[a].cost) <= 2);
+  if (!partners.length) return draftMakePair();   // 换 a 重试(递归安全:池大)
+  const b = partners[Math.floor(Math.random() * partners.length)];
+  return [a, b];
+}
+
+function draftStart() {
+  draftState = { round: 1, playerPicks: [], aiPicks: [], pair: null };
+  draftNextPair();
+}
+
+function draftNextPair() {
+  draftState.pair = draftMakePair();
+  if (!draftState.pair) { draftFinish(); return; }
+  setPhase('draft');
+}
+
+// 玩家点了某张:拿走它,AI 拿另一张
+function draftPick(idx) {
+  if (phase !== 'draft' || !draftState || !draftState.pair) return;
+  const [a, b] = draftState.pair;
+  const mine = idx === 0 ? a : b;
+  const theirs = idx === 0 ? b : a;
+  draftState.playerPicks.push(mine);
+  draftState.aiPicks.push(theirs);
+  audio.cardSelect();
+  draftState.round += 1;
+  if (draftState.round > 8) draftFinish();
+  else draftNextPair();
+}
+
+// 8 轮选完:双方各 8 张,直接开战
+function draftFinish() {
+  playerDraftDeck = draftState.playerPicks.slice();
+  aiDraftDeck = draftState.aiPicks.slice();
+  draftState = null;
+  startGame();
+}
+
 // ===== 流程状态机 =====
 function setPhase(p) {
   phase = p;
-  if (p === 'ready') {
+  if (p === 'draft') {
+    screens.showOverlay({
+      title: `选卡 ${draftState.round} / 8`,
+      desc: '选择一张加入你的卡组,另一张归 AI',
+      btn: '',
+      hint: '',
+      draft: draftState.pair,
+    });
+  } else if (p === 'ready') {
     screens.showOverlay({
       title: 'READY',
       desc: '选择卡组与 AI 强度,摧毁对方国王塔获胜',
@@ -630,7 +731,11 @@ document.getElementById('cvRestart').addEventListener('click', () => {
 });
 els.ovBtn.addEventListener('click', () => {
   audio.unlock(); // 首次交互解锁音频
-  if (phase === 'ready') startGame();
+  if (phase === 'draft') return;              // 选卡面板用卡牌点击,不用主按钮
+  if (phase === 'ready') {
+    if (els.deckModeSelect.value === 'draft') { playerDraftDeck = null; aiDraftDeck = null; draftStart(); }
+    else { playerDraftDeck = null; aiDraftDeck = null; startGame(); }
+  }
   else if (phase === 'paused') togglePause();
 });
 window.addEventListener('keydown', (e) => {
@@ -640,6 +745,11 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     togglePause();
   }
+});
+els.deckModeSelect.addEventListener('change', () => {
+  // 切回普通卡组:清掉上一场 draft 的卡组(ready 态重开预览)
+  playerDraftDeck = null; aiDraftDeck = null;
+  if (phase === 'ready') { initGame(); handUI.invalidate(); renderer.draw(null, 0); }
 });
 els.deckSelect.addEventListener('change', () => {
   // 记住选中的卡组(下次默认使用)

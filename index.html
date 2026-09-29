@@ -57,7 +57,7 @@
     </div>
     <div class="cvTitle">皇室战争</div>
     <div class="cvSub">SINGLE PLAYER EDITION</div>
-    <div class="cvVersion" id="cvVersion">v0.7.6</div>
+    <div class="cvVersion" id="cvVersion">v0.7.7</div>
   </div>
   <!-- 中央:情境小标签 + 主按钮 -->
   <div class="ovInner">
@@ -70,6 +70,10 @@
   <div class="cvConfig" id="cvConfig">
     <div class="cvCfgRow">
       <span class="cvCfgLabel">卡组</span>
+      <select id="deckModeSelect">
+        <option value="deck" selected>选卡组</option>
+        <option value="draft">开局选卡</option>
+      </select>
       <select id="deckSelect"></select>
     </div>
     <div class="cvCfgRow">
@@ -80,6 +84,10 @@
         <option value="3" selected>挑战</option>
         <option value="4">噩梦</option>
       </select>
+    </div>
+    <div class="cvCfgRow">
+      <span class="cvCfgLabel">AI卡组</span>
+      <select id="aiDeckSelect"></select>
     </div>
   </div>
   <!-- 封面底部:功能入口(二级页) -->

@@ -132,6 +132,7 @@ export class Renderer {
       this.drawUnitStates();
     }
     this.drawProjectiles();
+    this.drawBeams();
     this.drawEffects();
     if (deployPreview) this.drawPreview(deployPreview);
     ctx.restore();
@@ -810,7 +811,10 @@ export class Renderer {
     // 攻击闪光(扩大到卡图范围;建筑用碰撞半径,部队用卡图半径)
     const buildVR = isBuilding ? u.radius * CELL : 0;
     const fxR = art ? (isBuilding ? buildVR : Math.max(r, (isSwarm ? r*2.1 : r*2.6))) : r;
-    if (u.atkAnim > 0) {
+    // beam 单位(地狱飞龙/地狱塔)不画逐发攻击闪光——持续激光由
+    // drawBeams 统一绘制,闪光会让激光看起来"一下一下"
+    const _spBeam = u.card && u.card.special && (u.card.special.beam || u.card.special.rampDamage);
+    if (u.atkAnim > 0 && !_spBeam) {
       const a = u.atkAnim / 0.3;
       ctx.strokeStyle = `rgba(255,235,59,${a*0.8})`;
       ctx.lineWidth = 2.5;
@@ -1016,6 +1020,62 @@ export class Renderer {
     if (ratio > 0) {
       ctx.fillStyle = color;
       roundRect(ctx, x-w/2, y, w*ratio, h, 1.5); ctx.fill();
+    }
+  }
+
+  // ===== 持续激光(地狱飞龙/地狱塔 beam)=====
+  // 官方观感:攻击中一条激光一直连着目标;打断(换目标/眩晕/击退/
+  // 脱靶/死亡)激光自然断开——因为画的是"当前帧还在锁定攻击"这个
+  // 状态本身,不是攻击瞬间的残影。打断后伤害从第 1 段重新升
+  // (abilities.rampDamage 重置),视觉与数值同步归零
+  drawBeams() {
+    const ctx = this.ctx;
+    const g = this.game;
+    const beamSources = [];
+    // beam 单位扫描(地狱飞龙部队 + 地狱塔建筑单位,都在 units 里):
+    // 正在攻击 = 锁定目标 + 在射程内 + 可行动(未冰冻/眩晕/击退/部署中)
+    for (const u of g.units) {
+      if (u.dead || u._digTo) continue;
+      const sp = u.card && u.card.special;
+      if (!sp || (!sp.beam && !sp.rampDamage)) continue;
+      if (!u.target || !u.target.ref || u.target.ref.dead) continue;
+      if (u.frozen > 0 || u.stunned > 0 || u._knock || u.deployTimer > 0) continue;
+      if (!g.inAttackRange(u, u.target)) continue;
+      beamSources.push({ x: u.x, y: u.y - (u.flying ? u.radius * 0.5 : 0), t: u.target.ref,
+        mult: u.rampMult || 1, uid: u.uid });
+    }
+    if (!beamSources.length) return;
+    const time = this.animTime;
+    for (const b of beamSources) {
+      const x0 = b.x * CELL, y0 = b.y * CELL;
+      const x1 = b.t.x * CELL, y1 = b.t.y * CELL;
+      // 激光强度随充能段位增强(段1 细而暗 → 满段粗而亮,带脉动)
+      const stage = Math.min(1, (b.mult - 1) / 11);   // 0(1倍)→1(12倍)
+      const flick = 0.85 + 0.15 * Math.sin(time * 30 + b.uid * 3);
+      const coreW = (1.5 + stage * 3.5) * flick;
+      ctx.save();
+      // 外层光晕(火焰红渐强)
+      const glow = ctx.createLinearGradient(x0, y0, x1, y1);
+      const c1 = `rgba(255,120,40,${0.15 + stage * 0.25})`;
+      const c2 = `rgba(255,200,80,${0.05 + stage * 0.15})`;
+      glow.addColorStop(0, c1); glow.addColorStop(1, c2);
+      ctx.strokeStyle = glow;
+      ctx.lineWidth = coreW * 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      // 内芯(白热)
+      ctx.strokeStyle = `rgba(255,255,235,${0.5 + stage * 0.5})`;
+      ctx.lineWidth = coreW;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      // 命中点炽斑
+      const hr = (3 + stage * 6) * flick;
+      const hg = ctx.createRadialGradient(x1, y1, 0, x1, y1, hr);
+      hg.addColorStop(0, 'rgba(255,255,240,0.95)');
+      hg.addColorStop(0.4, `rgba(255,170,60,${0.5 + stage * 0.4})`);
+      hg.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = hg;
+      ctx.beginPath(); ctx.arc(x1, y1, hr, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
     }
   }
 

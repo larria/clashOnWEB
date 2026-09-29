@@ -1104,8 +1104,12 @@ const SCENARIOS = {
   ok(dmgLog.length >= 12, `持续开火 ${dmgLog.length} 发`);
   if (dmgLog.length >= 11) {
     ok(Math.round(dmgLog[0]) === 35, `首发低段 35(${Math.round(dmgLog[0])})`);
-    const mid = dmgLog[4];   // 第5发 rampTimer=1.6 → 35×(1+11.06×0.4)=190
-    ok(mid >= 120 && mid <= 230, `中段过渡(${Math.round(mid)} 在 35→422 之间)`);
+    // 官方三段阶梯(2026-09-29 修正,此前线性爬升中段伤害翻倍):
+    // 前4发 35 → 次5发 120 → 之后 422(每 2s 升段)
+    const seg1 = dmgLog.slice(0, 4), seg2 = dmgLog.slice(4, 10), seg3 = dmgLog.slice(10, 12);
+    ok(seg1.every(d => Math.abs(d - 35) < 2), `第1段 4 发全 35(${seg1.map(d=>Math.round(d)).join(',')})`);
+    ok(seg2.every(d => Math.abs(d - 120) < 3), `第2段全 120(${seg2.map(d=>Math.round(d)).join(',')})`);
+    ok(seg3.every(d => Math.abs(d - 422) < 3), `第3段 422(${seg3.map(d=>Math.round(d)).join(',')})`);
     const late = dmgLog.slice(-2);
     ok(late.every(d => Math.abs(d - 422) < 3), `后期伤害达满段 422(${late.map(d=>Math.round(d)).join(',')})`);
   }

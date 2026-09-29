@@ -115,13 +115,15 @@ export const CARDS = {
   infernoDragon: { id:'infernoDragon', name:'地狱飞龙', cost:4, rarity:'传奇', kind:KIND.TROOP,
     hp:1295, dmg:35, hitSpeed:0.4, firstHit:0.5, range:3.5, sightRange:5.5, speed:SPEED.MEDIUM,
     targets:T.ALL, flying:true, count:1, splash:0, deployTime:1, color:'#ff7043', radius:0.45,
-    special:{ rampDamage:{ maxMult:12.06, rampTime:4.0 }, beam: true } },
+    special:{ rampDamage:{ stages:[
+      { mult:1, hits:4 }, { mult:3.43, hits:5 }, { mult:12.06, hits:Infinity },
+    ] }, beam: true } },
     // wiki 11级:hp 1295·三段伤害 35/120/422·攻速 0.4·射程 3.5·对空对地
     // 中速(60=1.0格/s)·空军单体;2016-09-30 首发(2016 Q4 批次首张)
-    // ramp 口径:官方"前4发≈8.5%·次5发≈28.5%·之后100%"三段模型,
-    // 4.0s 达满段(422/35=12.06 倍线性递增,与地狱塔 maxMult 19.7 同机制);
-    // 换目标/眩晕/击退重置充能(wiki:火球/雪球/龙卷风可重置,与塔不同
-    // 它不免疫击退);破盾重置(2017-12 官方修复,护盾伤害溢出重算)
+    // ramp 官方三段阶梯:前4发 35(8.5%)·次5发 120(28.5%)·之后
+    // 422(100%),每 2s 升段(4发×0.4s);换目标/眩晕/击退重置充能
+    // (wiki:火球/雪球/龙卷风可重置,与塔不同它不免疫击退);
+    // 破盾重置(2017-12 官方修复)
   princess: { id:'princess', name:'公主', cost:3, rarity:'传奇', kind:KIND.TROOP,
     hp:261, dmg:168, hitSpeed:3.0, firstHit:0.3, range:9.0, sightRange:9.0, speed:SPEED.SLOW,
     targets:T.ALL, flying:false, count:1, splash:2.0, deployTime:1, color:'#f48fb1', radius:0.38,
@@ -219,7 +221,11 @@ export const CARDS = {
   infernoTower: { id:'infernoTower', name:'地狱之塔', cost:5, rarity:'稀有', kind:KIND.BUILDING,
     hp:1748, dmg:43, hitSpeed:0.4, firstHit:0.5, range:6.0, sightRange:6.0, speed:0,
     targets:T.ALL, flying:false, count:1, splash:0, deployTime:1, lifetime:40, color:'#ff5722', radius:1.35,
-    special:{ rampDamage:{ maxMult:19.7, rampTime:4.0 } } },  // 对空(wiki:air-targeting,可打气球/亡灵)
+    special:{ rampDamage:{ stages:[
+      { mult:1, hits:4 }, { mult:3.67, hits:5 }, { mult:19.7, hits:Infinity },
+    ] } },  // 官方三段阶梯:前4发 43·次5发 158·之后 847(wiki 1/2/3_dmg_11)
+    // 对空(wiki:air-targeting,可打气球/亡灵);此前线性爬升中段伤害偏高
+  },
   bombTower: { id:'bombTower', name:'炸弹塔', cost:4, rarity:'稀有', kind:KIND.BUILDING,
     hp:1356, dmg:222, hitSpeed:1.8, firstHit:0.5, range:6.0, sightRange:5.5, speed:0,
     targets:T.GROUND, flying:false, count:1, splash:1.5, deployTime:1, lifetime:30, color:'#37474f', radius:1.35,
