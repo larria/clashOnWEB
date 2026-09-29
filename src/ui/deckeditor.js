@@ -15,6 +15,7 @@
 import { CARDS, SELECTABLE_CARDS } from '../data/cards.js';
 import { appBus } from '../core/events.js';
 import { getCardUrl } from '../render/cardart.js';
+import { elixirCostHtml } from './elixiricon.js';
 
 const LS_KEY = 'CR_USER_DECKS_V1';
 const LS_LAST_KEY = 'CR_LAST_DECK';
@@ -157,8 +158,9 @@ export class DeckEditor {
       const s = document.createElement('div');
       s.className = 'deSlot' + (i === this.curSlot ? ' active' : '');
       const empty = d.cards.length === 0;
+      const notFull = d.cards.length > 0 && d.cards.length < DECK_SIZE;
       s.innerHTML = `<div class="deSlotName">${i + 1}. ${d.name}</div>
-        <div class="deSlotCount ${empty ? 'empty' : ''}">${d.cards.length}/8 张</div>
+        <div class="deSlotCount ${empty ? 'empty' : ''} ${notFull ? 'notfull' : ''}">${d.cards.length}/8 张${notFull ? ' ⚠' : ''}</div>
         <div class="deDel" title="删除卡组">🗑</div>`;
       s.addEventListener('click', (e) => {
         if (e.target.classList.contains('deDel')) {
@@ -210,7 +212,7 @@ export class DeckEditor {
     return `<div class="deDeckCard" data-card="${id}">
       <div class="deArt" style="background-image:url('${getCardUrl(id)}');"></div>
       <div class="deName">${c.name}</div>
-      <div class="deCost">💧${c.cost}</div>
+      <div class="deCost">${elixirCostHtml(c.cost)}</div>
       <div class="deRm">✕</div>
     </div>`;
   }
@@ -232,7 +234,7 @@ export class DeckEditor {
         <div class="deRarityTag" style="background:${rarityColor(c.rarity)};"></div>
         <div class="deArt" style="background-image:url('${getCardUrl(id)}');"></div>
         <div class="deName">${c.name}</div>
-        <div class="deCost">💧${c.cost}</div>
+        <div class="deCost">${elixirCostHtml(c.cost)}</div>
       </div>`;
     }).join('');
     grid.querySelectorAll('.dePoolCard').forEach(el => {
@@ -252,7 +254,8 @@ export class DeckEditor {
     const d = this.userDecks[this.curSlot];
     if (!d.cards.length) { avg.innerHTML = '平均圣水:—'; return; }
     const a = d.cards.reduce((s, id) => s + CARDS[id].cost, 0) / d.cards.length;
-    avg.innerHTML = `平均圣水:<b>${a.toFixed(1)}</b> · ${d.cards.length}/8 张`;
+    avg.innerHTML = `平均圣水:<b>${a.toFixed(1)}</b> · ${d.cards.length}/8 张` +
+      (d.cards.length < DECK_SIZE ? ` <span style="color:#ffb74d;">⚠ 未满 8 张暂不可用于对战(开局将回退其他卡组)</span>` : '');
   }
 
   open(slot) {

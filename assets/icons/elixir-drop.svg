@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 80" width="64" height="80">
+  <!-- 圣水滴(官方圣水紫):可复用图标 —— data-uri/background/img 均可
+       渐变:亮粉高光 → 主紫 → 深紫底,白高光斑,深紫描边 -->
+  <defs>
+    <linearGradient id="eg" x1="0.25" y1="0" x2="0.75" y2="1">
+      <stop offset="0" stop-color="#f9a8ff"/>
+      <stop offset="0.35" stop-color="#ee6cf5"/>
+      <stop offset="0.7" stop-color="#d233e0"/>
+      <stop offset="1" stop-color="#8f14ab"/>
+    </linearGradient>
+  </defs>
+  <!-- 水滴形路径:顶尖底圆(贝塞尔) -->
+  <path d="M32 2 C 36 14, 52 30, 56 44 C 61 61, 49 76, 32 76
+           C 15 76, 3 61, 8 44 C 12 30, 28 14, 32 2 Z"
+        fill="url(#eg)" stroke="#5a1066" stroke-width="3" stroke-linejoin="round"/>
+  <!-- 高光斑(左上椭圆) -->
+  <ellipse cx="22" cy="36" rx="7" ry="12" fill="#ffd8ff" opacity="0.75"
+           transform="rotate(-18 22 36)"/>
+  <!-- 小高光点 -->
+  <circle cx="44" cy="26" r="3.5" fill="#ffd8ff" opacity="0.5"/>
+</svg>

@@ -99,7 +99,8 @@ function buildDeckSelect() {
     const opt = document.createElement('option');
     opt.value = k;
     const d = DECKS[k];
-    opt.textContent = `卡组${i + 1} · ${d.name}${d.cards.length === 0 ? '(空)' : ''}`;
+    const n = d.cards.length;
+    opt.textContent = `卡组${i + 1} · ${d.name}${n === 0 ? '(空)' : (n < 8 ? `(${n}/8 未满)` : '')}`;
     sel.appendChild(opt);
   });
   if (prev && DECKS[prev]) sel.value = prev;
@@ -160,11 +161,14 @@ function resolveDeckKey(v) {
 }
 
 // ===== 建局 =====
-// 选择用于开局的卡组:空卡组(未编辑完)回退到第一个非空
+// 选择用于开局的卡组:不足 8 张的卡组(未编辑完的草稿)回退到
+// 第一个满 8 张卡组——官方口径卡组必须恰好 8 张,此前 <8 张会被
+// sanitizeDeck 静默补牌(玩家不知道自己在用被替换过的卡组)
 function pickPlayableDeckKey() {
+  const FULL = 8;
   const cur = els.deckSelect.value;
-  if (DECKS[cur] && DECKS[cur].cards.length > 0) return cur;
-  return Object.keys(DECKS).find(k => DECKS[k].cards.length > 0) || 'slot0';
+  if (DECKS[cur] && DECKS[cur].cards.length >= FULL) return cur;
+  return Object.keys(DECKS).find(k => DECKS[k].cards.length >= FULL) || 'slot0';
 }
 
 function initGame() {

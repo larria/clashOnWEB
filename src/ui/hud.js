@@ -1,6 +1,7 @@
 // ===============================================
 // HUD - 倒计时/阶段标签 + 中央大提示 + 战斗信息面板
 // ===============================================
+import { ELIXIR_DROP_URI } from './elixiricon.js';
 import { MATCH_TIME, OVERTIME } from '../core/constants.js';
 
 export class Hud {
@@ -62,8 +63,8 @@ export class Hud {
         <span style="font-size:15px;font-weight:700;letter-spacing:1px;">⏳ 剩余 ${m}:${s}</span>${de ? `<span style="background:rgba(255,80,80,0.18);padding:1px 8px;border-radius:8px;font-size:10px;color:#ff8a80;border:1px solid rgba(255,80,80,0.35);">⚡双倍圣水</span>` : ''}
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11.5px;">
-        <span style="color:#e07bff;">💧 你 <b>${game.elixir[0]}</b>/10</span>
-        <span style="color:#ffab91;">AI <b>${game.elixir[1]}</b>/10 💧</span>
+        <span style="color:#e07bff;"><img src="${ELIXIR_DROP_URI}" style="width:12px;height:15px;vertical-align:-2px;"> 你 <b>${game.elixir[0]}</b>/10</span>
+        <span style="color:#ffab91;">AI <b>${game.elixir[1]}</b>/10 <img src="${ELIXIR_DROP_URI}" style="width:12px;height:15px;vertical-align:-2px;"></span>
       </div>
       <div style="height:1px;background:rgba(255,255,255,0.1);margin:7px 0;"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;">

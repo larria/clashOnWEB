@@ -14,7 +14,7 @@
 // 页面显示更新提示条 → 用户点"立即更新" → postMessage skipWaiting →
 // controllerchange → reload。
 // ===============================================
-const APP_VERSION = '0.7.1';
+const APP_VERSION = '0.7.2';
 
 const CACHE = `clash-v${APP_VERSION}`;
 const CORE = `clash-core-v${APP_VERSION}`;
@@ -40,6 +40,7 @@ const SRC_MODULES = [
   'game/projectile.js', 'game/movement.js',
   'render/renderer.js', 'render/pixilayer.js', 'render/graphics.js', 'render/cardart.js',
   'ui/hand.js', 'ui/hud.js', 'ui/gamelog.js', 'ui/deckeditor.js',
+  'ui/elixiricon.js',
   'ui/settingsui.js', 'ui/screens.js',
   'input/input.js',
   'audio/audio.js',
