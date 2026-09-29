@@ -449,7 +449,11 @@ export function attackTarget(attacker, target, game) {
   //   溅射:卡牌数据声明 projectileSpeed 才实体化(弹道慢到可见的卡,
   //         如公主 wiki 600=15格/s;法师/炸弹兵等快弹短程保持瞬发,
   //         落点 AOE 观感等价)——溅射弹命中点为圆心范围伤害
-  const isRanged = card.range >= 3.5;
+  // 例外:beam(地狱飞龙)——官方口径"attack is not considered a
+  //   projectile"(wiki),聚焦光束即时命中,伤害=出手瞬间快照,
+  //   递增伤害逐发结算不走弹道延迟
+  const isBeam = !!(card.special && card.special.beam);
+  const isRanged = card.range >= 3.5 && !isBeam;
   const aslow = card.special && card.special.attackSlow;
   const projSpeed = card.projectileSpeed || 12;
   if (isRanged && (!(card.splash > 0) || card.projectileSpeed)) {
@@ -538,8 +542,9 @@ export function attackTarget(attacker, target, game) {
   afterAttack(attacker);
 
   // 攻击特效:按攻击类型分近战斩击/远程弹道(渲染层按 card.color 着色)
+  // beam(地狱飞龙)用 shotTrail 光束观感(着色为卡色火焰红)
   game.addEffect({
-    type: isRanged ? 'shotTrail' : 'meleeSlash',
+    type: (isRanged || isBeam) ? 'shotTrail' : 'meleeSlash',
     cardId: attacker.cardId, side: attacker.side,
     x: attacker.x, y: attacker.y, tx, ty,
     splash: (card.splash || 0) > 0,

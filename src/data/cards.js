@@ -1,5 +1,5 @@
 // ===============================================
-// 卡牌数据定义(44 张:26 部队 + 10 建筑 + 8 法术)
+// 卡牌数据定义(45 张:27 部队 + 10 建筑 + 8 法术)
 // 数值 = 官方 wiki 11级原值直读(v0.7.0 起废除 ×0.5 缩放;见 docs/card-stats.json)
 //
 // 新增卡牌指南:
@@ -112,6 +112,16 @@ export const CARDS = {
     // wiki 11级:hp688 dmg89 攻速1.7 射程5.5 溅射1.5
     // 首张传奇(2016-02-29):攻击附带范围减速30%/2.5s(移速+攻速);
     // 落地伤害 84·半径3·落地减速30%/1s(可秒杀骷髅/蝙蝠)
+  infernoDragon: { id:'infernoDragon', name:'地狱飞龙', cost:4, rarity:'传奇', kind:KIND.TROOP,
+    hp:1295, dmg:35, hitSpeed:0.4, firstHit:0.5, range:3.5, sightRange:5.5, speed:SPEED.MEDIUM,
+    targets:T.ALL, flying:true, count:1, splash:0, deployTime:1, color:'#ff7043', radius:0.45,
+    special:{ rampDamage:{ maxMult:12.06, rampTime:4.0 }, beam: true } },
+    // wiki 11级:hp 1295·三段伤害 35/120/422·攻速 0.4·射程 3.5·对空对地
+    // 中速(60=1.0格/s)·空军单体;2016-09-30 首发(2016 Q4 批次首张)
+    // ramp 口径:官方"前4发≈8.5%·次5发≈28.5%·之后100%"三段模型,
+    // 4.0s 达满段(422/35=12.06 倍线性递增,与地狱塔 maxMult 19.7 同机制);
+    // 换目标/眩晕/击退重置充能(wiki:火球/雪球/龙卷风可重置,与塔不同
+    // 它不免疫击退);破盾重置(2017-12 官方修复,护盾伤害溢出重算)
   princess: { id:'princess', name:'公主', cost:3, rarity:'传奇', kind:KIND.TROOP,
     hp:261, dmg:168, hitSpeed:3.0, firstHit:0.3, range:9.0, sightRange:9.0, speed:SPEED.SLOW,
     targets:T.ALL, flying:false, count:1, splash:2.0, deployTime:1, color:'#f48fb1', radius:0.38,

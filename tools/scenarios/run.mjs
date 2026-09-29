@@ -1083,6 +1083,64 @@ const SCENARIOS = {
   ok(rg.maxHp - rg.hp >= 688, `伤害照吃(${rg.maxHp - rg.hp} ≥ 688)`);
 },
 
+// ===== 新卡:地狱飞龙(2026-09-29) =====
+'新卡-地狱飞龙三段递增': () => {
+  // wiki 11级:hp 1295·三段 35/120/422·攻速 0.4·射程 3.5·对空对地·中速·空军
+  // ramp 官方口径:前4发≈8.5%·次5发≈28.5%·之后100%(4.0s 达满段);
+  // beam 官方口径"attack is not considered a projectile"——即时命中
+  const g = newGame();
+  const id = g.spawnUnit('infernoDragon', 0, 9, 21);
+  ok(id.flying, '空军');
+  ok(id.hp === 1295, `hp 1295(${id.hp})`);
+  // 高血目标:敌方公主塔 3052(戈仑 5120 会在满段后 ~2s 被烧死,不利断言)
+  const tw = g.towers[1].left;
+  const d2 = g.spawnUnit('infernoDragon', 0, tw.x, tw.y + 2.5);   // 塔射程内
+  d2.deployTimer = 0;
+  const dmgLog = [];
+  const origTD = g.dealTowerDamage.bind(g);
+  g.dealTowerDamage = (t, dmg) => { if (t === tw) dmgLog.push(dmg); return origTD(t, dmg); };
+  run(5.5, g);   // 5.5s ≈ 12 发(beam 即时,攻速 0.4/前摇 0.5;第 12 发 rampTimer=4.4 达满段)
+  g.dealTowerDamage = origTD;
+  ok(dmgLog.length >= 12, `持续开火 ${dmgLog.length} 发`);
+  if (dmgLog.length >= 11) {
+    ok(Math.round(dmgLog[0]) === 35, `首发低段 35(${Math.round(dmgLog[0])})`);
+    const mid = dmgLog[4];   // 第5发 rampTimer=1.6 → 35×(1+11.06×0.4)=190
+    ok(mid >= 120 && mid <= 230, `中段过渡(${Math.round(mid)} 在 35→422 之间)`);
+    const late = dmgLog.slice(-2);
+    ok(late.every(d => Math.abs(d - 422) < 3), `后期伤害达满段 422(${late.map(d=>Math.round(d)).join(',')})`);
+  }
+  // zap 重置充能(官方:眩晕/击退重置递增——与地狱塔同机制)
+  const before = d2.rampMult;
+  ok(before > 1, `已充能(${before.toFixed(1)}倍)`);
+  castSpell('zap', 1, d2.x, d2.y, g);
+  run(0.8, g);   // zap castTime 0.5s,等效果结算
+  ok(d2.rampMult === 1 && d2.rampTimer === 0, `zap 重置充能(${before.toFixed(1)}→${d2.rampMult})`);
+},
+
+'新卡-地狱飞龙换目标重置与对空': () => {
+  // 官方:烧新目标从第 1 段重新升(wiki:移动出射程/换目标重置)
+  const g = newGame();
+  const id = g.spawnUnit('infernoDragon', 0, 9, 21);
+  const g1 = g.spawnUnit('golem', 1, 9, 18.5);
+  g1.deployTimer = 0;
+  run(3, g);   // 烧戈仑 3s,充能应在中段
+  ok(id.rampMult > 2, `烧戈仑 3s 后充能 ${id.rampMult.toFixed(1)} 倍(>2)`);
+  // 送一个新目标在旁边(地狱飞龙换目标重置)
+  const g2 = g.spawnUnit('giant', 1, 7, 19);
+  g2.deployTimer = 0;
+  g1.hp = 0; g1.dead = true;   // 戈仑死,被迫换目标
+  g.units = g.units.filter(u => !u.dead);
+  run(0.5, g);
+  ok(id.rampMult === 1 || id.rampTimer < 0.5, `换目标后重置(当前 ${id.rampMult.toFixed(1)} 倍/t=${id.rampTimer.toFixed(2)})`);
+  // 对空:地狱飞龙可打空军(wiki:air-targeting)
+  const g3 = newGame();
+  const id2 = g3.spawnUnit('infernoDragon', 0, 9, 21);
+  const bal = g3.spawnUnit('balloon', 1, 9, 19);   // 气球是空军
+  bal.deployTimer = 0;
+  run(2, g3);
+  ok(bal.hp < bal.maxHp, `对空生效:气球被灼烧(${bal.maxHp - bal.hp > 0 ? Math.round(bal.maxHp - bal.hp) + ' 伤害' : '未受伤'})`);
+},
+
 '滚木-只能部署己方半场与河带': () => {
   // deployZone riverbanks:玩家可放 y<17(己方+河),不可放敌方腹地
   const g = newGame();

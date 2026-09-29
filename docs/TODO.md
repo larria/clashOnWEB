@@ -9,18 +9,18 @@
 
 ## 卡牌实装进度
 
-**已实装 54 张**(数值 = 官方 wiki 11 级原值,核对记录见
+**已实装 55 张**(数值 = 官方 wiki 11 级原值,核对记录见
 LOG.md v0.4.6):
 
-- 部队 26:骑士、弓箭手、哥布林、投矛哥布林、骷髅兵、亡灵、野蛮人、
+- 部队 27:骑士、弓箭手、哥布林、投矛哥布林、骷髅兵、亡灵、野蛮人、
   炸弹兵、蝙蝠、哥布林团伙、巨人、迷你皮卡、火枪手、女武神、野猪骑士、法师、皮卡超人、
-  王子、黑王子、冰法师、飞龙宝宝、骷髅军团、女巫、气球兵、骷髅巨人、戈仑石人、亡灵大军、三个火枪手
+  王子、黑王子、冰法师、飞龙宝宝、地狱飞龙、骷髅军团、女巫、气球兵、骷髅巨人、戈仑石人、亡灵大军、三个火枪手
 - 建筑 10:加农炮、特斯拉电磁塔、地狱之塔、炸弹塔、哥布林小屋、
   野蛮人小屋、骷髅墓碑、圣水收集器、X连弩、迫击炮
 - 法术 10:火球、万箭齐发、火箭、雷电法术、电击法术、狂暴法术、
   冰冻法术、镜像法术、哥布林飞桶、毒药
 
-**未实装 65 张**(类型取自官方 Card Infobox;中文名后括号内为
+**未实装 64 张**(类型取自官方 Card Infobox;中文名后括号内为
 `docs/cards-wiki/` 文件名,查数据直接开对应文件):
 
 ### 部队 Troop(49)
@@ -32,8 +32,7 @@ LOG.md v0.4.6):
 熔炉(Furnace)、哥布林爆破手(Goblin Demolisher)、
 哥布林巨人(Goblin Giant)、哥布林机甲(Goblin Machine)、皇家卫队(Guards)、
 治疗精灵(Heal Spirit)、猎人(Hunter)、冰巨人(Ice Golem)、
-冰精灵(Ice Spirit)、地狱飞龙(Inferno Dragon)、
-熔岩猎犬(Lava Hound)、伐木工(Lumberjack)、魔法弓箭手(Magic Archer)、
+冰精灵(Ice Spirit)、熔岩猎犬(Lava Hound)、伐木工(Lumberjack)、魔法弓箭手(Magic Archer)、
 超级骑士(Mega Knight)、巨型亡灵(Mega Minion)、矿工(Miner)、
 巫婆(Mother Witch)、暗夜女巫(Night Witch)、凤凰(Phoenix)、
 攻城野猪(Ram Rider)、恶棍小队(Rascals)、浪人(Ronin)、

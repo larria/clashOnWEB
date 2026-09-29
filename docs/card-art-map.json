@@ -183,4 +183,7 @@
   "goblinGang": {
     "file": "GoblinGangCard.png"
   }
+,  "infernoDragon": {
+    "file": "InfernoDragonCard.png"
+  }
 }

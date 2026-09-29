@@ -26,7 +26,7 @@ export const MAX_USER_DECKS = 8;   // 自定义卡组上限
 export const CLASSIC_DECKS = [
   { name: '速转猪',   cards: ['hogRider', 'iceSpirit', 'iceGolem', 'theLog', 'skeletons', 'cannon', 'zap', 'fireball'] },
   { name: '巨人体系', cards: ['giant', 'darkPrince', 'threeMusketeers', 'wizard', 'skeletons', 'arrows', 'poison', 'minions'] },
-  { name: '戈仑重击', cards: ['golem', 'babyDragon', 'miniPekka', 'iceWizard', 'minions', 'arrows', 'zap', 'barbarianHut'] },
+  { name: '戈仑重击', cards: ['golem', 'babyDragon', 'infernoDragon', 'iceWizard', 'minions', 'arrows', 'zap', 'barbarianHut'] },
   { name: '空军流',   cards: ['balloon', 'minionHorde', 'minions', 'babyDragon', 'bats', 'arrows', 'fireball', 'musketeer'] },
   { name: '速转流',   cards: ['hogRider', 'skeletons', 'goblins', 'spearGoblins', 'goblinGang', 'zap', 'fireball', 'musketeer'] },
   { name: '公主控制', cards: ['princess', 'knight', 'musketeer', 'skeletonArmy', 'fireball', 'zap', 'cannon', 'goblins'] },
